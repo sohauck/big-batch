@@ -39,9 +39,12 @@ closedir ORIGDIR;
 my @splitdir = split(/\//, $dir);
 my $oldfolder = pop @splitdir;
 my $transdir = join("/", @splitdir) . "/translated/";
+if( -e $transdir)   { Usage("Output directory already exists: $transdir"); exit; }
 mkdir $transdir;
 
 my $uniquefile = join("/", @splitdir) . "/unique-aa-seqs.txt";
+if( -e $uniquefile)   { Usage("Output file already exists: $uniquefile"); exit; }
+
 open(UNIQUEAA, '>', $uniquefile) or die "Cannot open $uniquefile\n";
 	print UNIQUEAA "For $transdir, a list of the count of unique amino acid sequences per locus.";
 my @uniqueaa;
@@ -73,7 +76,7 @@ foreach my $file (@files)
 			my $peptide = translate($line, "1");
 			
 	    		if ( !exists($unique{$peptide})) #if allele doesn't exist in unique-hash
-    			{ $unique{$peptide} = 1; } #then add it with allele number as key, value as 1
+    			{ $unique{$peptide} = 1;} #then add it with allele number as key, value as 1
 			
 			print AMINOACID $peptide, "\n";
 		}	
@@ -82,8 +85,8 @@ foreach my $file (@files)
 	# counting number of unique amino acids
 	my $count;
 	foreach my $key ( sort keys %unique ) 
-	{ $count++ ; }			
-	push @uniqueaa, ($file, $count);
+	{ $count++ ;  print "I did this, count is $count    "; }			
+	print UNIQUEAA $file . "," . $count . "\n";
 	
 	close NUCLEOTIDE; close AMINOACID;
 
@@ -332,4 +335,4 @@ sub translate  {
     
 # return the value:
     return $peptide;
-} # end of sub translate
+}
