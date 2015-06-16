@@ -46,7 +46,7 @@ my $uniquefile = join("/", @splitdir) . "/unique-aa-seqs.txt";
 if( -e $uniquefile)   { Usage("Output file already exists: $uniquefile"); exit; }
 
 open(UNIQUEAA, '>', $uniquefile) or die "Cannot open $uniquefile\n";
-	print UNIQUEAA "For $transdir, a list of the count of unique amino acid sequences per locus.";
+	print UNIQUEAA "For $transdir, a list of the count of unique amino acid sequences per locus.\n\n";
 my @uniqueaa;
 
 # letting you know what's going to happen
@@ -85,7 +85,7 @@ foreach my $file (@files)
 	# counting number of unique amino acids
 	my $count;
 	foreach my $key ( sort keys %unique ) 
-	{ $count++ ;  print "I did this, count is $count    "; }			
+	{ $count++ ; }			
 	print UNIQUEAA $file . "," . $count . "\n";
 	
 	close NUCLEOTIDE; close AMINOACID;
