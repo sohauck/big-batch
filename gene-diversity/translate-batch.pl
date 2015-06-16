@@ -41,6 +41,11 @@ my $oldfolder = pop @splitdir;
 my $transdir = join("/", @splitdir) . "/translated/";
 mkdir $transdir;
 
+my $uniquefile = join("/", @splitdir) . "/unique-aa-seqs.txt";
+open(UNIQUEAA, '>', $uniquefile) or die "Cannot open $uniquefile\n";
+	print UNIQUEAA "For $transdir, a list of the count of unique amino acid sequences per locus.";
+my @uniqueaa;
+
 # letting you know what's going to happen
 print "Translated up to...";
 
@@ -49,9 +54,12 @@ foreach my $file (@files)
  	my $infile = $dir . "/" . $file; # original file from folder given in command line
  	my $outfile = $transdir . $file; # aligned file into translated folder, with same file name
  	
+ 	# empty hash to check for synonymous mutations 
+	my %unique = ();
 
 	open(NUCLEOTIDE, $infile) or die "Cannot open $infile\n";
 	open(AMINOACID, '>', $outfile) or die "Cannot open $outfile\n";
+
 
  	while ( my $line = <NUCLEOTIDE> )
 	{
@@ -63,9 +71,19 @@ foreach my $file (@files)
 		{
 			chomp $line;
 			my $peptide = translate($line, "1");
+			
+	    		if ( !exists($unique{$peptide})) #if allele doesn't exist in unique-hash
+    			{ $unique{$peptide} = 1; } #then add it with allele number as key, value as 1
+			
 			print AMINOACID $peptide, "\n";
 		}	
 	}
+	
+	# counting number of unique amino acids
+	my $count;
+	foreach my $key ( sort keys %unique ) 
+	{ $count++ ; }			
+	push @uniqueaa, ($file, $count);
 	
 	close NUCLEOTIDE; close AMINOACID;
 
@@ -73,7 +91,8 @@ foreach my $file (@files)
  	# So you have something to watch while it runs... 
  	print $file . ", ";
 }
- 
+
+close UNIQUEAA;
 
 
 #---------------------------------------------------------------
