@@ -21,6 +21,7 @@ sub Usage( ; $ );
 # Defines scalars needed from command line
 my $fTab;
 my $dFAS;
+my $dOut;
 
 # Get Command line options, exits if conditions don't look right
 if( scalar(@ARGV) < 1 ) { Usage("Not enough command line options"); exit; }
@@ -28,22 +29,27 @@ my $i = 0;
 my $arg_cnt = 0; 
 for ($i=0; $i<=$#ARGV; $i++)
 {
-	if($ARGV[$i] eq "-h")	       { Usage("You asked for help"); exit; }
-	if($ARGV[$i] eq "-table")         { $fTab = $ARGV[$i+1] || ''; $arg_cnt++; }
+	if($ARGV[$i] eq "-h")	          { Usage("You asked for help"); exit; }
+	if($ARGV[$i] eq "-in")            { $fTab = $ARGV[$i+1] || ''; $arg_cnt++; }
 	if($ARGV[$i] eq "-dfasta")        { $dFAS = $ARGV[$i+1] || ''; $arg_cnt++; }
+	if($ARGV[$i] eq "-out")           { $dOut = $ARGV[$i+1] || ''; $arg_cnt++; }
+
 }
 
 # Command line option checks
 if(! defined $fTab) { Usage("Missing Option: -table <FILE>"); exit; }
 if(! defined $dFAS) { Usage("Missing Option: -dfasta DIRECTORY"); exit; }
+if(! defined $dOut) { Usage("Missing Option: -out DIRECTORY"); exit; }
 
 # File checks
 if(! -e $fTab)   { Usage("Input file does not exist: $fTab"); exit; }
-if(! -e $dFAS)  { Usage("Output directory already exists: $dFAS"); exit; }
+if(! -e $dFAS)  { Usage("Input directory already exists: $dFAS"); exit; }
+if(  -e $dOut)  { Usage("Output directory already exists: $dOut"); exit; }
 
+mkdir $dOut;
 
 # Transposing:
-
+print "Transposing...";
 my @original = (); #where data will go in the beginning
 my @transposed = (); #where data is moved as its processed
 my $columncount = 0; my $rowcount = 0;
@@ -74,18 +80,20 @@ for my $row (@original)
 @transposed = splice (@transposed, 0, $rowcount); #removes empty rows if more isolates than loci
 
 # puts the transposed results somewhere sensible
-my @results = (); 
+my @newtable = (); 
 
 for my $new_row (@transposed) 
 {
-	my $result; 
+	my @result; 
 	for my $new_col (@{$new_row}) 
 	{
-		$result = $result . $new_col . ",";
+		push (@result, $new_col);
 	}
-	$result = $result . "\n"; 
-	push (@results, $result);
+	my $newline = join (",", @result);
+	push (@newtable, $newline);
 }
+
+print " complete!\n";
 
 
 # Copying only relevant loci
@@ -93,7 +101,7 @@ for my $new_row (@transposed)
 open(INFILE, $fTab) or die "Cannot open $fTab\n";
 
 
-foreach my $locusrow (@results)
+foreach my $locusrow (@newtable)
 {
 	chomp($locusrow);
 	my @row = split (',', $locusrow);
@@ -111,7 +119,7 @@ foreach my $locusrow (@results)
 	}
 
 	my $originalFAS = $dFAS."/".$locusname.".FAS";
-	my $reducedFAS = $dFAS."/reduced/".$locusname.".FAS";
+	my $reducedFAS = $dOut.$locusname.".FAS";
 
 	if ( open(FULLFASTA, $originalFAS) )
 	{
@@ -127,6 +135,7 @@ foreach my $locusrow (@results)
 					if ( exists($unique_alleles{$allelenumber}) )
 						{
 							print REDFASTA $line, "\n";
+							$unique_alleles{$allelenumber} = 0;
 							$save = 1;
 						}
 						elsif ( !exists($unique_alleles{$allelenumber}))
@@ -137,17 +146,26 @@ foreach my $locusrow (@results)
 				}
 				elsif ( $line =~ /^[A-Z]/ )
 				{
-					if ($save == 1) { print REDFASTA $line; }
+					if ($save == 1)    { print REDFASTA $line; }
 					elsif ($save == 0) { }
 				}	
 			}
 		}  
 		close(FULLFASTA);
 		close(REDFASTA);
+	
+		# check if all alleles were used
+		foreach my $key ( sort keys %unique_alleles ) 
+		{ 
+			if ( $unique_alleles{$key} == 1 && $key != 0 )
+			{ print "Did not find sequence for locus $locusname, allele $key.\n"; }
+		}			
 	}
+	
 	else { print "$locusname did not exist as a FASTA file.\n"; }	
-	print "$locusname, ";
-}
+	
+
+} # closes per-locus loop
 close(INFILE);
 
 
