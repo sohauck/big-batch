@@ -22,7 +22,7 @@ sub Usage( ; $ );
 my $fIn;
 my $dOut;
 
-if( scalar(@ARGV) < 1 ) { Usage("Not enough command line options"); exit; }
+if( scalar(@ARGV) < 2 ) { Usage("Not enough command line options"); exit; }
 my $i = 0; 
 my $arg_cnt = 0; 
 for ($i=0; $i<=$#ARGV; $i++)
