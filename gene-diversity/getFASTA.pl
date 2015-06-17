@@ -19,16 +19,27 @@ use LWP::Simple;
 sub Usage( ; $ );
 
 # Get Command line options, exits if conditions don't look right
+my $fIn;
+my $dOut;
+
 if( scalar(@ARGV) < 1 ) { Usage("Not enough command line options"); exit; }
-my $fIn = $ARGV[0];
+my $i = 0; 
+my $arg_cnt = 0; 
+for ($i=0; $i<=$#ARGV; $i++)
+{
+	if($ARGV[$i] eq "-h")	       { Usage("You asked for help"); exit; }
+	if($ARGV[$i] eq "-in")         { $fIn  = $ARGV[$i+1] || ''; $arg_cnt++; }
+	if($ARGV[$i] eq "-out")        { $dOut = $ARGV[$i+1] || ''; $arg_cnt++; }
+}
+
+print "Out is $dOut.\n";
 
 # Command line option checks
 if(! defined $fIn) { Usage("Missing Option: input file <FILE>"); exit; }
 if(! -e $fIn) { Usage("Input file does not exist: $fIn"); exit; }
 
-# Preparing for output
-my $dOut = $fIn . "-files";
-if(-e $dOut) { Usage("Output directory already exist: $dOut"); exit; }
+# Preparing for folder for output
+if( -e $dOut) { Usage("Output directory already exist: $dOut"); exit; }
 mkdir $dOut; 
 
 # Open infile, move to outfile directory
@@ -43,7 +54,6 @@ open(INFILE, $fIn) or die "Cannot open $fIn\n";
 		chomp $line; 
 		
 		my $url = "http://rest.pubmlst.org/db/".$database."/loci/".$line."/alleles_fasta";
-		print "URl is $url \n";
 		
 		my $file = $line.".FAS";
 		
@@ -71,9 +81,10 @@ Description:
 	  
 Usage:
 getFASTA.pl [ options ]
+ -in FILE with database in first line, loci in the rest
+ -out DIRECTORY file path including new folder name, for exported files to go into
 
-Results will be in folder with same name as file,
-with files within the folder being named after the locus.
+
 
 EOU
 
