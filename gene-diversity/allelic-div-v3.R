@@ -19,18 +19,18 @@ for (i in 1:ncol(GCtable) ) {
   temp.t <- as.data.frame(table(GCtable[,i]))
   allele.count <- c(allele.count, nrow(temp.t))
   div.index <- c(div.index, diversity(temp.t$Freq, "simpson"))
-  temp.t <- temp.t[temp.t$Freq > 1,]
-  allele.count2 <- c(allele.count2, nrow(temp.t))
-  div.index2 <- c(div.index2, diversity(temp.t$Freq, "simpson"))
+  #temp.t <- temp.t[temp.t$Freq > 1,]
+  #allele.count2 <- c(allele.count2, nrow(temp.t))
+  #div.index2 <- c(div.index2, diversity(temp.t$Freq, "simpson"))
 }
 
 df <- as.data.frame( cbind(colnames(GCtable), allele.count, allele.count2, div.index, div.index2))
 
 names(df)[1] <- "locus"
 df$allele.count <- as.numeric(levels(df$allele.count))[as.integer(df$allele.count)]
-df$allele.count2 <- as.numeric(levels(df$allele.count2))[as.integer(df$allele.count2)]
+#df$allele.count2 <- as.numeric(levels(df$allele.count2))[as.integer(df$allele.count2)]
 df$div.index <- as.numeric(levels(df$div.index))[df$div.index]
-df$div.index2 <- as.numeric(levels(df$div.index2))[df$div.index2]
+#df$div.index2 <- as.numeric(levels(df$div.index2))[df$div.index2]
 
 # bringing in more variables from lookup tables
 dfref <- read.csv('/Volumes/sofia/Mycobacterium/MTBC allelic diversity/ECCMID/Ref/id-name-cat-conv.csv')
@@ -45,9 +45,9 @@ dfref <- read.csv('/Volumes/sofia/Mycobacterium/MTBC allelic diversity/ECCMID/Da
 df <- merge(df,dfref,by="locus")
 dfref <- read.csv('/Users/user/Desktop/FASTA-exported/non-var-count-cs.txt')
 df <- merge(df,dfref,by="locus")
-dfref <- read.csv('/Users/user/Desktop/FASTA-exported/non-var-count-cs.txt')
+dfref <- read.csv('/Users/user/Desktop/FASTA-exported/trans-alignedvar-count.txt')
 df <- merge(df,dfref,by="locus")
-dfref <- read.csv('/Users/user/Desktop/FASTA-exported/non-var-count-cs.txt')
+dfref <- read.csv('/Users/user/Desktop/FASTA-exported/unique-aa-seqs.txt')
 df <- merge(df,dfref,by="locus")
 
 # setting up variables
@@ -55,7 +55,10 @@ df$allelic.div <- c( log10(  df$allele.count / df$length) )
 df$allelic.div2 <- c( log10(  df$allele.count2 / df$length) )
 df$div.diff <- c( (df$allele.count - (mean(df$allele.count / df$length) * df$length) ) / df$length )
 df$div.diff2 <- c( (df$allele.count2 - (mean(df$allele.count2 / df$length) * df$length) ) / df$length )
+
 df$pvarsites <- (df$length - df$non.var.sites) / df$length
+df$pvaraa <- ((df$length / 3)- df$non.var.aa) / (df$length / 3)
+df$psynonsyn <- df$allele.count / df$aacount
 
 # removing worst loci in terms of tagging (usually ones with seed problems)
 cutoff <- 5000
@@ -201,7 +204,7 @@ ggplot(df) +
 # by proportion of variable sites
 ggplot(df) +
   geom_boxplot(aes(x=category, y=pvarsites), alpha = 0, outlier.shape = " ") +
-  geom_point( aes(x=category, y=pvarsites, colour=allelic.div), size=5, alpha=.5, position = position_jitter(w=0.15, h=0)) +
+  geom_point( aes(x=category, y=pvarsites, colour=psynonsyn), size=5, alpha=.5, position = position_jitter(w=0.15, h=0)) +
   coord_flip() + theme_minimal() + 
   theme(axis.text.y=element_text(size=14), legend.position=c(.9, .9), plot.title = element_text(face="bold"), axis.title.x=element_text(vjust=-.5, size=14)) +
   geom_hline(yintercept=mean(df$pvarsites), size=1, colour="blue", linetype="dashed") +
