@@ -18,12 +18,9 @@ $| = 1;
 # Declares subroutines
 sub Usage( ; $ );
 
-# Defines options needed from command line
-
-
 # Get Command line options, exits if conditions don't look right
 if( scalar(@ARGV) < 2 ) { Usage("Not enough command line options; probably missing MAFFT arguments"); exit; }
-my $dir = shift(@ARGV);
+my $dir = shift(@ARGV); # directory where all the FASTA files to be aligned are (can be nuc. or aa) 
 my @mafftarg = @ARGV; # rest of @ARGV are arguments that will be passed directly to mafft
 print "MAFFT arguments are @mafftarg.\n";
 
@@ -36,7 +33,7 @@ opendir (ORIGDIR, $dir) or die "Cannot open directory: $!";
 	my @files = readdir ORIGDIR;
 	@files = grep(/^([A-Z]|[a-z]|[0-9])/,@files);
 	if ($#files < 1)
-	{ die "It looks like you have no FASTA files to align. If their file names don't begin with letters or numbers they are being removed.\n";}
+	{ die "It looks like you have no FASTA files to align. If their file names don't begin with letters or numbers they are being excluded.\n";}
 closedir ORIGDIR;
 
 # Loop that aligns all the files using MAFFT and puts them in new directory
@@ -48,7 +45,7 @@ my $alidir = join("/", @splitdir) . "/" . substr($oldfolder, 0, 5) . "-aligned/"
 mkdir $alidir;
 
 # letting you know what's going to happen
-print "Adding to MAFFT arguments: output in CLUSTAL format (for non-variable count), and quiet terminal output.\n";
+print "Adding to MAFFT arguments: output in CLUSTAL format (necessary for non-variable count), and quiet terminal output.\n";
 push @mafftarg, ("--clustalout", "--quiet");
 
 print "Aligned up to...";
@@ -62,7 +59,7 @@ foreach my $file (@files)
  	system ($command); # passes mafft command to terminal
  	
  	# So you have something to watch while it runs... 
- 	print "\r" . $file . ", ";
+ 	print "\r$file";
 }
  
 
