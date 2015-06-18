@@ -13,6 +13,7 @@
 
 use strict;
 use warnings;
+$| = 1;
 
 # Declares subroutines
 sub Usage( ; $ );
@@ -61,12 +62,12 @@ foreach my $file (@files)
  	system ($command); # passes mafft command to terminal
  	
  	# So you have something to watch while it runs... 
- 	print $file . ", ";
+ 	print "\r" . $file . ", ";
 }
  
 
-# Count of number of non-variable nucleotides per locus
-# essentially the number of askerisks per file
+# Count of number of non-variable sites per locus
+# essentially the number of asterisks per file
 
 my @results = ();
 
