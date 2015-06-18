@@ -28,6 +28,7 @@ print "MAFFT arguments are @mafftarg.\n";
 if(! defined $dir) { Usage("Missing Option: a directory that as the first argument"); exit; }
 if(! -e $dir)   { Usage("Input directory does not exist: $dir"); exit; }
 
+
 # get names of all the files in the directory
 opendir (ORIGDIR, $dir) or die "Cannot open directory: $!";
 	my @files = readdir ORIGDIR;
@@ -43,6 +44,7 @@ my @splitdir = split(/\//, $dir);
 my $oldfolder = pop @splitdir;
 my $alidir = join("/", @splitdir) . "/" . substr($oldfolder, 0, 5) . "-aligned/";
 mkdir $alidir;
+
 
 # letting you know what's going to happen
 print "Adding to MAFFT arguments: output in CLUSTAL format (necessary for non-variable count), and quiet terminal output.\n";
