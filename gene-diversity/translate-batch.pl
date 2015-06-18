@@ -17,8 +17,6 @@ use warnings;
 # Declares subroutines
 sub Usage( ; $ );
 
-# Defines options needed from command line
-
 
 # Get Command line options & file checks
 my $dir = shift(@ARGV);
