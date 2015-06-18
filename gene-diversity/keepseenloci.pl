@@ -20,9 +20,9 @@ $| = 1;
 sub Usage( ; $ );
 
 # Defines scalars needed from command line
-my $fTab;
-my $dFAS;
-my $dOut;
+my $fTab; # file with isolate/locus table where relevant loci are named
+my $dFAS; # directory where all the FASTA files for each locus are
+my $dOut; # directory where only the relevant parts of those FASTA files will be copied to
 
 # Get Command line options, exits if conditions don't look right
 if( scalar(@ARGV) < 1 ) { Usage("Not enough command line options"); exit; }
