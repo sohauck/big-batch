@@ -21,8 +21,8 @@ $| =1; # for dynamic output
 sub Usage( ; $ );
 
 # Get Command line options, exits if conditions don't look right
-my $fIn;
-my $dOut;
+my $fIn;  # file with the database name and loci names
+my $dOut; # directory where exported FASTA files will go
 
 if( scalar(@ARGV) < 2 ) { Usage("Not enough command line options"); exit; }
 my $i = 0; 
