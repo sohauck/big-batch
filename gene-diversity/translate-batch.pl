@@ -13,6 +13,7 @@
 
 use strict;
 use warnings;
+$| = 1;
 
 # Declares subroutines
 sub Usage( ; $ );
@@ -36,16 +37,18 @@ closedir ORIGDIR;
 # naming and making directory 
 my @splitdir = split(/\//, $dir);
 my $oldfolder = pop @splitdir;
-my $transdir = join("/", @splitdir) . "/translated/";
+my $transdir = join("/", @splitdir) . "/" . substr($oldfolder, 0, 5) . "-transla/";
+
 if( -e $transdir)   { Usage("Output directory already exists: $transdir"); exit; }
 mkdir $transdir;
 
-my $uniquefile = join("/", @splitdir) . "/unique-aa-seqs.txt";
+my $uniquefile = join("/", @splitdir) . "/count-aa.txt";
 if( -e $uniquefile)   { Usage("Output file already exists: $uniquefile"); exit; }
 
 open(UNIQUEAA, '>', $uniquefile) or die "Cannot open $uniquefile\n";
-	print UNIQUEAA "For $transdir, a list of the count of unique amino acid sequences per locus.\n\n";
+	print UNIQUEAA "locus,count-aa";
 my @uniqueaa;
+
 
 # letting you know what's going to happen
 print "Translated up to...";
@@ -80,17 +83,20 @@ foreach my $file (@files)
 		}	
 	}
 	
+	my @filearray = split (".", $file);
+	my $locusname = shift @filearray;
+
 	# counting number of unique amino acids
 	my $count;
 	foreach my $key ( sort keys %unique ) 
 	{ $count++ ; }			
-	print UNIQUEAA $file . "," . $count . "\n";
+	print UNIQUEAA $locusname . "," . $count . "\n";
 	
 	close NUCLEOTIDE; close AMINOACID;
 
  	
  	# So you have something to watch while it runs... 
- 	print $file . ", ";
+ 	print "\r$locusname";
 }
 
 close UNIQUEAA;
