@@ -175,7 +175,7 @@ foreach my $locusrow (@newtable)
 		}			
 	}
 	
-	else { print "$locusname did not exist as a FASTA file.\n"; }	
+	else { print "\n$locusname did not exist as a FASTA file.\n"; }	
 
 	print "\r$locusname";
 

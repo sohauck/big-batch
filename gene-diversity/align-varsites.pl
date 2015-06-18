@@ -48,7 +48,7 @@ mkdir $alidir;
 print "Adding to MAFFT arguments: output in CLUSTAL format (necessary for non-variable count), and quiet terminal output.\n";
 push @mafftarg, ("--clustalout", "--quiet");
 
-print "Aligned up to...";
+print "Aligned up to...\n";
 
 foreach my $file (@files)
 {
@@ -118,6 +118,7 @@ Then goes back over files and checks for number of non-variable loci per aligmen
 
 Input: 
 First argument is folder with FASTA files, all others are passed on to MAFFT.
+Recommend "--maxiterate 0 --retree 1" for fastest option.
 
 Output: 
 Folder with same name and number of files but named -aligned with aligned FASTA files, and 
