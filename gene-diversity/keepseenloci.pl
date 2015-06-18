@@ -43,14 +43,14 @@ if(! defined $dFAS) { Usage("Missing Option: -dfasta DIRECTORY"); exit; }
 if(! defined $dOut) { Usage("Missing Option: -out DIRECTORY"); exit; }
 
 # File checks
-if(! -e $fTab)   { Usage("Input file does not exist: $fTab"); exit; }
-if(! -e $dFAS)  { Usage("Input directory already exists: $dFAS"); exit; }
-if(  -e $dOut)  { Usage("Output directory already exists: $dOut"); exit; }
+if(! -e $fTab)		{ Usage("Input file does not exist: $fTab"); exit; }
+if(! -e $dFAS)		{ Usage("Input directory already exists: $dFAS"); exit; }
+if(  -e $dOut)		{ Usage("Output directory already exists: $dOut"); exit; }
 
 mkdir $dOut;
 
 # Transposing:
-print "Transposing...";
+print "\nTransposing...";
 my @original = (); #where data will go in the beginning
 my @transposed = (); #where data is moved as its processed
 my $columncount = 0; my $rowcount = 0;
@@ -132,7 +132,7 @@ foreach my $locusrow (@newtable)
 	}
 
 	my $originalFAS = $dFAS."/".$locusname.".FAS";
-	my $reducedFAS = $dOut.$locusname.".FAS";
+	my $reducedFAS = $dOut."/".$locusname.".FAS";
 
 	if ( open(FULLFASTA, $originalFAS) )
 	{
@@ -204,7 +204,7 @@ keepseenloci.pl [ options ]
 Results will be in folder with the FASTA files, in a subfolder called "reduced".
 Actually you need to create this folder (and leave it empty) before running this script...
 
--table: Table as csv with rows as loci.
+-in: Table as csv with rows as loci.
 -dfasta: Directory with fasta files where "locusname.FAS" is the file name, like BACT000001.FAS
 
 EOU
