@@ -15,6 +15,8 @@ use strict;
 use warnings;
 use LWP::Simple;
 
+$| =1; # for dynamic output
+
 # Declares subroutines
 sub Usage( ; $ );
 
@@ -32,8 +34,6 @@ for ($i=0; $i<=$#ARGV; $i++)
 	if($ARGV[$i] eq "-out")        { $dOut = $ARGV[$i+1] || ''; $arg_cnt++; }
 }
 
-print "Out is $dOut.\n";
-
 # Command line option checks
 if(! defined $fIn) { Usage("Missing Option: input file <FILE>"); exit; }
 if(! -e $fIn) { Usage("Input file does not exist: $fIn"); exit; }
@@ -41,6 +41,8 @@ if(! -e $fIn) { Usage("Input file does not exist: $fIn"); exit; }
 # Preparing for folder for output
 if( -e $dOut) { Usage("Output directory already exist: $dOut"); exit; }
 mkdir $dOut; 
+
+print "Extraction now up to...\n";
 
 # Open infile, move to outfile directory
 open(INFILE, $fIn) or die "Cannot open $fIn\n";
@@ -56,12 +58,13 @@ open(INFILE, $fIn) or die "Cannot open $fIn\n";
 		my $url = "http://rest.pubmlst.org/db/".$database."/loci/".$line."/alleles_fasta";
 		
 		my $file = $line.".FAS";
-		
 		getstore($url, $file);
+		
+		print "\r$line";
 	}
 close(INFILE);
 
-print "Finished! Results are in $dOut directory.\n";
+print "\nFinished! Results are in $dOut directory.\n";
 
 #---------------------------------------------------------------
 # Subroutines
