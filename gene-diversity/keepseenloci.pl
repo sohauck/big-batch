@@ -14,6 +14,7 @@
 
 use strict;
 use warnings;
+$| = 1;
 
 # Declares subroutines
 sub Usage( ; $ );
@@ -100,7 +101,7 @@ print " complete!\n";
 
 open(INFILE, $fTab) or die "Cannot open $fTab\n";
 
-
+print "Processed up to...";
 foreach my $locusrow (@newtable)
 {
 	chomp($locusrow);
@@ -114,6 +115,18 @@ foreach my $locusrow (@newtable)
 	# makes a list of the unique alleles, including sorting them numerically
 	foreach my $allele (@alleleArray) #go through each allele in locus
     	{
+    		# in case of paralogous loci
+    		if ( $allele =~ /;/ )
+    		{
+    			my @paralogous = split (';', $allele);
+    			
+    			foreach my $paraallele (@paralogous) #go through each allele in locus
+			{
+				if ( !exists($unique_alleles{$paraallele})) #if allele doesn't exist in unique-hash
+    				{ $unique_alleles{$paraallele} = 1; } #then add it with allele number as key, value as 1
+			}
+    		}
+    		
     		if ( !exists($unique_alleles{$allele})) #if allele doesn't exist in unique-hash
     		{ $unique_alleles{$allele} = 1; } #then add it with allele number as key, value as 1
 	}
@@ -163,11 +176,13 @@ foreach my $locusrow (@newtable)
 	}
 	
 	else { print "$locusname did not exist as a FASTA file.\n"; }	
-	
+
+	print "\r$locusname";
 
 } # closes per-locus loop
 close(INFILE);
 
+print "\n";
 
 #---------------------------------------------------------------
 # Subroutines
