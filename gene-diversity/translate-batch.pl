@@ -119,18 +119,17 @@ sub Usage( ; $ )
 
 	print << 'EOU';
 
-align-varsites.pl
-follows from keenseenloci.pl
+translate-batch.pl
 
 Description:
 	  
 Usage:
-align-varsites.pl [ options ]
+translate-batch.pl [ options ]
 
-Takes FASTA files from a folder, aligns them with MAFFT then saves results.
-Then goes back over files and checks for number of non-variable loci per aligment.
+Takes FASTA files from a folder, translates them into amino acid sequences.
+Also reports number of unique amino acid sequences (useful as comparing to unique nucleotide sequences).
 
-First argument is folder with FASTA files, everything else gets passed on to MAFFT.
+First argument is folder with FASTA files, everything else gets ignore.
 
 EOU
 
