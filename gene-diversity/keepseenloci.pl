@@ -34,7 +34,6 @@ for ($i=0; $i<=$#ARGV; $i++)
 	if($ARGV[$i] eq "-in")            { $fTab = $ARGV[$i+1] || ''; $arg_cnt++; }
 	if($ARGV[$i] eq "-dfasta")        { $dFAS = $ARGV[$i+1] || ''; $arg_cnt++; }
 	if($ARGV[$i] eq "-out")           { $dOut = $ARGV[$i+1] || ''; $arg_cnt++; }
-
 }
 
 # Command line option checks
@@ -99,6 +98,13 @@ print " complete!\n";
 
 # Copying only relevant loci
 
+# naming and making count file
+my $uniquefile = join("/", @splitdir) . "/" . $oldfolder. "-count-nuc.txt";
+if( -e $uniquefile)   { Usage("Output file already exists: $uniquefile"); exit; }
+open(UNIQUENUC, '>', $uniquefile) or die "Cannot open $uniquefile\n";
+	print UNIQUENUC "locus,count-nuc\n";
+
+
 open(INFILE, $fTab) or die "Cannot open $fTab\n";
 
 print "Processed up to...";
@@ -139,12 +145,14 @@ foreach my $locusrow (@newtable)
 		open(REDFASTA, '>', $reducedFAS) or die "Cannot open $reducedFAS\n";
 		{       
 			my $save = 1;
+			my $count;
 			while ( my $line = <FULLFASTA> )
 			{
 				if ( $line =~ /^>/ )
 				{ 
+					$count ++;
 					chomp $line; 
-					my ($junk, $allelenumber) = split ('_', $line);
+					my ($locusname, $allelenumber) = split ('_', $line);
 					if ( exists($unique_alleles{$allelenumber}) )
 						{
 							print REDFASTA $line, "\n";
@@ -163,6 +171,9 @@ foreach my $locusrow (@newtable)
 					elsif ($save == 0) { }
 				}	
 			}
+			 
+			print UNIQUENUC $locusname . "," . $count . "\n";
+
 		}  
 		close(FULLFASTA);
 		close(REDFASTA);
@@ -181,7 +192,7 @@ foreach my $locusrow (@newtable)
 
 } # closes per-locus loop
 close(INFILE);
-
+close(UNIQUE
 print "\n";
 
 #---------------------------------------------------------------
