@@ -99,7 +99,7 @@ print " complete!\n";
 # Copying only relevant loci
 
 # naming and making count file
-my $uniquefile = join("/", @splitdir) . "/" . $oldfolder. "-count-nuc.txt";
+my $uniquefile = $dOut . "-count-nuc.txt";
 if( -e $uniquefile)   { Usage("Output file already exists: $uniquefile"); exit; }
 open(UNIQUENUC, '>', $uniquefile) or die "Cannot open $uniquefile\n";
 	print UNIQUENUC "locus,count-nuc\n";
@@ -192,7 +192,7 @@ foreach my $locusrow (@newtable)
 
 } # closes per-locus loop
 close(INFILE);
-close(UNIQUE
+close(UNIQUENUC);
 print "\n";
 
 #---------------------------------------------------------------
