@@ -42,7 +42,9 @@ closedir ORIGDIR;
 # naming and making directory 
 my @splitdir = split(/\//, $dir);
 my $oldfolder = pop @splitdir;
-my $alidir = join("/", @splitdir) . "/" . substr($oldfolder, 0, 5) . "-aligned/";
+my $alidir = join("/", @splitdir) . "/" . $oldfolder . "-a/";
+if( -e $alidir)   { Usage("Output directory already exists: $alidir"); exit; }
+
 mkdir $alidir;
 
 

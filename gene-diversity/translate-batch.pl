@@ -37,21 +37,21 @@ closedir ORIGDIR;
 # naming and making directory 
 my @splitdir = split(/\//, $dir);
 my $oldfolder = pop @splitdir;
-my $transdir = join("/", @splitdir) . "/" . substr($oldfolder, 0, 5) . "-transla/";
+my $transdir = join("/", @splitdir) . "/" . $oldfolder . "-t/";
 
 if( -e $transdir)   { Usage("Output directory already exists: $transdir"); exit; }
-mkdir $transdir;
 
-my $uniquefile = join("/", @splitdir) . "/count-aa.txt";
+my $uniquefile = join("/", @splitdir) . "/" . $oldfolder. "-count-aa.txt";
 if( -e $uniquefile)   { Usage("Output file already exists: $uniquefile"); exit; }
 
 open(UNIQUEAA, '>', $uniquefile) or die "Cannot open $uniquefile\n";
-	print UNIQUEAA "locus,count-aa";
-my @uniqueaa;
+	print UNIQUEAA "locus,count-aa\n";
+
+mkdir $transdir;
 
 
 # letting you know what's going to happen
-print "Translated up to...";
+print "Translated up to...\n";
 
 foreach my $file (@files)
 {
@@ -76,28 +76,35 @@ foreach my $file (@files)
 			chomp $line;
 			my $peptide = translate($line, "1");
 			
+			# for later checking the count of unique amino acids
 	    		if ( !exists($unique{$peptide})) #if allele doesn't exist in unique-hash
     			{ $unique{$peptide} = 1;} #then add it with allele number as key, value as 1
 			
 			print AMINOACID $peptide, "\n";
+			
+			
 		}	
 	}
 	
-	my @filearray = split (".", $file);
-	my $locusname = shift @filearray;
-
-	# counting number of unique amino acids
-	my $count;
-	foreach my $key ( sort keys %unique ) 
-	{ $count++ ; }			
-	print UNIQUEAA $locusname . "," . $count . "\n";
-	
-	close NUCLEOTIDE; close AMINOACID;
-
+ 	my @filearray = split (/\./, $file);
+ 	my $locusname = shift @filearray;
+ 	print "\r$locusname";
+ 
+ 	# counting number of unique amino acids
+ 	my $count;
+ 	foreach my $key ( sort keys %unique ) 
+ 	{ $count++ ; }			
+ 	print UNIQUEAA $locusname . "," . $count . "\n";
+ 	 
+ 	
+ 	close NUCLEOTIDE; close AMINOACID;
+ 
  	
  	# So you have something to watch while it runs... 
- 	print "\r$locusname";
+ 	# print "\r$locusname";
 }
+
+print "\nComplete! Results are at $transdir.\n";
 
 close UNIQUEAA;
 
