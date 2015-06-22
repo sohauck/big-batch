@@ -154,7 +154,7 @@ foreach my $locusrow (@newtable)
 					my ($locusname, $allelenumber) = split ('_', $line);
 					if ( exists($unique_alleles{$allelenumber}) )
 						{
-							print REDFASTA $line, "\n";
+							print REDFASTA "\n", $line, "\n";
 							$unique_alleles{$allelenumber} = 0;
 							$save = 1;
 							$count ++;
@@ -167,6 +167,7 @@ foreach my $locusrow (@newtable)
 				}
 				elsif ( $line =~ /^[A-Z]/ )
 				{
+					chomp $line; 
 					if ($save == 1)    { print REDFASTA $line; }
 					elsif ($save == 0) { }
 				}	
