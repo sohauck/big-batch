@@ -85,15 +85,16 @@ foreach my $file (@files)
 		    	$totalcount = $totalcount + $count; 
 		    }
 	close ALIGNED;
-	
-	push @results, ($file . "\t" . $totalcount);
+	 
+	my ($locusname, $extension) = split (/\./, $file);
+	push @results, ($locusname . "," . $totalcount);
 }
 
 # Then write results to a new file 
-my $resultfile = substr($alidir, 0, -1) . "var-count.txt";
+my $resultfile = substr($alidir, 0, -1) . "-count-nvs.txt";
 
 open(RESULT, '>', $resultfile) or die "Cannot open $resultfile\n";
-	print RESULT "locus,varsites";
+	print RESULT "locus,varsites\n";
 
 	foreach my $result (@results)
 	{ print RESULT $result , "\n"; } 
