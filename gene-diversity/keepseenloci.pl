@@ -149,7 +149,7 @@ foreach my $locusrow (@newtable)
 			while ( my $line = <FULLFASTA> )
 			{
 				if ( $line =~ /^>/ )
-				{ 
+				{
 					chomp $line; 
 					my ($locusname, $allelenumber) = split ('_', $line);
 					if ( exists($unique_alleles{$allelenumber}) )
@@ -186,9 +186,20 @@ foreach my $locusrow (@newtable)
 		}			
 	}
 	
-	else { print "\n$locusname did not exist as a FASTA file.\n"; }	
+	else { # if there isn't a FASTA file to copy over
+		print "\n$locusname did not exist as a FASTA file. Alleles in table were..."; 
+		my $count2 = 0; 
+		foreach my $key ( sort keys %unique_alleles ) 
+		{ 
+			if ( $count2 < 5 )
+			{ print " $key"; $count2++; }
+			else
+			{ print " etc."; last; }
+		 }
+		print "\n";
+	}	
 
-	print "\r$locusname";
+	print "\r\r$locusname";
 
 } # closes per-locus loop
 close(INFILE);
@@ -212,11 +223,11 @@ Description:
 Usage:
 keepseenloci.pl [ options ]
 
-Results will be in folder with the FASTA files, in a subfolder called "reduced".
-Actually you need to create this folder (and leave it empty) before running this script...
+Copies only the alleles in FASTA files that appear in a locus/isolate table. 
 
 -in: Table as csv with rows as loci.
--dfasta: Directory with fasta files where "locusname.FAS" is the file name, like BACT000001.FAS
+-dfasta: Directory with FASTA files where "locusname.FAS" is the file name, like BACT000001.FAS
+-out: Directory where filtered FASTA files will be saved.
 
 EOU
 
