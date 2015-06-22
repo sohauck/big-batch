@@ -14,6 +14,7 @@
 
 use strict;
 use warnings;
+$| = 1;
 
 # Declares subroutines
 sub Usage( ; $ );
@@ -185,14 +186,14 @@ foreach my $locusrow (@newtable)
 		}			
 	}
 	
-	else { # if there isn't a FASTA file to copy over
-		print "\n$locusname did not exist as a FASTA file. Alleles in table were..."; 
+	else { # if there isn't a FASTA file to copy over, give warning plus example alleles (might be just "0" which would explain missing file)
+		print "$locusname did not exist as a FASTA file. Alleles in table were..."; 
 		my $count2 = 0; 
 		foreach my $key ( sort keys %unique_alleles ) 
 		{ 
 			if ( $count2 < 5 )
 			{ print " $key"; $count2++; }
-			else
+			else # if already printed 5 allele numbers, just leave it
 			{ print " etc."; last; }
 		 }
 		print "\n";
