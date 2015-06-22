@@ -81,8 +81,6 @@ foreach my $file (@files)
     			{ $unique{$peptide} = 1;} #then add it with allele number as key, value as 1
 			
 			print AMINOACID $peptide, "\n";
-			
-			
 		}	
 	}
 	
