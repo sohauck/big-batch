@@ -14,7 +14,6 @@
 
 use strict;
 use warnings;
-$| = 1;
 
 # Declares subroutines
 sub Usage( ; $ );
@@ -107,7 +106,7 @@ open(UNIQUENUC, '>', $uniquefile) or die "Cannot open $uniquefile\n";
 
 open(INFILE, $fTab) or die "Cannot open $fTab\n";
 
-print "Processed up to...";
+print "Now filter-copying...";
 foreach my $locusrow (@newtable)
 {
 	chomp($locusrow);
@@ -199,12 +198,12 @@ foreach my $locusrow (@newtable)
 		print "\n";
 	}	
 
-	print "\r\r$locusname";
-
 } # closes per-locus loop
+
+
 close(INFILE);
 close(UNIQUENUC);
-print "\n";
+print "All done!\n";
 
 #---------------------------------------------------------------
 # Subroutines
