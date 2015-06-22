@@ -43,7 +43,7 @@ if(! defined $dOut) { Usage("Missing Option: -out DIRECTORY"); exit; }
 
 # File checks
 if(! -e $fTab)		{ Usage("Input file does not exist: $fTab"); exit; }
-if(! -e $dFAS)		{ Usage("Input directory already exists: $dFAS"); exit; }
+if(! -e $dFAS)		{ Usage("Input directory doesn't exist: $dFAS"); exit; }
 if(  -e $dOut)		{ Usage("Output directory already exists: $dOut"); exit; }
 
 mkdir $dOut;

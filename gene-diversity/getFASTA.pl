@@ -39,7 +39,7 @@ if(! defined $fIn) { Usage("Missing Option: input file <FILE>"); exit; }
 if(! -e $fIn) { Usage("Input file does not exist: $fIn"); exit; }
 
 # Preparing for folder for output
-if( -e $dOut) { Usage("Output directory already exist: $dOut"); exit; }
+if( -e $dOut) { Usage("Output directory already exists: $dOut"); exit; }
 mkdir $dOut; 
 
 print "Extraction now up to...\n";
