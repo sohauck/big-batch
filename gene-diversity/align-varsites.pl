@@ -19,7 +19,7 @@ $| = 1;
 sub Usage( ; $ );
 
 # Get Command line options, exits if conditions don't look right
-if( scalar(@ARGV) < 2 ) { Usage("Not enough command line options; probably missing MAFFT arguments"); exit; }
+if( scalar(@ARGV) < 1 ) { Usage("Not enough command line options; need at least the input folder"); exit; }
 my $dir = shift(@ARGV); # directory where all the FASTA files to be aligned are (can be nuc. or aa) 
 my @mafftarg = @ARGV; # rest of @ARGV are arguments that will be passed directly to mafft
 print "MAFFT arguments are @mafftarg.\n";
@@ -93,7 +93,7 @@ foreach my $file (@files)
 my $resultfile = substr($alidir, 0, -1) . "var-count.txt";
 
 open(RESULT, '>', $resultfile) or die "Cannot open $resultfile\n";
-	print RESULT "Count of number of variable sites per locus in $alidir files.\n\n";
+	print RESULT "locus,varsites";
 
 	foreach my $result (@results)
 	{ print RESULT $result , "\n"; } 
