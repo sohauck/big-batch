@@ -22,7 +22,6 @@ sub Usage( ; $ );
 if( scalar(@ARGV) < 1 ) { Usage("Not enough command line options; need at least the input folder"); exit; }
 my $dir = shift(@ARGV); # directory where all the FASTA files to be aligned are (can be nuc. or aa) 
 my @mafftarg = @ARGV; # rest of @ARGV are arguments that will be passed directly to mafft
-print "MAFFT arguments are @mafftarg.\n";
 
 # Command line option & file checks
 if(! defined $dir) { Usage("Missing Option: a directory that as the first argument"); exit; }
@@ -49,7 +48,7 @@ mkdir $alidir;
 
 
 # letting you know what's going to happen
-print "Adding to MAFFT arguments: output in CLUSTAL format (necessary for non-variable count), and quiet terminal output.\n";
+print "Adding to MAFFT arguments: --clustalout --quiet for output in CLUSTAL format (necessary for non-variable count), and no STDOUT reports.\n";
 push @mafftarg, ("--clustalout", "--quiet");
 
 print "Aligned up to...\n";
