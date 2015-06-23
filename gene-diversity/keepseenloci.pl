@@ -179,7 +179,7 @@ foreach my $locusrow (@newtable)
 				elsif ( $line =~ /^[A-Z]/ ) # if line contains a sequence
 				{
 					chomp $line; 
-					if ($save == 1)    { print REDFASTA $line; } 
+					if ($save == 1)    { print REDFASTA $line; }
 					elsif ($save == 0) { }
 				}	
 			}
@@ -190,10 +190,10 @@ foreach my $locusrow (@newtable)
 		close(FULLFASTA);
 		close(REDFASTA);
 	
-		# check if all alleles were used
+		# check if all alleles seen in table were copied 
 		foreach my $key ( sort keys %unique_alleles ) 
 		{ 
-			if ( $unique_alleles{$key} == 1 && $key != 0 )
+			if ( $unique_alleles{$key} >= $dup && $key != 0 ) # if frequency is still above cut-off (copied ones are reset to 0) and isn't the missing allele, 0
 			{ print "Did not find sequence for locus $locusname, allele $key.\n"; }
 		}			
 	}
@@ -246,4 +246,3 @@ EOU
 print "Quit because: $message\n";
 print "ARGV was " . join (", ", @ARGV) . "\n";
 }
-
