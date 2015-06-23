@@ -125,11 +125,7 @@ foreach my $locusrow (@newtable)
 	foreach my $allele (@alleleArray) #go through each allele in locus
     	{
     		# if just one value
-    		if ( !exists($unique_alleles{$allele})) #if allele doesn't exist in unique-hash
-    		{ $unique_alleles{$allele} = 1; } #then add it with allele number as key, value as 1
-    		
-    		if (  exists($unique_alleles{$allele})) #if allele is already in the hash
-    		{ $unique_alleles{$allele}++; } #increase the frequency count
+    		$unique_alleles{$allele}++; #increase the frequency count
     		
     		# in case of paralogous loci
     		if ( $allele =~ /;/ )
@@ -137,12 +133,8 @@ foreach my $locusrow (@newtable)
     			my @paralogous = split (';', $allele);
     			
     			foreach my $paraallele (@paralogous) #go through each allele in locus
-			{
-				if ( !exists($unique_alleles{$paraallele})) #if allele doesn't exist in unique-hash
-    				{ $unique_alleles{$paraallele} = 1; } #then add it with allele number as key, value as 1
-    				if (  exists($unique_alleles{$allele})) #if allele is already in the hash
-    				{ $unique_alleles{$allele}++; } #increase the frequency count
-			}
+			{ $unique_alleles{$allele}++; } #increase the frequency count
+			
     		}
 
 	}
