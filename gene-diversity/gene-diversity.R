@@ -5,32 +5,37 @@ library(corrplot)
 
 # open table of isolates by loci, filled with allele numbers (no paralogous ";" accepted atm)
 # no paralogous, 0 in for missing
-GCtable <- read.csv('/Volumes/sofia/Mycobacterium/MTBC allelic diversity/ECCMID/Data sets/full.csv')
-GCtable <- data.frame(GCtable[,-1], row.names=GCtable[,1])
-GCtable[] <- lapply(GCtable, factor)
+# GCtable <- read.csv('/Volumes/sofia/Mycobacterium/MTBC allelic diversity/ECCMID/Data sets/full.csv')
+# GCtable <- data.frame(GCtable[,-1], row.names=GCtable[,1])
+# GCtable[] <- lapply(GCtable, factor)
 
 # creating table of allele counts
-allele.count <- vector(mode="numeric", length=0)
-allele.count2 <- vector(mode="numeric", length=0)
-div.index <- vector(mode="numeric", length=0)
-div.index2 <- vector(mode="numeric", length=0)
+# allele.count <- vector(mode="numeric", length=0)
+# allele.count2 <- vector(mode="numeric", length=0)
+# div.index <- vector(mode="numeric", length=0)
+# div.index2 <- vector(mode="numeric", length=0)
 
-for (i in 1:ncol(GCtable) ) { 
-  temp.t <- as.data.frame(table(GCtable[,i]))
-  allele.count <- c(allele.count, nrow(temp.t))
-  div.index <- c(div.index, diversity(temp.t$Freq, "simpson"))
+#for (i in 1:ncol(GCtable) ) { 
+#  temp.t <- as.data.frame(table(GCtable[,i]))
+#  allele.count <- c(allele.count, nrow(temp.t))
+#  div.index <- c(div.index, diversity(temp.t$Freq, "simpson"))
   #temp.t <- temp.t[temp.t$Freq > 1,]
   #allele.count2 <- c(allele.count2, nrow(temp.t))
   #div.index2 <- c(div.index2, diversity(temp.t$Freq, "simpson"))
-}
+# }
 
-df <- as.data.frame( cbind(colnames(GCtable), allele.count, allele.count2, div.index, div.index2))
+# df <- as.data.frame( cbind(colnames(GCtable), allele.count, allele.count2, div.index, div.index2))
 
-names(df)[1] <- "locus"
-df$allele.count <- as.numeric(levels(df$allele.count))[as.integer(df$allele.count)]
-#df$allele.count2 <- as.numeric(levels(df$allele.count2))[as.integer(df$allele.count2)]
-df$div.index <- as.numeric(levels(df$div.index))[df$div.index]
-#df$div.index2 <- as.numeric(levels(df$div.index2))[df$div.index2]
+# df$allele.count <- as.numeric(levels(df$allele.count))[as.integer(df$allele.count)]
+# df$allele.count2 <- as.numeric(levels(df$allele.count2))[as.integer(df$allele.count2)]
+# df$div.index <- as.numeric(levels(df$div.index))[df$div.index]
+# df$div.index2 <- as.numeric(levels(df$div.index2))[df$div.index2]
+
+#dfref <- read.csv('/Volumes/sofia/Mycobacterium/MTBC allelic diversity/ECCMID/Ref/sharing.txt')
+#df <- merge(df,dfref,by="locus")
+
+in.file <- file.choose()
+df <- read.csv(in.file)
 
 # bringing in more variables from lookup tables
 dfref <- read.csv('/Volumes/sofia/Mycobacterium/MTBC allelic diversity/ECCMID/Ref/id-name-cat-conv.csv')
@@ -39,35 +44,31 @@ df <- merge(df,dfref,by="locus")
 dfref <- read.csv('/Volumes/sofia/Mycobacterium/MTBC allelic diversity/ECCMID/Ref/locus-length.csv')
 names(dfref)[2] <- "length"
 df <- merge(df,dfref,by="locus")
-dfref <- read.csv('/Volumes/sofia/Mycobacterium/MTBC allelic diversity/ECCMID/Ref/sharing.txt')
-df <- merge(df,dfref,by="locus")
 dfref <- read.csv('/Volumes/sofia/Mycobacterium/MTBC allelic diversity/ECCMID/Data sets/full-missing.txt')
 df <- merge(df,dfref,by="locus")
-dfref <- read.csv('/Users/user/Desktop/FASTA-exported/non-var-count-cs.txt')
+
+in.file <- file.choose()
+dfref <- read.csv(in.file)
 df <- merge(df,dfref,by="locus")
-dfref <- read.csv('/Users/user/Desktop/FASTA-exported/trans-alignedvar-count.txt')
-df <- merge(df,dfref,by="locus")
-dfref <- read.csv('/Users/user/Desktop/FASTA-exported/unique-aa-seqs.txt')
-df <- merge(df,dfref,by="locus")
+
 
 # setting up variables
-df$allelic.div <- c( log10(  df$allele.count / df$length) )
-df$allelic.div2 <- c( log10(  df$allele.count2 / df$length) )
-df$div.diff <- c( (df$allele.count - (mean(df$allele.count / df$length) * df$length) ) / df$length )
-df$div.diff2 <- c( (df$allele.count2 - (mean(df$allele.count2 / df$length) * df$length) ) / df$length )
+df$allelic.div <- c( log10(  df$count.nuc / df$length) )
+#df$allelic.div2 <- c( log10(  df$allele.count2 / df$length) )
+df$div.diff <- c( (df$count.nuc - (mean(df$count.nuc / df$length) * df$length) ) / df$length )
+#df$div.diff2 <- c( (df$allele.count2 - (mean(df$allele.count2 / df$length) * df$length) ) / df$length )
 
-df$pvarsites <- (df$length - df$non.var.sites) / df$length
-df$pvaraa <- ((df$length / 3)- df$non.var.aa) / (df$length / 3)
-df$psynonsyn <- df$allele.count / df$aacount
-df$psynnon <- df$aacount / df$allele.count
-
+df$pvarsites.nuc <- (df$length - df$varsites.x) / df$length
+df$pvarsites.aa <- ((df$length / 3)- df$varsites.x) / (df$length / 3)
+df$psynnon <- df$count.aa / df$count.nuc
+df$ratio.varsites <- df$pvarsites.aa / df$pvarsites.nuc
 
 # removing worst loci in terms of tagging (usually ones with seed problems)
 cutoff <- 5000
 df <- df[df$missing < cutoff,]
 
 # correlation plots for all numeric variables
-df2 <- subset(df, select = -c(locus,name,category,drug.resistance,sharing1,sharing2) )
+df2 <- subset(df, select = -c(locus,name,category,drug.resistance) )
 M <- cor(df2)
 corrplot(M, method = "circle")
 
@@ -148,9 +149,9 @@ multiplot(d1,d2)
 
 
 
-p1 <- ggplot(df, aes(x=allelic.div)) + geom_histogram(alpha=.7, binwidth = 0.01)
+p1 <- ggplot(df, aes(x=)) + geom_histogram(alpha=.7, binwidth = 0.01)
 p2 <- ggplot(df, aes(x=div.diff)) + geom_histogram(alpha=.7, binwidth = 0.001)
-p3 <- ggplot(df, aes(x=pvarsites)) + geom_histogram(alpha=.7, binwidth = 0.001)
+p3 <- ggplot(df, aes(x=ratio.varsites)) + geom_histogram(alpha=.7, binwidth = 0.001)
 p4 <- ggplot(df, aes(x=psynnon)) + geom_histogram(alpha=.7, binwidth = 0.005)
 
 multiplot(p1,p2,p3,p4)
@@ -207,27 +208,16 @@ ggplot(df) +
 
 # by proportion of variable sites
 ggplot(df) +
-  geom_boxplot(aes(x=category, y=pvarsites), alpha = 0, outlier.shape = " ") +
-  geom_point( aes(x=category, y=pvarsites, colour=psynnon), size=5, alpha=.5, position = position_jitter(w=0.15, h=0)) +
+  geom_boxplot(aes(x=category, y=pvarsites.nuc), alpha = 0, outlier.shape = " ") +
+  geom_point( aes(x=category, y=pvarsites.nuc, colour=psynnon), size=5, alpha=.5, position = position_jitter(w=0.15, h=0)) +
   coord_flip() + theme_minimal() + 
   theme(axis.text.y=element_text(size=14), legend.position=c(.9, .9), plot.title = element_text(face="bold"), axis.title.x=element_text(vjust=-.5, size=14)) +
   geom_hline(yintercept=mean(df$pvarsites), size=1, colour="blue", linetype="dashed") +
   ggtitle("Genetic diversity of loci, split by locus functional category and coloured by gene length") +
   xlab("")  + ylab("Difference in alleles/nucleotide from expected based on mean") +
-  geom_text( data=subset(df, pvarsites > 0.1 | pvarsites < 0.005), aes(x=category, y=pvarsites, label=name), size=4, alpha=.8, vjust=-1.5, position = position_jitter(width=0.3)) 
+  geom_text( data=subset(df, pvarsites.nuc > 0.1 | pvarsites.nuc < 0.005), aes(x=category, y=pvarsites.nuc, label=name), size=4, alpha=.8, vjust=-1.5, position = position_jitter(width=0.3)) 
 
-# by ratio of unique nucleotide to unique amino acid sequences
-ggplot(df) +
-  geom_boxplot(aes(x=category, y=psynonsyn), alpha = 0, outlier.shape = " ") +
-  geom_point( aes(x=category, y=psynonsyn, colour=psynonsyn), size=5, alpha=.5, position = position_jitter(w=0.15, h=0)) +
-  coord_flip() + theme_minimal() + 
-  theme(axis.text.y=element_text(size=14), legend.position=c(.9, .9), plot.title = element_text(face="bold"), axis.title.x=element_text(vjust=-.5, size=14)) +
-  geom_hline(yintercept=mean(df$psynonsyn), size=1, colour="blue", linetype="dashed") +
-  ggtitle("Genetic diversity of loci, split by locus functional category and coloured by gene length") +
-  xlab("")  + ylab("Ratio of unique alleles in nucleotide to amino acid format") +
-  geom_text( data=subset(df, psynonsyn > 3 | psynonsyn < 1.2), aes(x=category, y=psynonsyn, label=name), size=4, alpha=.8, vjust=-1.5, position = position_jitter(width=0.3)) 
-
-# inverse of above
+# by ratio of unique amino acid sequences to unique nucleotide 
 ggplot(df) +
   geom_boxplot(aes(x=category, y=psynnon), alpha = 0, outlier.shape = " ") +
   geom_point( aes(x=category, y=psynnon, colour=drug.resistance), size=5, alpha=.5, position = position_jitter(w=0.15, h=0)) +
@@ -237,6 +227,18 @@ ggplot(df) +
   ggtitle("Genetic diversity of loci, split by locus functional category and coloured by gene length") +
   xlab("")  + ylab("Ratio of unique alleles in nucleotide to amino acid format") +
   geom_text( data=subset(df, psynnon > .8 | psynnon < .4), aes(x=category, y=psynnon, label=name), size=4, alpha=.8, vjust=-1.5, position = position_jitter(width=0.3)) 
+
+
+ggplot(df) +
+  geom_boxplot(aes(x=category, y=ratio.varsites), alpha = 0, outlier.shape = " ") +
+  geom_point( aes(x=category, y=ratio.varsites, colour=drug.resistance), size=5, alpha=.5, position = position_jitter(w=0.15, h=0)) +
+  coord_flip() + theme_minimal() + 
+  theme(axis.text.y=element_text(size=14), legend.position=c(.9, .9), plot.title = element_text(face="bold"), axis.title.x=element_text(vjust=-.5, size=14)) +
+  geom_hline(yintercept=mean(df$ratio.varsites), size=1, colour="blue", linetype="dashed") +
+  ggtitle("Genetic diversity of loci, split by locus functional category and coloured by gene length") +
+  xlab("")  + ylab("Ratio of unique alleles in nucleotide to amino acid format") +
+  geom_text( data=subset(df, ratio.varsites > .8 | ratio.varsites < .4), aes(x=category, y=ratio.varsites, label=name), size=4, alpha=.8, vjust=-1.5, position = position_jitter(width=0.3)) 
+
 
 
 
