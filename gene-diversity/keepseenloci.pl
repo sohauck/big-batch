@@ -148,7 +148,7 @@ foreach my $locusrow (@newtable)
 		open(REDFASTA, '>', $reducedFAS) or die "Cannot open $reducedFAS\n";
 		{       
 			my $save = 1; # whether to copy the sequence following a >identifier line
-			my $count; # counts how many alleles are copied over, for count-nuc file
+			my $count = 0; # counts how many alleles are copied over, for count-nuc file
 			while ( my $line = <FULLFASTA> )
 			{
 				if ( $line =~ /^>/ ) # if line is >identifier
@@ -156,18 +156,15 @@ foreach my $locusrow (@newtable)
 					chomp $line; 
 					my ($locusname, $allelenumber) = split ('_', $line);
 					
-					if ( exists($unique_alleles{$allelenumber}) )
+					if ( exists($unique_alleles{$allelenumber}) ) # exists in hash of wanted loci
 					{
-						if ($unique_alleles{$allelenumber} >= $dup )
+						if ($unique_alleles{$allelenumber} >= $dup ) # and in frequence at or above cutoff
 						{
 							print REDFASTA "\n", $line, "\n";
 							$save = 1;
 							$count ++;
 							$unique_alleles{$allelenumber} = 0; # set frequency to 0 as check that was copied
-
 						}
-					
-
 					}
 					else 
 					{ $save = 0; } # knows to skip the sequences lines that follow unwanted identifiers
