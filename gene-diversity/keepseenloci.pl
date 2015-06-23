@@ -18,6 +18,7 @@ $| = 1;
 
 # Declares subroutines
 sub Usage( ; $ );
+sub FreqCount();
 
 # Defines scalars needed from command line
 my $fTab; # file with isolate/locus table where relevant loci are named
@@ -160,15 +161,18 @@ foreach my $locusrow (@newtable)
 						if ($unique_alleles{$allelenumber} >= $dup )
 						{
 							print REDFASTA "\n", $line, "\n";
-							$unique_alleles{$allelenumber} = 0;
 							$save = 1;
 							$count ++;
+							$unique_alleles{$allelenumber} = 0; # set frequency to 0 as check that was copied
+
 						}
+					
+
 					}
 					else 
-					{ $save = 0; } # knows to skip the lines with sequences for now
+					{ $save = 0; } # knows to skip the sequences lines that follow unwanted identifiers
 				}
-				elsif ( $line =~ /^[A-Z]/ ) # if line contains a sequence
+				elsif ( $line =~ /^[A-Z]/ ) # if is a sequence line, copy only is "save" is turned on by wanted identifier
 				{
 					chomp $line; 
 					if ($save == 1)    { print REDFASTA $line; }
