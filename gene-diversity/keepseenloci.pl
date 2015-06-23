@@ -32,9 +32,9 @@ my $arg_cnt = 0;
 for ($i=0; $i<=$#ARGV; $i++)
 {
 	if($ARGV[$i] eq "-h")	          { Usage("You asked for help"); exit; }
-	if($ARGV[$i] eq "-in")            { $fTab = $ARGV[$i+1] || ''; $arg_cnt++; }
-	if($ARGV[$i] eq "-dfasta")        { $dFAS = $ARGV[$i+1] || ''; $arg_cnt++; }
-	if($ARGV[$i] eq "-out")           { $dOut = $ARGV[$i+1] || ''; $arg_cnt++; }
+	if($ARGV[$i] eq "-intab")            { $fTab = $ARGV[$i+1] || ''; $arg_cnt++; }
+	if($ARGV[$i] eq "-din")        { $dFAS = $ARGV[$i+1] || ''; $arg_cnt++; }
+	if($ARGV[$i] eq "-dout")           { $dOut = $ARGV[$i+1] || ''; $arg_cnt++; }
 	if($ARGV[$i] eq "-dup")           { $dup = $ARGV[$i+1] || ''; $arg_cnt++; }
 
 }
@@ -110,7 +110,7 @@ open(UNIQUENUC, '>', $uniquefile) or die "Cannot open $uniquefile\n";
 
 open(INFILE, $fTab) or die "Cannot open $fTab\n";
 
-print "Now filter-copying...";
+print "Now filter-copying...\n";
 foreach my $locusrow (@newtable)
 {
 	chomp($locusrow);
@@ -124,6 +124,13 @@ foreach my $locusrow (@newtable)
 	# makes a list of the unique alleles, including sorting them numerically
 	foreach my $allele (@alleleArray) #go through each allele in locus
     	{
+    		# if just one value
+    		if ( !exists($unique_alleles{$allele})) #if allele doesn't exist in unique-hash
+    		{ $unique_alleles{$allele} = 1; } #then add it with allele number as key, value as 1
+    		
+    		if (  exists($unique_alleles{$allele})) #if allele is already in the hash
+    		{ $unique_alleles{$allele}++; } #increase the frequency count
+    		
     		# in case of paralogous loci
     		if ( $allele =~ /;/ )
     		{
@@ -133,14 +140,10 @@ foreach my $locusrow (@newtable)
 			{
 				if ( !exists($unique_alleles{$paraallele})) #if allele doesn't exist in unique-hash
     				{ $unique_alleles{$paraallele} = 1; } #then add it with allele number as key, value as 1
+    				if (  exists($unique_alleles{$allele})) #if allele is already in the hash
+    				{ $unique_alleles{$allele}++; } #increase the frequency count
 			}
     		}
-    		
-    		if ( !exists($unique_alleles{$allele})) #if allele doesn't exist in unique-hash
-    		{ $unique_alleles{$allele} = 1; } #then add it with allele number as key, value as 1
-    		
-    		if (  exists($unique_alleles{$allele})) #if allele is already in the hash
-    		{ $unique_alleles{$allele}++; } #increase the frequency count
 
 	}
 
@@ -151,31 +154,32 @@ foreach my $locusrow (@newtable)
 	{
 		open(REDFASTA, '>', $reducedFAS) or die "Cannot open $reducedFAS\n";
 		{       
-			my $save = 1;
-			my $count;
+			my $save = 1; # whether to copy the sequence following a >identifier line
+			my $count; # counts how many alleles are copied over, for count-nuc file
 			while ( my $line = <FULLFASTA> )
 			{
-				if ( $line =~ /^>/ )
+				if ( $line =~ /^>/ ) # if line is >identifier
 				{
 					chomp $line; 
 					my ($locusname, $allelenumber) = split ('_', $line);
+					
 					if ( exists($unique_alleles{$allelenumber}) )
+					{
+						if ($unique_alleles{$allelenumber} >= $dup )
 						{
 							print REDFASTA "\n", $line, "\n";
 							$unique_alleles{$allelenumber} = 0;
 							$save = 1;
 							$count ++;
 						}
-						elsif ( !exists($unique_alleles{$allelenumber}))
-						{
-							# print nothing
-							$save = 0;
-						}
+					}
+					else 
+					{ $save = 0; } # knows to skip the lines with sequences for now
 				}
-				elsif ( $line =~ /^[A-Z]/ )
+				elsif ( $line =~ /^[A-Z]/ ) # if line contains a sequence
 				{
 					chomp $line; 
-					if ($save == 1)    { print REDFASTA $line; }
+					if ($save == 1)    { print REDFASTA $line; } 
 					elsif ($save == 0) { }
 				}	
 			}
@@ -233,10 +237,10 @@ keepseenloci.pl [ options ]
 
 Copies only the alleles in FASTA files that appear in a locus/isolate table. 
 
--in: Table as csv with rows as loci.
--dfasta: Directory with FASTA files where "locusname.FAS" is the file name, like BACT000001.FAS
--out: Directory where filtered FASTA files will be saved.
-
+-intab: Table as csv with rows as loci.
+-din: Directory with FASTA files where "locusname.FAS" is the file name, like BACT000001.FAS
+-dout: Directory where filtered FASTA files will be saved.
+-dup: Can give 
 EOU
 
 print "Quit because: $message\n";
