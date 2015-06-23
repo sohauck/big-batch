@@ -50,7 +50,7 @@ if(! -e $fTab)		{ Usage("Input file does not exist: $fTab"); exit; }
 if(! -e $dFAS)		{ Usage("Input directory doesn't exist: $dFAS"); exit; }
 if(  -e $dOut)		{ Usage("Output directory already exists: $dOut"); exit; }
 
-mkdir $dOut;
+mkdir $dOut; # creates output directory
 
 # Transposing:
 print "\nTransposing...";
@@ -108,11 +108,9 @@ if( -e $uniquefile)   { Usage("Output file already exists: $uniquefile"); exit; 
 open(UNIQUENUC, '>', $uniquefile) or die "Cannot open $uniquefile\n";
 	print UNIQUENUC "locus,count-nuc\n";
 
-
-open(INFILE, $fTab) or die "Cannot open $fTab\n";
-
 print "Now filter-copying...\n";
-foreach my $locusrow (@newtable)
+
+foreach my $locusrow (@newtable) # loop per locus
 {
 	chomp($locusrow);
 	my @row = split (',', $locusrow);
@@ -131,10 +129,14 @@ foreach my $locusrow (@newtable)
     		# in case of paralogous loci
     		if ( $allele =~ /;/ )
     		{
+    			print "Found a semicolon!! Whole thing is \"$allele\"\n";
+    			
     			my @paralogous = split (';', $allele);
     			
+    			print "Then after split is @paralogous";
+    			
     			foreach my $paraallele (@paralogous) #go through each allele in locus
-			{ $unique_alleles{$allele}++; } #increase the frequency count
+			{ $unique_alleles{$paraallele}++; } #increase the frequency count
 			
     		}
 
@@ -207,7 +209,6 @@ foreach my $locusrow (@newtable)
 } # closes per-locus loop
 
 
-close(INFILE);
 close(UNIQUENUC);
 print "All done!\n";
 
@@ -233,7 +234,7 @@ Copies only the alleles in FASTA files that appear in a locus/isolate table.
 -intab: Table as csv with rows as loci.
 -din: Directory with FASTA files where "locusname.FAS" is the file name, like BACT000001.FAS
 -dout: Directory where filtered FASTA files will be saved.
--dup: Can give 
+-dup: Can set a mininum frequence for allele appearance (default is 1) 
 EOU
 
 print "Quit because: $message\n";
