@@ -23,6 +23,7 @@ sub Usage( ; $ );
 my $fTab; # file with isolate/locus table where relevant loci are named
 my $dFAS; # directory where all the FASTA files for each locus are
 my $dOut; # directory where only the relevant parts of those FASTA files will be copied to
+my $dup = 1; #  turned to the smallest number of duplicates necessary for locus to be considered, default is 1
 
 # Get Command line options, exits if conditions don't look right
 if( scalar(@ARGV) < 1 ) { Usage("Not enough command line options"); exit; }
@@ -34,6 +35,8 @@ for ($i=0; $i<=$#ARGV; $i++)
 	if($ARGV[$i] eq "-in")            { $fTab = $ARGV[$i+1] || ''; $arg_cnt++; }
 	if($ARGV[$i] eq "-dfasta")        { $dFAS = $ARGV[$i+1] || ''; $arg_cnt++; }
 	if($ARGV[$i] eq "-out")           { $dOut = $ARGV[$i+1] || ''; $arg_cnt++; }
+	if($ARGV[$i] eq "-dup")           { $dup = $ARGV[$i+1] || ''; $arg_cnt++; }
+
 }
 
 # Command line option checks
@@ -135,6 +138,10 @@ foreach my $locusrow (@newtable)
     		
     		if ( !exists($unique_alleles{$allele})) #if allele doesn't exist in unique-hash
     		{ $unique_alleles{$allele} = 1; } #then add it with allele number as key, value as 1
+    		
+    		if (  exists($unique_alleles{$allele})) #if allele is already in the hash
+    		{ $unique_alleles{$allele}++; } #increase the frequency count
+
 	}
 
 	my $originalFAS = $dFAS."/".$locusname.".FAS";
