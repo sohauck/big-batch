@@ -83,24 +83,26 @@ foreach my $file (@files)
  	foreach my $key ( sort keys %unique ) # goes through hash
  	{ 	
  		$count++;
- 		push (@lengths, length($key));
+ 		push (@lengths, (3 * length($key) ) );
  	}
 
 	if ( $count == 0 ) # if no alleles for that locus, have an escape route
 	{ 
 		print UNIQUEAA  $locusname .",0,0,0,0\n"; 
-		last; close NUCLEOTIDE; close AMINOACID;
+		
+		close NUCLEOTIDE; close AMINOACID;
 	}
+	else 
+	{
+		use List::Util qw( min max sum );
+		my $min = min @lengths;
+		my $max = max @lengths;
+		my $avg = (sum @lengths) / $count;
 	
- 	use List::Util qw( min max sum );
-	my $min = min @lengths;
-	my $max = max @lengths;
-	my $avg = (sum @lengths) / $count;
- 	
- 	print UNIQUEAA  $locusname .",". $count .",". $min .",". $max .",". $avg . "\n";
- 	
- 	close NUCLEOTIDE; close AMINOACID;
- 
+		print UNIQUEAA  $locusname .",". $count .",". $min .",". $max .",". $avg . "\n";
+	
+		close NUCLEOTIDE; close AMINOACID;
+ 	}
  	
  	#So you have something to watch while it runs... 
  	print "\r$locusname";
