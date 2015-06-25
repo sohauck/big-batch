@@ -4,27 +4,20 @@
 # PROGRAM: keepseenloci.pl
 # AUTHOR:  Sofia Hauck
 # CREATED: 09.06.2015
-# UPDATED: ----------
-# VERSION: v1.00
-#--------------------------------------------------------
-# VERSION HISTORY
-# v1.00 (09.06.2015) created
 #--------------------------------------------------------
 # transposing adapted from http://stackoverflow.com/questions/3249508/transpose-in-perl
 
 use strict;
 use warnings;
-use diagnostics;
 $| = 1;
 
 # Declares subroutines
 sub Usage( ; $ );
-sub FreqCount();
 
 # Defines scalars needed from command line
-my $fTab; # file with isolate/locus table where relevant loci are named
-my $dFAS; # directory where all the FASTA files for each locus are
-my $dOut; # directory where only the relevant parts of those FASTA files will be copied to
+my $fTab;    # file with isolate/locus table where relevant loci are named
+my $dFAS;    # directory where all the FASTA files for each locus are
+my $dOut;    # directory where only the relevant parts of those FASTA files will be copied to
 my $dup = 1; #  turned to the smallest number of duplicates necessary for locus to be considered, default is 1
 
 # Get Command line options, exits if conditions don't look right
@@ -34,24 +27,31 @@ my $arg_cnt = 0;
 for ($i=0; $i<=$#ARGV; $i++)
 {
 	if($ARGV[$i] eq "-h")	          { Usage("You asked for help"); exit; }
-	if($ARGV[$i] eq "-tin")            { $fTab = $ARGV[$i+1] || ''; $arg_cnt++; }
-	if($ARGV[$i] eq "-din")        { $dFAS = $ARGV[$i+1] || ''; $arg_cnt++; }
-	if($ARGV[$i] eq "-dout")           { $dOut = $ARGV[$i+1] || ''; $arg_cnt++; }
+	if($ARGV[$i] eq "-tin")           { $fTab = $ARGV[$i+1] || ''; $arg_cnt++; }
+	if($ARGV[$i] eq "-din")           { $dFAS = $ARGV[$i+1] || ''; $arg_cnt++; }
+	if($ARGV[$i] eq "-dout")          { $dOut = $ARGV[$i+1] || ''; $arg_cnt++; }
 	if($ARGV[$i] eq "-dup")           { $dup = $ARGV[$i+1] || ''; $arg_cnt++; }
 
 }
 
-# Command line option checks
-if(! defined $fTab) { Usage("Missing Option: -table <FILE>"); exit; }
-if(! defined $dFAS) { Usage("Missing Option: -dfasta DIRECTORY"); exit; }
-if(! defined $dOut) { Usage("Missing Option: -out DIRECTORY"); exit; }
+# Command line option checks & File checks
+if(! defined $fTab)  { Usage("Missing Option: -table <FILE>"); exit; }
+if(! defined $dFAS)  { Usage("Missing Option: -dfasta DIRECTORY"); exit; }
+if(! defined $dOut)  { Usage("Missing Option: -out DIRECTORY"); exit; }
 
-# File checks
-if(! -e $fTab)		{ Usage("Input file does not exist: $fTab"); exit; }
-if(! -e $dFAS)		{ Usage("Input directory doesn't exist: $dFAS"); exit; }
-if(  -e $dOut)		{ Usage("Output directory already exists: $dOut"); exit; }
+if(! -e $fTab)  { Usage("Input file does not exist: $fTab"); exit; }
+if(! -e $dFAS)  { Usage("Input directory doesn't exist: $dFAS"); exit; }
+if(  -e $dOut)  { Usage("Output directory already exists: $dOut"); exit; }
 
-mkdir $dOut; # creates output directory
+# Makes output directory and prepared output count file, including header
+mkdir $dOut;
+my $uniquefile = $dOut . "-count-nuc.txt";
+
+if( -e $uniquefile)  { Usage("Output file already exists: $uniquefile"); exit; }
+
+open(UNIQUENUC, '>', $uniquefile) or die "Cannot open $uniquefile\n";
+	print UNIQUENUC "locus,count-nuc\n";
+
 
 # Transposing:
 print "\nTransposing...";
@@ -63,13 +63,13 @@ my $columncount = 0; my $rowcount = 0;
 open(INFILE, $fTab) or die "Cannot open $fTab\n";
 	while ( my $line = <INFILE> )		
 	{
-        chomp($line); $line =~ s/\r\n?|\n//g; #just in case, removes all other types of line break
-        
-        my @row = split (',', $line);
+		chomp($line); $line =~ s/\r\n?|\n//g; #just in case, removes all other types of line break
+	
+		my @row = split (',', $line); # works if comma-separated file
 
-        $rowcount = @row;
-        $columncount ++;
-        push ( @original, [ @row ] );
+		$rowcount = @row;
+		$columncount ++;
+		push ( @original, [ @row ] );
 	} 
 close(INFILE);
 
@@ -83,10 +83,10 @@ for my $row (@original)
 }
 @transposed = splice (@transposed, 0, $rowcount); #removes empty rows if more isolates than loci
 
-# puts the transposed results into an array of array
-my @newtable = (); 
+# puts the transposed results into an array of arrays
+my @newtable = ();
 
-for my $new_row (@transposed) 
+for my $new_row (@transposed)
 {
 	my @result;
 	my $missing = 0;
@@ -95,34 +95,28 @@ for my $new_row (@transposed)
 		if ( $new_col eq "" ) # if empty cells for missing allele
 		{ 
 			$missing++;
-			push (@result, "0"); 
-		} # write as "0" for further steps
+			push (@result, "0"); # write as "0", creates less confusion with undefined or empty variables
+		}
 		else
 		{ push (@result, $new_col); }
 	}
-	push (@newtable, \@result);
+	push (@newtable, \@result); # puts reference to this array into array of array
 }
 
-print " complete!\n";
+print " complete!\n"; # Transposing is done
+
 
 # Copying only relevant loci
-
-# naming and making count file
-my $uniquefile = $dOut . "-count-nuc.txt";
-if( -e $uniquefile)   { Usage("Output file already exists: $uniquefile"); exit; }
-open(UNIQUENUC, '>', $uniquefile) or die "Cannot open $uniquefile\n";
-	print UNIQUENUC "locus,count-nuc\n";
-
 print "Now filter-copying...\n";
 
 foreach my $locusrow (@newtable) # loop per locus
 {
-	# empty hash to find unique values, split line into elements of array, take out locus name
+	# empty hash to find unique values, set locus name
 	my %unique_alleles = ();
 		
 	my $locusname = shift(@{$locusrow});
 	
-	# makes a list of the unique alleles, including sorting them numerically
+	# populates that hash with unique allele numbers as keys and their number of appearances as values
 	foreach my $allele (@{$locusrow}) #go through each allele in locus
     	{
     		if ( $allele =~ /;/ ) # in case of paralogous loci
