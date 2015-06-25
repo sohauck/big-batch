@@ -71,32 +71,39 @@ foreach my $file (@files)
     			{ $unique{$peptide} = 1; } #then add it with allele number as key, value as 1
 			
 			print AMINOACID $peptide, "\n";
-			push (@lengths, length($peptide));
 		}	
 	}
 	
  	my ($locusname, $extension) = split (/\./, $file);
- 	print "\r$locusname"; # this gives the STDOUT the name of the last file to be processed
  
  	# counting number of unique amino acids and measuring the length of the locus
- 	my $count; 
+ 	my $count = 0; 
+ 	my @lengths;
  	
  	foreach my $key ( sort keys %unique ) # goes through hash
- 	{ $count++; }
+ 	{ 	
+ 		$count++;
+ 		push (@lengths, length($key));
+ 	}
 
+	if ( $count == 0 ) # if no alleles for that locus, have an escape route
+	{ 
+		print UNIQUEAA  $locusname .",0,0,0,0\n"; 
+		last; close NUCLEOTIDE; close AMINOACID;
+	}
+	
  	use List::Util qw( min max sum );
 	my $min = min @lengths;
 	my $max = max @lengths;
-	my $avg = sum @lengths / ($#lengths + 1);
+	my $avg = (sum @lengths) / $count;
  	
- 	print UNIQUEAA  $locusname .",". $count .",". $min .",". $max .",". $avg ."\n";
- 	 
+ 	print UNIQUEAA  $locusname .",". $count .",". $min .",". $max .",". $avg . "\n";
  	
  	close NUCLEOTIDE; close AMINOACID;
  
  	
- 	# So you have something to watch while it runs... 
- 	# print "\r$locusname";
+ 	#So you have something to watch while it runs... 
+ 	print "\r$locusname";
 }
 
 print "\nComplete! Results are at $transdir.\n";
