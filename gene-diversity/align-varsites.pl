@@ -49,7 +49,7 @@ mkdir $alidir;
 
 # letting you know what's going to happen
 print "Adding to MAFFT arguments: --clustalout --quiet for output in CLUSTAL format (necessary for non-variable count), and no STDOUT reports.\n";
-push @mafftarg, ("--clustalout", "--quiet");
+push @mafftarg, ("--clustalout","--quiet");
 
 print "Aligned up to...\n";
 
