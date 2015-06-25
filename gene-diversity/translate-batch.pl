@@ -42,6 +42,7 @@ closedir ORIGDIR;
 
 # Loop that aligns translates all the files and puts them in new directory
 print "Translated up to...\n";
+my @lengths;
 
 foreach my $file (@files)
 {
@@ -70,22 +71,19 @@ foreach my $file (@files)
     			{ $unique{$peptide} = 1; } #then add it with allele number as key, value as 1
 			
 			print AMINOACID $peptide, "\n";
+			push (@lengths, length($peptide));
 		}	
 	}
 	
- 	my @filearray = split (/\./, $file);
- 	my $locusname = shift @filearray;
- 	print "\r$locusname";
+ 	my ($locusname, $extension) = split (/\./, $file);
+ 	print "\r$locusname"; # this gives the STDOUT the name of the last file to be processed
  
- 	# counting number of unique amino acids
- 	my $count;
- 	my @lengths;
+ 	# counting number of unique amino acids and measuring the length of the locus
+ 	my $count; 
  	
- 	foreach my $key ( sort keys %unique ) 
- 	{ 	$count++;
- 		push (@lengths, length($key));
- 	}
- 	
+ 	foreach my $key ( sort keys %unique ) # goes through hash
+ 	{ $count++; }
+
  	use List::Util qw( min max sum );
 	my $min = min @lengths;
 	my $max = max @lengths;
