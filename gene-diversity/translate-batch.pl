@@ -45,7 +45,7 @@ my $uniquefile = join("/", @splitdir) . "/" . $oldfolder. "-count-aa.txt";
 if( -e $uniquefile)   { Usage("Output file already exists: $uniquefile"); exit; }
 
 open(UNIQUEAA, '>', $uniquefile) or die "Cannot open $uniquefile\n";
-	print UNIQUEAA "locus,count-aa\n";
+	print UNIQUEAA "locus,count-aa,min-length,max-length,avg-length\n";
 
 mkdir $transdir;
 
@@ -78,7 +78,7 @@ foreach my $file (@files)
 			
 			# for later checking the count of unique amino acids
 	    		if ( !exists($unique{$peptide})) #if allele doesn't exist in unique-hash
-    			{ $unique{$peptide} = 1;} #then add it with allele number as key, value as 1
+    			{ $unique{$peptide} = 1; } #then add it with allele number as key, value as 1
 			
 			print AMINOACID $peptide, "\n";
 		}	
@@ -90,9 +90,19 @@ foreach my $file (@files)
  
  	# counting number of unique amino acids
  	my $count;
+ 	my @lengths;
+ 	
  	foreach my $key ( sort keys %unique ) 
- 	{ $count++ ; }			
- 	print UNIQUEAA $locusname . "," . $count . "\n";
+ 	{ 	$count++;
+ 		push (@lengths, length($key));
+ 	}
+ 	
+ 	use List::Util qw( min max sum );
+	my $min = min @lengths;
+	my $max = max @lengths;
+	my $avg = sum @lengths / ($#lengths + 1);
+ 	
+ 	print UNIQUEAA  $locusname .",". $count .",". $min .",". $max .",". $avg ."\n";
  	 
  	
  	close NUCLEOTIDE; close AMINOACID;
