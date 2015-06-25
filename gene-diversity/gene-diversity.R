@@ -3,33 +3,6 @@ library(grid)
 library(vegan)
 library(corrplot)
 
-# open table of isolates by loci, filled with allele numbers (no paralogous ";" accepted atm)
-# no paralogous, 0 in for missing
-# GCtable <- read.csv('/Volumes/sofia/Mycobacterium/MTBC allelic diversity/ECCMID/Data sets/full.csv')
-# GCtable <- data.frame(GCtable[,-1], row.names=GCtable[,1])
-# GCtable[] <- lapply(GCtable, factor)
-
-# creating table of allele counts
-# allele.count <- vector(mode="numeric", length=0)
-# allele.count2 <- vector(mode="numeric", length=0)
-# div.index <- vector(mode="numeric", length=0)
-# div.index2 <- vector(mode="numeric", length=0)
-
-#for (i in 1:ncol(GCtable) ) { 
-#  temp.t <- as.data.frame(table(GCtable[,i]))
-#  allele.count <- c(allele.count, nrow(temp.t))
-#  div.index <- c(div.index, diversity(temp.t$Freq, "simpson"))
-  #temp.t <- temp.t[temp.t$Freq > 1,]
-  #allele.count2 <- c(allele.count2, nrow(temp.t))
-  #div.index2 <- c(div.index2, diversity(temp.t$Freq, "simpson"))
-# }
-
-# df <- as.data.frame( cbind(colnames(GCtable), allele.count, allele.count2, div.index, div.index2))
-
-# df$allele.count <- as.numeric(levels(df$allele.count))[as.integer(df$allele.count)]
-# df$allele.count2 <- as.numeric(levels(df$allele.count2))[as.integer(df$allele.count2)]
-# df$div.index <- as.numeric(levels(df$div.index))[df$div.index]
-# df$div.index2 <- as.numeric(levels(df$div.index2))[df$div.index2]
 
 #dfref <- read.csv('/Volumes/sofia/Mycobacterium/MTBC allelic diversity/ECCMID/Ref/sharing.txt')
 #df <- merge(df,dfref,by="locus")
