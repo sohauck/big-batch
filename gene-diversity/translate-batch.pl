@@ -4,11 +4,6 @@
 # PROGRAM: translate-batch.pl
 # AUTHOR:  Sofia Hauck
 # CREATED: 15.06.2015
-# UPDATED: ----------
-# VERSION: v1.00
-#--------------------------------------------------------
-# VERSION HISTORY
-# v1.00 (15.06.2015) created
 #--------------------------------------------------------
 
 use strict;
@@ -18,39 +13,34 @@ $| = 1;
 # Declares subroutines
 sub Usage( ; $ );
 
-
-# Get Command line options & file checks
+# Get command line options & file checks, including creating output directory and output count file
 my $dir = shift(@ARGV);
-if(! defined $dir) { Usage("Missing Option: a directory that as the first argument"); exit; }
-if(! -e $dir)   { Usage("Input directory does not exist: $dir"); exit; }
+if(! defined $dir) { Usage("Missing Option: a directory as the first argument"); exit; }
+if(! -e $dir)      { Usage("Input directory does not exist: $dir"); exit; }
+
+my @splitdir =   split(/\//, $dir);
+my $oldfolder =  pop @splitdir;
+my $transdir =   join("/", @splitdir) . "/" . $oldfolder . "-t/"; 
+my $uniquefile = join("/", @splitdir) . "/" . $oldfolder. "-count-aa.txt";
+
+if( -e $transdir)     { Usage("Output directory already exists: $transdir"); exit; }
+if( -e $uniquefile)   { Usage("Output file already exists: $uniquefile"); exit; }
+
+mkdir $transdir;
+open(UNIQUEAA, '>', $uniquefile) or die "Cannot open $uniquefile\n"; # setting up header of output count file 
+	print UNIQUEAA "locus,count-aa,min-length,max-length,avg-length\n";
+
 
 # Get names of all the files in the directory
 opendir (ORIGDIR, $dir) or die "Cannot open directory: $!";
 	my @files = readdir ORIGDIR;
 	@files = grep(/^([A-Z]|[a-z]|[0-9])/,@files);
 	if ($#files < 1)
-	{ die "It looks like you have no FASTA files to align. If their file names don't begin with letters or numbers they are being removed.\n";}
+	{ die "It looks like you have no FASTA files to align. If their file names don't begin with letters or numbers they are not being included.\n";}
 closedir ORIGDIR;
 
+
 # Loop that aligns translates all the files and puts them in new directory
-
-# naming and making directory 
-my @splitdir = split(/\//, $dir);
-my $oldfolder = pop @splitdir;
-my $transdir = join("/", @splitdir) . "/" . $oldfolder . "-t/";
-
-if( -e $transdir)   { Usage("Output directory already exists: $transdir"); exit; }
-
-my $uniquefile = join("/", @splitdir) . "/" . $oldfolder. "-count-aa.txt";
-if( -e $uniquefile)   { Usage("Output file already exists: $uniquefile"); exit; }
-
-open(UNIQUEAA, '>', $uniquefile) or die "Cannot open $uniquefile\n";
-	print UNIQUEAA "locus,count-aa,min-length,max-length,avg-length\n";
-
-mkdir $transdir;
-
-
-# letting you know what's going to happen
 print "Translated up to...\n";
 
 foreach my $file (@files)
@@ -58,8 +48,7 @@ foreach my $file (@files)
  	my $infile = $dir . "/" . $file; # original file from folder given in command line
  	my $outfile = $transdir . $file; # aligned file into translated folder, with same file name
  	
- 	# empty hash to check for synonymous mutations 
-	my %unique = ();
+	my %unique = (); # empty hash to check for synonymous mutations 
 
 	open(NUCLEOTIDE, $infile) or die "Cannot open $infile\n";
 	open(AMINOACID, '>', $outfile) or die "Cannot open $outfile\n";
