@@ -156,9 +156,9 @@ foreach my $locusrow (@newtable) # loop per locus
 							$count ++;
 							$unique_alleles{$allelenumber} = 0; # set frequency to 0 as check that was copied
 						}
+						else 
+						{ $save = 0; } # knows to skip the sequences lines that follow unwanted identifiers
 					}
-					else 
-					{ $save = 0; } # knows to skip the sequences lines that follow unwanted identifiers
 				}
 				elsif ( $line =~ /^[A-Z]/ ) # if is a sequence line, copy only is "save" is turned on by wanted identifier
 				{
