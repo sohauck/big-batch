@@ -14,6 +14,7 @@
 
 use strict;
 use warnings;
+use diagnostics;
 $| = 1;
 
 # Declares subroutines
@@ -33,7 +34,7 @@ my $arg_cnt = 0;
 for ($i=0; $i<=$#ARGV; $i++)
 {
 	if($ARGV[$i] eq "-h")	          { Usage("You asked for help"); exit; }
-	if($ARGV[$i] eq "-intab")            { $fTab = $ARGV[$i+1] || ''; $arg_cnt++; }
+	if($ARGV[$i] eq "-tin")            { $fTab = $ARGV[$i+1] || ''; $arg_cnt++; }
 	if($ARGV[$i] eq "-din")        { $dFAS = $ARGV[$i+1] || ''; $arg_cnt++; }
 	if($ARGV[$i] eq "-dout")           { $dOut = $ARGV[$i+1] || ''; $arg_cnt++; }
 	if($ARGV[$i] eq "-dup")           { $dup = $ARGV[$i+1] || ''; $arg_cnt++; }
@@ -72,8 +73,7 @@ open(INFILE, $fTab) or die "Cannot open $fTab\n";
 	} 
 close(INFILE);
 
-if ( $columncount == 1 )
-{ print "You only have one column so your csv is probably not in Unix (LF) format.\n"; }
+if ( $columncount == 1 ) { print "You only have one column so your csv is probably not in Unix (LF) format.\n"; }
 
 # actually does the transposition
 for my $row (@original)
@@ -83,22 +83,27 @@ for my $row (@original)
 }
 @transposed = splice (@transposed, 0, $rowcount); #removes empty rows if more isolates than loci
 
-# puts the transposed results somewhere sensible
+# puts the transposed results into an array of array
 my @newtable = (); 
 
 for my $new_row (@transposed) 
 {
-	my @result; 
+	my @result;
+	my $missing = 0;
 	for my $new_col (@{$new_row}) 
-	{
-		push (@result, $new_col);
+	{ 
+		if ( $new_col eq "" ) # if empty cells for missing allele
+		{ 
+			$missing++;
+			push (@result, "0"); 
+		} # write as "0" for further steps
+		else
+		{ push (@result, $new_col); }
 	}
-	my $newline = join (",", @result);
-	push (@newtable, $newline);
+	push (@newtable, \@result);
 }
 
 print " complete!\n";
-
 
 # Copying only relevant loci
 
@@ -112,34 +117,24 @@ print "Now filter-copying...\n";
 
 foreach my $locusrow (@newtable) # loop per locus
 {
-	chomp($locusrow);
-	my @row = split (',', $locusrow);
-
 	# empty hash to find unique values, split line into elements of array, take out locus name
 	my %unique_alleles = ();
-	my @alleleArray = split (',', $locusrow);
-	my $locusname = shift(@alleleArray);
+		
+	my $locusname = shift(@{$locusrow});
 	
 	# makes a list of the unique alleles, including sorting them numerically
-	foreach my $allele (@alleleArray) #go through each allele in locus
+	foreach my $allele (@{$locusrow}) #go through each allele in locus
     	{
-    		# if just one value
-    		$unique_alleles{$allele}++; #increase the frequency count
-    		
-    		# in case of paralogous loci
-    		if ( $allele =~ /;/ )
-    		{
-    			print "Found a semicolon!! Whole thing is \"$allele\"\n";
-    			
+    		if ( $allele =~ /;/ ) # in case of paralogous loci
+    		{    			
     			my @paralogous = split (';', $allele);
-    			
-    			print "Then after split is @paralogous";
-    			
+    			    			
     			foreach my $paraallele (@paralogous) #go through each allele in locus
 			{ $unique_alleles{$paraallele}++; } #increase the frequency count
 			
     		}
-
+    		else # if just one value 
+    		{ $unique_alleles{$allele}++; } 
 	}
 
 	my $originalFAS = $dFAS."/".$locusname.".FAS";
@@ -231,7 +226,7 @@ keepseenloci.pl [ options ]
 
 Copies only the alleles in FASTA files that appear in a locus/isolate table. 
 
--intab: Table as csv with rows as loci.
+-tin: Table as csv with rows as loci.
 -din: Directory with FASTA files where "locusname.FAS" is the file name, like BACT000001.FAS
 -dout: Directory where filtered FASTA files will be saved.
 -dup: Can set a mininum frequence for allele appearance (default is 1) 
