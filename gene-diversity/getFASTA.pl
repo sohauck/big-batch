@@ -4,11 +4,6 @@
 # PROGRAM: getFASTA.pl
 # AUTHOR:  Sofia Hauck
 # CREATED: 09.06.2015
-# UPDATED: ----------
-# VERSION: v1.00
-#--------------------------------------------------------
-# VERSION HISTORY
-# v1.00 (09.06.2015) created
 #--------------------------------------------------------
 
 use strict;
