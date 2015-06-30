@@ -50,7 +50,7 @@ my $uniquefile = $dOut . "-count-nuc.txt";
 if( -e $uniquefile)  { Usage("Output file already exists: $uniquefile"); exit; }
 
 open(UNIQUENUC, '>', $uniquefile) or die "Cannot open $uniquefile\n";
-	print UNIQUENUC "locus,count-nuc\n";
+	print UNIQUENUC "locus,count-nuc,missing\n";
 
 
 # Transposing:
@@ -161,6 +161,7 @@ foreach my $locusrow (@newtable) # loop per locus
 					}
 					else { $save = 0; }
 				}
+				
 				elsif ( $line =~ /^[A-Z]/ ) # if is a sequence line, copy only is "save" is turned on by wanted identifier
 				{
 					chomp $line; 
@@ -168,8 +169,10 @@ foreach my $locusrow (@newtable) # loop per locus
 					elsif ($save == 0) { }
 				}	
 			}
-			 
-			print UNIQUENUC $locusname . "," . $count . "\n";
+			my $missing = 0;
+			if ( exists($unique_alleles{"0"}) )
+			{ $missing = $unique_alleles{"0"}; }
+			print UNIQUENUC $locusname . "," . $count . "," . $missing . "\n";
 
 		}  
 		close(FULLFASTA);
