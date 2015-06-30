@@ -3,42 +3,34 @@ library(grid)
 library(vegan)
 library(corrplot)
 
-
 #dfref <- read.csv('/Volumes/sofia/Mycobacterium/MTBC allelic diversity/ECCMID/Ref/sharing.txt')
-#df <- merge(df,dfref,by="locus")
 
 in.file <- file.choose()
 df <- read.csv(in.file)
-
-# bringing in more variables from lookup tables
-dfref <- read.csv('/Volumes/sofia/Mycobacterium/MTBC allelic diversity/ECCMID/Ref/id-name-cat-conv.csv')
-names(dfref)[1] <- "locus"
-df <- merge(df,dfref,by="locus")
-dfref <- read.csv('/Volumes/sofia/Mycobacterium/MTBC allelic diversity/ECCMID/Ref/locus-length.csv')
-names(dfref)[2] <- "length"
-df <- merge(df,dfref,by="locus")
-dfref <- read.csv('/Volumes/sofia/Mycobacterium/MTBC allelic diversity/ECCMID/Data sets/full-missing.txt')
-df <- merge(df,dfref,by="locus")
 
 in.file <- file.choose()
 dfref <- read.csv(in.file)
 df <- merge(df,dfref,by="locus")
 
+dfref <- read.csv('/Volumes/sofia/Mycobacterium/MTBC allelic diversity/ECCMID/Ref/id-name-cat-conv.csv')
+names(dfref)[1] <- "locus"
+df <- merge(df,dfref,by="locus")
+
 
 # setting up variables
-df$allelic.div <- c( log10(  df$count.nuc / df$length) )
-#df$allelic.div2 <- c( log10(  df$allele.count2 / df$length) )
-df$div.diff <- c( (df$count.nuc - (mean(df$count.nuc / df$length) * df$length) ) / df$length )
-#df$div.diff2 <- c( (df$allele.count2 - (mean(df$allele.count2 / df$length) * df$length) ) / df$length )
+df$allelic.div <- c( log10(  df$count.nuc / df$avg.length) )
+df$div.diff <- c( (df$count.nuc - (mean(df$count.nuc / df$avg.length) * df$avg.length) ) / df$avg.length )
 
-df$pvarsites.nuc <- (df$length - df$varsites.x) / df$length
-df$pvarsites.aa <- ((df$length / 3)- df$varsites.x) / (df$length / 3)
-df$psynnon <- df$count.aa / df$count.nuc
-df$ratio.varsites <- df$pvarsites.aa / df$pvarsites.nuc
+df$p.vs.nuc <- (df$avg.length - df$varsites.x) / df$avg.length
+df$p.vs.aa <- ((df$avg.length / 3) - df$varsites.y) / (df$avg.length / 3)
+df$r.count <- df$count.aa / df$count.nuc
+df$r.vs <- df$p.vs.aa / df$p.vs.nuc
 
 # removing worst loci in terms of tagging (usually ones with seed problems)
+df.all <- df
 cutoff <- 5000
 df <- df[df$missing < cutoff,]
+
 
 # correlation plots for all numeric variables
 df2 <- subset(df, select = -c(locus,name,category,drug.resistance) )
@@ -100,6 +92,7 @@ multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
 
 # that's all the data set up done!
 
+
 # Total distribution
 d1 <- 
   ggplot(df, aes(x=allelic.div, fill="")) + geom_histogram(alpha=.7, binwidth=.025) + 
@@ -122,10 +115,10 @@ multiplot(d1,d2)
 
 
 
-p1 <- ggplot(df, aes(x=)) + geom_histogram(alpha=.7, binwidth = 0.01)
+p1 <- ggplot(df, aes(x=allelic.div)) + geom_histogram(alpha=.7, binwidth = 0.01)
 p2 <- ggplot(df, aes(x=div.diff)) + geom_histogram(alpha=.7, binwidth = 0.001)
-p3 <- ggplot(df, aes(x=ratio.varsites)) + geom_histogram(alpha=.7, binwidth = 0.001)
-p4 <- ggplot(df, aes(x=psynnon)) + geom_histogram(alpha=.7, binwidth = 0.005)
+p3 <- ggplot(df, aes(x=r.vs)) + geom_histogram(alpha=.7, binwidth = 0.001)
+p4 <- ggplot(df, aes(x=r.count)) + geom_histogram(alpha=.7, binwidth = 0.005)
 
 multiplot(p1,p2,p3,p4)
 
