@@ -28,7 +28,7 @@ if( -e $uniquefile)   { Usage("Output file already exists: $uniquefile"); exit; 
 
 mkdir $transdir;
 open(UNIQUEAA, '>', $uniquefile) or die "Cannot open $uniquefile\n"; # setting up header of output count file 
-	print UNIQUEAA "locus,count-aa,min-length,max-length,avg-length\n";
+	print UNIQUEAA "locus,count-aa,avg-length\n";
 
 
 # Get names of all the files in the directory
@@ -95,11 +95,11 @@ foreach my $file (@files)
 	else 
 	{
 		use List::Util qw( min max sum );
-		my $min = min @lengths;
-		my $max = max @lengths;
+		#my $min = min @lengths;
+		#my $max = max @lengths;
 		my $avg = (sum @lengths) / $count;
 	
-		print UNIQUEAA  $locusname .",". $count .",". $min .",". $max .",". $avg . "\n";
+		print UNIQUEAA  $locusname .",". $count . "," . $avg . "\n";
 	
 		close NUCLEOTIDE; close AMINOACID;
  	}
