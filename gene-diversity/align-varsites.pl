@@ -74,19 +74,19 @@ my @results = ();
 foreach my $file (@files)
 {
  	my $alignedfile = $alidir . $file;
-	my $totalcount = 0;
+	my $total = 0;
 	
 	# Loop per line inside loop per file, adds to asterisk count
 	open (ALIGNED, $alignedfile) or die "Cannot open $alignedfile";
 		    while (my $line = <ALIGNED>)
 		    {
 		    	my $count = ($line =~ tr/\*//);
-		    	$totalcount = $totalcount + $count; 
+		    	$total = $total + $count; 
 		    }
 	close ALIGNED;
 	 
 	my ($locusname, $extension) = split (/\./, $file);
-	push @results, ($locusname . "," . $totalcount);
+	push @results, ($locusname . "," . $total);
 }
 
 # Then write results to a new file 
