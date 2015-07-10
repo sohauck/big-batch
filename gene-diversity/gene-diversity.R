@@ -1,10 +1,8 @@
 library(ggplot2)
 library(grid)
-library(vegan)
 library(corrplot)
 
-#dfref <- read.csv('/Volumes/sofia/Mycobacterium/MTBC allelic diversity/ECCMID/Ref/sharing.txt')
-
+# reading in data
 in.file <- file.choose()
 df <- read.csv(in.file)
 
@@ -16,6 +14,9 @@ dfref <- read.csv('/Volumes/sofia/Mycobacterium/MTBC allelic diversity/ECCMID/Re
 names(dfref)[1] <- "locus"
 df <- merge(df,dfref,by="locus")
 
+#dfref <- read.csv('/Volumes/sofia/Mycobacterium/MTBC allelic diversity/ECCMID/Ref/sharing.txt')
+
+
 
 # setting up variables
 df$allelic.div <- c( log10(  df$count.nuc / df$avg.length) )
@@ -26,21 +27,21 @@ df$p.vs.aa <- ((df$avg.length / 3) - df$varsites.y) / (df$avg.length / 3)
 df$r.count <- df$count.aa / df$count.nuc
 df$r.vs <- df$p.vs.aa / df$p.vs.nuc
 
+
 # removing worst loci in terms of tagging (usually ones with seed problems)
 df.all <- df
 cutoff <- 5000
 df <- df[df$missing < cutoff,]
+# Distribution of missing (vast majority less than 200)
+# ggplot(df, aes(x=missing)) + geom_density() + geom_vline(xintercept=200) + xlim(0, 6000)
 
 
 # correlation plots for all numeric variables
-df2 <- subset(df, select = -c(locus,name,category,drug.resistance) )
-M <- cor(df2)
+df.num <- subset(df, select = -c(locus,name,category,drug.resistance) )
+M <- cor(df.num)
 corrplot(M, method = "circle")
 
-
-
-
-# For my own peace of mind...
+# just to keep labels shorter
 levels(df$category)[levels(df$category)=="Cell wall and cell processes"] <- "Cell processes"
 levels(df$category)[levels(df$category)=="Insertion seqs and phages"] <- "IS and phages"
 levels(df$category)[levels(df$category)=="Conserved hypotheticals"] <- "Hypotheticals"
@@ -87,8 +88,7 @@ multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
   }
 }
 
-# Distribution of missing (vast majority less than 200)
-# ggplot(df, aes(x=missing)) + geom_density() + geom_vline(xintercept=200) + xlim(0, 6000)
+
 
 # that's all the data set up done!
 
@@ -100,30 +100,20 @@ d1 <-
   theme(plot.title = element_text(face="bold"), axis.text.x = element_blank(), axis.title.x=element_text(vjust=-.5, size=14)) +
   geom_vline(xintercept=mean(df$allelic.div), colour = "red", linetype="dashed") +
   ylab("Density")  + xlab("Alleles per nucleotide, in log10 scale") + guides(fill=FALSE) 
-# Distribution by sharing
-m.table <- aggregate(allelic.div ~ sharing2, data = df, mean)      
-d2 <- ggplot(df, aes(x=allelic.div, fill=sharing2)) + geom_histogram(alpha=.5, position="identity", binwidth=.025) + 
-  ggtitle("Density of alleles per nucleotide position (log transformed), separated by sharing status") +
-  theme(plot.title = element_text(face="bold"), axis.text.x = element_blank(), axis.title.x=element_text(vjust=-.5, size=14)) +
-  scale_fill_manual(values=c("#56B4E9","#E69F00"), name = "Sharing status") + 
-  theme(legend.position=c(.9, .8)) +
-  geom_vline(xintercept=m.table[1,2], colour = "blue", linetype="dashed") +
-  geom_vline(xintercept=m.table[2,2], colour = "brown", linetype="dashed") +
-  ylab("Density")  + xlab("Alleles per nucleotide, in log10 scale") 
-
-multiplot(d1,d2)
 
 
 
 p1 <- ggplot(df, aes(x=allelic.div)) + geom_histogram(alpha=.7, binwidth = 0.01)
-p2 <- ggplot(df, aes(x=div.diff)) + geom_histogram(alpha=.7, binwidth = 0.001)
-p3 <- ggplot(df, aes(x=r.vs)) + geom_histogram(alpha=.7, binwidth = 0.001)
-p4 <- ggplot(df, aes(x=r.count)) + geom_histogram(alpha=.7, binwidth = 0.005)
+p2 <- ggplot(df, aes(x=div.diff)) + geom_histogram(alpha=.7, binwidth = 0.003)
+p3 <- ggplot(df, aes(x=p.vs.nuc)) + geom_histogram(alpha=.7, binwidth = 0.003)
+p4 <- ggplot(df, aes(x=p.vs.aa)) + geom_histogram(alpha=.7, binwidth = 0.005)
+p5 <- ggplot(df, aes(x=r.count)) + geom_histogram(alpha=.7, binwidth = 0.004)
+p6 <- ggplot(df, aes(x=r.vs)) + geom_histogram(alpha=.7, binwidth = 0.05)
 
-multiplot(p1,p2,p3,p4)
+multiplot(p1,p2,p3,p4,p5,p6)
 
 
-#Scatter plot of diversity by category coloured by sharing, same coloured by missing
+#Scatter plot of diversity by category coloured by sharing, 
 ggplot(df) +
   geom_boxplot(aes(x=category, y=allelic.div), alpha = 0, outlier.shape = " ") +
   geom_point( data=subset(df, allelic.div < -.9 & allelic.div > -1.7),aes(x=category, y=allelic.div, colour=drug.resistance), size=5, alpha=.5, position = position_jitter(w=0.15, h=0)) + 
