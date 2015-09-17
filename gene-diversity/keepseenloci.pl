@@ -73,7 +73,7 @@ open(INFILE, $fTab) or die "Cannot open $fTab\n";
 	} 
 close(INFILE);
 
-if ( $columncount == 1 ) { print "You only have one column so your csv is probably not in Unix (LF) format.\n"; }
+if ( $columncount == 1 ) { die "You only have one column so your csv is probably not in Unix (LF) format.\n"; }
 
 # actually does the transposition
 for my $row (@original)
@@ -127,10 +127,14 @@ foreach my $locusrow (@newtable) # loop per locus
 			{ $unique_alleles{$paraallele}++; } #increase the frequency count
 			
     		}
-    		else # if just one value 
+    		
+    		if ( $allele =~ /;/ ) # in case it isn't a numeric allele designation
+    		{ $unique_alleles{"0"}++; } # just add as 0
+    		
+    		else # if just one numeric value, add it 
     		{ $unique_alleles{$allele}++; } 
 	}
-
+	
 	my $originalFAS = $dFAS."/".$locusname.".FAS";
 	my $reducedFAS = $dOut."/".$locusname.".FAS";
 
@@ -145,10 +149,13 @@ foreach my $locusrow (@newtable) # loop per locus
 				if ( $line =~ /^>/ ) # if line is >identifier
 				{
 					chomp $line; 
-					my ($locusname, $allelenumber) = split ('_', $line);
+					my @alleletitle = split ('_', $line); #if in BIGS BACT01_1 format
+					my $allelenumber = pop @alleletitle;
+					$allelenumber =~ s/[>]+//g; #in case > is still in there if there is no other ID
 					
 					if ( exists($unique_alleles{$allelenumber}) ) # exists in hash of wanted loci
 					{
+
 						if ($unique_alleles{$allelenumber} >= $dup ) # and in frequence at or above cutoff
 						{
 							print REDFASTA "\n", $line, "\n";
@@ -169,10 +176,12 @@ foreach my $locusrow (@newtable) # loop per locus
 					elsif ($save == 0) { }
 				}	
 			}
-			my $missing = 0;
-			if ( exists($unique_alleles{"0"}) )
-			{ $missing = $unique_alleles{"0"}; }
-			print UNIQUENUC $locusname . "," . $count . "," . $missing . "\n";
+			
+			my $missing = 0; # sets the missing count back to empty
+			
+			if ( exists($unique_alleles{"0"}) ) # move count away from empty if any missing alleles were seen
+			{ $missing = $unique_alleles{"0"}; } # gives the value in the frequency hash when the key is allele "0", the missing allele
+			print UNIQUENUC $locusname . "," . $count . "," . $missing . "\n"; 
 
 		}  
 		close(FULLFASTA);
@@ -224,12 +233,12 @@ keepseenloci.pl [ options ]
 
 Copies only the alleles in FASTA files that appear in a locus/isolate table. 
 
--tin: Table as csv with rows as loci.
+-tin: Table as csv with columns as loci.
 -din: Directory with FASTA files where "locusname.FAS" is the file name, like BACT000001.FAS
 -dout: Directory where filtered FASTA files will be saved.
 -dup: Can set a mininum frequence for allele appearance (default is 1) 
 EOU
 
-print "Quit because: $message\n";
+print "\n\nQuit because: $message\n\n";
 print "ARGV was " . join (", ", @ARGV) . "\n";
 }
