@@ -19,11 +19,13 @@ df <- merge(df,dfref,by="locus")
 
 
 # setting up variables
-df$allelic.div <- c( log10(  df$count.nuc / df$avg.length) )
+df$allelic.div2 <- c( log10(  df$count.nuc / df$avg.length) )
+df$allelic.div <- c( df$count.nuc / df$avg.length )
 df$div.diff <- c( (df$count.nuc - (mean(df$count.nuc / df$avg.length) * df$avg.length) ) / df$avg.length )
 
 df$p.vs.nuc <- (df$avg.length - df$varsites.x) / df$avg.length
 df$p.vs.aa <- ((df$avg.length / 3) - df$varsites.y) / (df$avg.length / 3)
+
 df$r.count <- df$count.aa / df$count.nuc
 df$r.vs <- df$p.vs.aa / df$p.vs.nuc
 
@@ -40,6 +42,10 @@ df <- df[df$missing < cutoff,]
 df.num <- subset(df, select = -c(locus,name,category,drug.resistance) )
 M <- cor(df.num)
 corrplot(M, method = "circle")
+
+df.mea <- subset(df, select = c(allelic.div,div.diff,p.vs.nuc,p.vs.aa,r.count,r.vs) )
+M2 <- cor(df.mea)
+corrplot(M2, method = "circle")
 
 # just to keep labels shorter
 levels(df$category)[levels(df$category)=="Cell wall and cell processes"] <- "Cell processes"
@@ -103,7 +109,7 @@ d1 <-
 
 
 
-p1 <- ggplot(df, aes(x=allelic.div)) + geom_histogram(alpha=.7, binwidth = 0.01)
+p1 <- ggplot(df, aes(x=allelic.div2)) + geom_histogram(alpha=.7, binwidth = 0.005)
 p2 <- ggplot(df, aes(x=div.diff)) + geom_histogram(alpha=.7, binwidth = 0.003)
 p3 <- ggplot(df, aes(x=p.vs.nuc)) + geom_histogram(alpha=.7, binwidth = 0.003)
 p4 <- ggplot(df, aes(x=p.vs.aa)) + geom_histogram(alpha=.7, binwidth = 0.005)
@@ -116,62 +122,41 @@ multiplot(p1,p2,p3,p4,p5,p6)
 #Scatter plot of diversity by category coloured by sharing, 
 ggplot(df) +
   geom_boxplot(aes(x=category, y=allelic.div), alpha = 0, outlier.shape = " ") +
-  geom_point( data=subset(df, allelic.div < -.9 & allelic.div > -1.7),aes(x=category, y=allelic.div, colour=drug.resistance), size=5, alpha=.5, position = position_jitter(w=0.15, h=0)) + 
-  geom_point( data=subset(df, allelic.div > -.9 | allelic.div < -1.7),aes(x=category, y=allelic.div, colour=drug.resistance), size=5, alpha=.5) +
+  geom_point( data=subset(df, allelic.div < .1 | allelic.div > 0.02),aes(x=category, y=allelic.div, colour=drug.resistance), size=5, alpha=.5, position = position_jitter(w=0.15, h=0)) + 
+  geom_point( data=subset(df, allelic.div > .1 | allelic.div < 0.02),aes(x=category, y=allelic.div, colour=drug.resistance), size=5, alpha=.5) +
   coord_flip() + scale_fill_manual(values=c("#56B4E9","#E69F00")) + 
   guides(col = guide_legend(title = "Drug Resistance")) +
   theme_minimal() + 
-  theme(axis.text.y=element_text(size=14), legend.position=c(.9, .9), plot.title = element_text(face="bold"), axis.text.x = element_blank(), axis.title.x=element_text(vjust=-.5, size=14)) +
+  theme(axis.text.y=element_text(size=14), legend.position=c(.9, .9), plot.title = element_text(face="bold"), axis.title.x=element_text(vjust=-.5, size=14)) +
   geom_hline(yintercept=mean(df$allelic.div), size=1, colour="blue", linetype="dashed") +
   ggtitle("Genetic diversity of loci, split by locus functional category and coloured by association with drug resistance") +
-  xlab("")  + ylab("Alleles per nucleotide, in log10 scale") +
-  geom_text( data=subset(df, allelic.div > -.95 | allelic.div < -1.7), aes(x=category, y=allelic.div, label=name), size=4, alpha=.8, vjust=-1.5, position = position_jitter(width=0.3)) 
-
-# by length
-ggplot(df) +
-  geom_boxplot(aes(x=category, y=allelic.div), alpha = 0, outlier.shape = " ") +
-  geom_point( data=subset(df, allelic.div < -.9 & allelic.div > -1.7),aes(x=category, y=allelic.div, colour=length), size=5, alpha=.5, position = position_jitter(w=0.15, h=0)) + 
-  geom_point( data=subset(df, allelic.div > -.9 | allelic.div < -1.7),aes(x=category, y=allelic.div, colour=length), size=5, alpha=.5) +
-  coord_flip() +  scale_colour_gradient(limits=c(0,1000), low="red", high="grey") +
-  theme_minimal() + 
-  theme(axis.text.y=element_text(size=14), legend.position=c(.9, .9), plot.title = element_text(face="bold"), axis.text.x = element_blank(), axis.title.x=element_text(vjust=-.5, size=14)) +
-  geom_hline(yintercept=mean(df$allelic.div), size=1, colour="blue", linetype="dashed") +
-  ggtitle("Genetic diversity of loci, split by locus functional category and coloured by gene length") +
-  xlab("")  + ylab("Alleles per nucleotide, in log10 scale") +
-  geom_text( data=subset(df, allelic.div > -.95 | allelic.div < -1.7), aes(x=category, y=allelic.div, label=name), size=4, alpha=.8, vjust=-1.5, position = position_jitter(width=0.3)) 
+  xlab("")  + ylab("Alleles per nucleotidee") +
+  geom_text( data=subset(df, allelic.div > .1 | allelic.div < 0.02), aes(x=category, y=allelic.div, label=name), size=4, alpha=.8, vjust=-1.5, position = position_jitter(width=0.3)) 
 
 # with null model measure
 ggplot(df) +
   geom_boxplot(aes(x=category, y=div.diff), alpha = 0, outlier.shape = " ") +
-  geom_point( aes(x=category, y=div.diff, colour=length), size=5, alpha=.5, position = position_jitter(w=0.15, h=0)) +
-  coord_flip() + theme_minimal() + scale_colour_gradient(limits=c(0,500), low="red", high="grey") +
+  geom_point( data=subset(df, div.diff < 0.09 | div.diff > -0.03),aes(x=category, y=div.diff, colour=drug.resistance), size=5, alpha=.5, position = position_jitter(w=0.15, h=0)) + 
+  geom_point( data=subset(df, div.diff > 0.09 | div.diff < -0.03),aes(x=category, y=div.diff, colour=drug.resistance), size=5, alpha=.5) +
+  coord_flip() + scale_fill_manual(values=c("#56B4E9","#E69F00")) + 
+  guides(col = guide_legend(title = "Drug Resistance")) +
+  theme_minimal() + 
   theme(axis.text.y=element_text(size=14), legend.position=c(.9, .9), plot.title = element_text(face="bold"), axis.title.x=element_text(vjust=-.5, size=14)) +
   geom_hline(yintercept=mean(df$div.diff), size=1, colour="blue", linetype="dashed") +
-  ggtitle("Genetic diversity of loci, split by locus functional category and coloured by gene length") +
+  ggtitle("Genetic diversity of loci, split by locus functional category and coloured by association with drug resistance") +
   xlab("")  + ylab("Difference in alleles/nucleotide from expected based on mean") +
-  geom_text( data=subset(df, div.diff > 0.07 | div.diff < -0.03), aes(x=category, y=div.diff, label=name), size=4, alpha=.8, vjust=-1.5, position = position_jitter(width=0.3)) 
+  geom_text( data=subset(df, div.diff > 0.09 | div.diff < -0.03), aes(x=category, y=div.diff, label=name), size=4, alpha=.8, vjust=-1.5, position = position_jitter(width=0.3)) 
 
-# by Simpson's Diversity Index 
+# by proportion of variable sites (nuc)
 ggplot(df) +
-  geom_boxplot(aes(x=category, y=div.index), alpha = 0, outlier.shape = " ") +
-  geom_point( aes(x=category, y=div.index, colour=length), size=5, alpha=.5, position = position_jitter(w=0.15, h=0)) +
-  coord_flip() + theme_minimal() + scale_colour_gradient(limits=c(0,500), low="red", high="grey") +
-  theme(axis.text.y=element_text(size=14), legend.position=c(.9, .9), plot.title = element_text(face="bold"), axis.title.x=element_text(vjust=-.5, size=14)) +
-  geom_hline(yintercept=mean(df$div.index), size=1, colour="blue", linetype="dashed") +
-  ggtitle("Genetic diversity of loci, split by locus functional category and coloured by gene length") +
-  xlab("")  + ylab("Simpson's diversity index per locus") +
-  geom_text( data=subset(df, div.index > 0.07 | div.index < -0.03), aes(x=category, y=div.diff, label=name), size=4, alpha=.8, vjust=-1.5, position = position_jitter(width=0.3)) 
-
-# by proportion of variable sites
-ggplot(df) +
-  geom_boxplot(aes(x=category, y=pvarsites.nuc), alpha = 0, outlier.shape = " ") +
-  geom_point( aes(x=category, y=pvarsites.nuc, colour=psynnon), size=5, alpha=.5, position = position_jitter(w=0.15, h=0)) +
+  geom_boxplot(aes(x=category, y=p.vs.nuc), alpha = 0, outlier.shape = " ") +
+  geom_point( aes(x=category, y=p.vs.nuc, colour=r.vs), size=5, alpha=.5, position = position_jitter(w=0.15, h=0)) +
   coord_flip() + theme_minimal() + 
-  theme(axis.text.y=element_text(size=14), legend.position=c(.9, .9), plot.title = element_text(face="bold"), axis.title.x=element_text(vjust=-.5, size=14)) +
-  geom_hline(yintercept=mean(df$pvarsites), size=1, colour="blue", linetype="dashed") +
+  theme(axis.text.y=element_text(size=14), legend.position=c(.9, .3), plot.title = element_text(face="bold"), axis.title.x=element_text(vjust=-.5, size=14)) +
+  geom_hline(yintercept=mean(df$p.vs.nuc), size=1, colour="blue", linetype="dashed") +
   ggtitle("Genetic diversity of loci, split by locus functional category and coloured by gene length") +
-  xlab("")  + ylab("Difference in alleles/nucleotide from expected based on mean") +
-  geom_text( data=subset(df, pvarsites.nuc > 0.1 | pvarsites.nuc < 0.005), aes(x=category, y=pvarsites.nuc, label=name), size=4, alpha=.8, vjust=-1.5, position = position_jitter(width=0.3)) 
+  xlab("")  + ylab("Proportion of polymorphic sites to nonpolymorphic sites") +
+  geom_text( data=subset(df, p.vs.nuc > 0.2 | p.vs.nuc < 0.01), aes(x=category, y=p.vs.nuc, label=name), size=4, alpha=.8, vjust=-1.5, position = position_jitter(width=0.3)) 
 
 # by ratio of unique amino acid sequences to unique nucleotide 
 ggplot(df) +
