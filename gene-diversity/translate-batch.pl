@@ -40,7 +40,7 @@ opendir (ORIGDIR, $dir) or die "Cannot open directory: $!";
 closedir ORIGDIR;
 
 
-# Loop that aligns translates all the files and puts them in new directory
+# Loop that translates all the files and puts them in new directory
 print "Translated up to...\n";
 my @lengths;
 
