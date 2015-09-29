@@ -106,9 +106,9 @@ foreach my $file (@files)
 	$resultline = $resultline . $allelecount . ","; # add value for count-2 column
 		
 	# go through 
-	my $countboth  = 3;
-	my $count1only = 1;
-	my $count2only = 2;
+	my $countboth  = 0;
+	my $count1only = 0;
+	my $count2only = 0;
 	
 	open(UNMATCHED, '>', $outfile) or die "Cannot open $outfile\n";
 	
