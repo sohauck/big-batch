@@ -89,10 +89,9 @@ foreach my $file (@files)
 	$resultline = $resultline . $allelecount . ","; # add value for count-1 column
 	
 	
-	open(SECOND, $infile2) or die "Cannot open $infile2\n";
- 	while ( my $line = <SECOND> )
+	if ( open(SECOND, $infile2) )
 	{
-		if ( $line =~ /^[a-zA-Z]/ ) # if line is sequence
+	 	while ( my $line = <SECOND> )
 		{
 			if ( !exists($unique{$line}) && length($line) > 1 )
 			{ $unique{$line} = 2; }
