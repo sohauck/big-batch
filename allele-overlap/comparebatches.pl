@@ -47,7 +47,7 @@ my $uniquefile = $dOut . "-compare.txt";
 if( -e $uniquefile)  { Usage("Output file already exists: $uniquefile"); exit; }
 
 open(RESULTS, '>', $uniquefile) or die "Cannot open $uniquefile\n";
-	print RESULTS "locus,count-1,count-2,both,1-only,2-only";
+	print RESULTS "locus,count-1,count-2,both,1-only,2-only\n";
 
 my @results = ();
 
@@ -126,9 +126,15 @@ foreach my $file (@files)
 		{ 	$count2only ++;
 			#print UNMATCHED ">SECOND_" . $count2only . "\n" . $key . "\n";
 		}
+		
+		
 	}			
 	
-	#close UNMATCHED;
+	$resultline = $resultline . $countboth . ",". $count1only . "," . $count2only; # add values for columns
+	
+	push ( @results, ($resultline)); 
+	
+	close UNMATCHED;
 
 }
 
