@@ -88,6 +88,7 @@ foreach my $file (@files)
 	close FIRST;
 	$resultline = $resultline . $allelecount . ","; # add value for count-1 column
 	
+	$allelecount = 0;
 	
 	if ( open(SECOND, $infile2) )
 	{
@@ -117,9 +118,9 @@ foreach my $file (@files)
 	
 		
 	# go through 
-	my $countboth  = 0;
-	my $count1only = 0;
-	my $count2only = 0;
+	my $countboth  = 0; # ==3
+	my $count1only = 0; # ==1
+	my $count2only = 0; # ==2
 	
 	open(UNMATCHED, '>', $outfile) or die "Cannot open $outfile\n";
 	
@@ -127,7 +128,7 @@ foreach my $file (@files)
 	
 	foreach my $key ( sort keys %unique ) 
 	{ 
-		print $key . " and the value is " . $unique{key};
+		print "The value is " . $unique{$key};
 		
 		if ( $unique{$key} == 3 )
 		{ $countboth ++; }
