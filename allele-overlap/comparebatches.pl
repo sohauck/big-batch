@@ -93,17 +93,28 @@ foreach my $file (@files)
 	{
 	 	while ( my $line = <SECOND> )
 		{
-			if ( !exists($unique{$line}) && length($line) > 1 )
-			{ $unique{$line} = 2; }
+			if ( $line =~ /^[a-zA-Z]/ ) # if line is sequence
+			{
+				if ( !exists($unique{$line}) && length($line) > 1 )
+				{ $unique{$line} = 2; }
+				
+				elsif ( exists($unique{$line}) ) 
+				{ $unique{$line} = 3; }
 			
-			if ( exists($unique{$line}) ) 
-			{ $unique{$line} = 3; }
-			
-			$allelecount++;
+				$allelecount++;
+			}
 		}
+		close SECOND;
+		$resultline = $resultline . $allelecount . ","; # add value for count-2 column
+
 	}
-	close SECOND;
-	$resultline = $resultline . $allelecount . ","; # add value for count-2 column
+	
+	else 
+	{
+		print "Cannot open $infile2, skipped\n";
+		$resultline = $resultline . "0,"; # add value for count-2 column
+	}
+	
 		
 	# go through 
 	my $countboth  = 0;
