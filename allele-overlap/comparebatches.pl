@@ -110,20 +110,24 @@ foreach my $file (@files)
 	my $count1only = 1;
 	my $count2only = 2;
 	
-	#open(UNMATCHED, $outfile) or die "Cannot open $outfile\n";
+	open(UNMATCHED, '>', $outfile) or die "Cannot open $outfile\n";
+	
+	print UNMATCHED "Hello there!\n";
 	
 	foreach my $key ( sort keys %unique ) 
 	{ 
+		print $key . " and the value is " . $unique{key};
+		
 		if ( $unique{$key} == 3 )
 		{ $countboth ++; }
 		if ( $unique{$key} == 1 )
 		{ 	
 			$count1only ++;
-			#print UNMATCHED ">FIRST_" . $count1only . "\n" . $key . "\n"; 
+			print UNMATCHED ">FIRST_" . $count1only . "\n" . $key . "\n"; 
 		}
 		if ( $unique{$key} == 2 )
 		{ 	$count2only ++;
-			#print UNMATCHED ">SECOND_" . $count2only . "\n" . $key . "\n";
+			print UNMATCHED ">SECOND_" . $count2only . "\n" . $key . "\n";
 		}
 		
 		
