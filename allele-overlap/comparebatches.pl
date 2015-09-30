@@ -79,9 +79,15 @@ foreach my $file (@files)
 	open(FIRST, $infile1) or die "Cannot open $infile1\n";
  	while ( my $line = <FIRST> )
 	{
+		chomp $line;
+		
 		if ( $line =~ /^[a-zA-Z]/ ) # if line is sequence
 		{
-			$unique{$line} = 1;
+			# if reverse complement, switch back first
+			if ( $line !~ /^([A-Z]TG)/) 
+			{ $line =~ tr /atcgATCG/tagcTAGC/; $line = reverse($line); }
+			
+			$unique{$line} = "1only";
 			$allelecount++;
 		}
 	}
@@ -94,13 +100,21 @@ foreach my $file (@files)
 	{
 	 	while ( my $line = <SECOND> )
 		{
+			chomp $line;
+			
 			if ( $line =~ /^[a-zA-Z]/ ) # if line is sequence
 			{
+				
+				# if reverse complement, switch back first
+				if ( $line !~ /^([A-Z]TG)/) 
+				{ $line =~ tr /atcgATCG/tagcTAGC/; $line = reverse($line); }
+				
+				# if doesn't exist yet, 
 				if ( !exists($unique{$line}) && length($line) > 1 )
-				{ $unique{$line} = 2; }
+				{ $unique{$line} = "2only"; }
 				
 				elsif ( exists($unique{$line}) ) 
-				{ $unique{$line} = 3; }
+				{ $unique{$line} = "both"; }
 			
 				$allelecount++;
 			}
@@ -118,31 +132,25 @@ foreach my $file (@files)
 	
 		
 	# go through 
-	my $countboth  = 0; # ==3
-	my $count1only = 0; # ==1
-	my $count2only = 0; # ==2
+	my $countboth  = 0; 
+	my $count1only = 0; 
+	my $count2only = 0; 
 	
 	open(UNMATCHED, '>', $outfile) or die "Cannot open $outfile\n";
-	
-	print UNMATCHED "Hello there!\n";
-	
-	foreach my $key ( sort keys %unique ) 
-	{ 
-		print "The value is " . $unique{$key};
 		
-		if ( $unique{$key} == 3 )
+	foreach my $key ( sort keys %unique ) 
+	{ 		
+		if ( $unique{$key} eq "both" )
 		{ $countboth ++; }
-		if ( $unique{$key} == 1 )
+		if ( $unique{$key} eq "1only" )
 		{ 	
 			$count1only ++;
 			print UNMATCHED ">FIRST_" . $count1only . "\n" . $key . "\n"; 
 		}
-		if ( $unique{$key} == 2 )
+		if ( $unique{$key} eq "2only" )
 		{ 	$count2only ++;
 			print UNMATCHED ">SECOND_" . $count2only . "\n" . $key . "\n";
 		}
-		
-		
 	}			
 	
 	$resultline = $resultline . $countboth . ",". $count1only . "," . $count2only; # add values for columns
