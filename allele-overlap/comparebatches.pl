@@ -14,8 +14,8 @@ $| = 1;
 sub Usage( ; $ );
 
 # Defines scalars needed from command line
-my $dIn1;    # directory where all the FASTA files for each locus are, the one whose loci will be used
-my $dIn2;    # directory where all the FASTA files for each locus are, could have extra stuff
+my $dIn1;    # directory where the FASTA files for each locus are, the one whose loci will be used
+my $dIn2;    # directory where the FASTA files for each locus are,
 my $dOut;    # directory where only the relevant parts of those FASTA files will be copied to
 
 # Get Command line options, exits if conditions don't look right
@@ -54,7 +54,7 @@ my @results = ();
 # Get names of all the files in the directory
 opendir (FIRSTFOLDER, $dIn1) or die "Cannot open directory: $!";
 	my @files = readdir FIRSTFOLDER;
-	@files = grep(/^([A-Z]|[a-z]|[0-9])/,@files);
+	@files = grep(/^([A-Z]|[a-z]|[0-9])/,@files); # in case of hidden files or anything funky
 	if ($#files < 1)
 	{ die "It looks like you have no FASTA files to align. If their file names don't begin with letters or numbers they are not being included.\n";}
 closedir FIRSTFOLDER;
