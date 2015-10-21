@@ -75,7 +75,7 @@ getFASTA.pl
 
 Description:
   From a text file with a list of loci (one per column), gets all the FASTA files via RESTful API. 
-  Currently set up to work only with mycobacteria_seqdef database. 
+  Currently set up to work only with unrestricted access databases. 
 	  
 Usage:
 getFASTA.pl [ options ]
