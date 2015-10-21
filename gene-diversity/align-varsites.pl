@@ -123,6 +123,8 @@ Output:
 Folder with same name and number of files but named -aligned with aligned FASTA files, and 
 one output text file with the count of variable sites, in the parent directory of both previously mentioned folders.
 
+Warning: MAFFT dislikes spaces in address to file!
+
 EOU
 
 print "Quit because: $message\n";
