@@ -128,7 +128,7 @@ foreach my $locusrow (@newtable) # loop per locus
 			
     		}
     		
-    		if ( $allele !~ /\d+/ ) # in case it isn't a numeric allele designation
+    		elsif ( $allele !~ /\d+/ ) # in case it isn't a numeric allele designation
     		{ $unique_alleles{"0"}++; } # just add as 0
     		
     		else # if just one numeric value, add it 
