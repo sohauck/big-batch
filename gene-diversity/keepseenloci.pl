@@ -89,18 +89,15 @@ my @newtable = ();
 for my $new_row (@transposed)
 {
 	my @result;
-	my $missing = 0;
 	for my $new_col (@{$new_row}) 
 	{ 
-		if ( $new_col eq "" ) # if empty cells for missing allele
-		{ 
-			$missing++;
-			push (@result, "0"); # write as "0", creates less confusion with undefined or empty variables
-		}
+		if ( !defined($new_col) ) # if empty cells for missing allele
+		{ push (@result, "0"); } # write as "0", creates less confusion with undefined or empty variables
+		
 		else
 		{ push (@result, $new_col); }
 	}
-	push (@newtable, \@result); # puts reference to this array into array of array
+	push (@newtable, \@result); # puts reference to this array into array of arrays
 }
 
 print " complete!\n"; # Transposing is done
@@ -113,17 +110,21 @@ foreach my $locusrow (@newtable) # loop per locus
 {
 	# empty hash to find unique values, set locus name
 	my %unique_alleles = ();
-		
-	my $locusname = shift(@{$locusrow});
 	
+	my $locusname = shift(@{$locusrow});
+		
 	# populates that hash with unique allele numbers as keys and their number of appearances as values
 	foreach my $allele (@{$locusrow}) #go through each allele in locus
     	{
     		if ( $allele =~ /;/ ) # in case of paralogous loci
-    		{    			
+    		{  
+    			my @paralogous = split (/;/, $allele);
+    			    			
     			foreach my $paraallele (@paralogous) #go through each allele in locus
+			{ $unique_alleles{$paraallele}++; } #increase the frequency count	
     		}
     		
+    		elsif ( $allele !~ /^\d+$/ ) # in case it isn't a numeric allele designation
     		{ $unique_alleles{"0"}++; } # just add as 0
     		
     		else # if just one numeric value, add it 
@@ -201,6 +202,7 @@ foreach my $locusrow (@newtable) # loop per locus
 			{ print " etc."; last; }
 		 }
 		print "\n";
+	}
 
 } # closes per-locus loop
 
