@@ -28,7 +28,7 @@ df$r.vs <- df$p.vs.aa / df$p.vs.nuc
 
 
 # removing worst loci in terms of tagging (usually ones with seed problems)
-df <- df.all
+df.all <- df
 cutoff <- (9/10)*nrow(df.all)
 df <- df[df$missing < cutoff,]
 # Distribution of missing (vast majority less than 200)
@@ -51,8 +51,6 @@ corrplot(M, method = "circle")
 df.num0 <- subset(df.all, select = -c(locus,name,category,drug.resistance) )
 M0 <- cor(df.num0)
 corrplot(M0, method = "circle")
-
-
 
 df.mea <- subset(df, select = c(allelic.div,div.diff,p.vs.nuc,p.vs.aa,r.count,r.vs) )
 M2 <- cor(df.mea)
@@ -120,7 +118,12 @@ d1 <-
 
 
 
-p1 <- ggplot(df, aes(x=allelic.div2)) + geom_histogram(alpha=.7, binwidth = 0.005)
+p1 <- 
+  
+  ggplot(df, aes(x=allelic.div.z)) + geom_histogram(alpha=.7, binwidth = 0.005) + 
+  geom_text(data=subset(df, allelic.div.z > 4), aes(x=allelic.div.z, y=1, label=locus))
+                                                                                            
+                                                                                            
 p2 <- ggplot(df, aes(x=div.diff)) + geom_histogram(alpha=.7, binwidth = 0.003)
 p3 <- ggplot(df, aes(x=p.vs.nuc)) + geom_histogram(alpha=.7, binwidth = 0.003)
 p4 <- ggplot(df, aes(x=p.vs.aa)) + geom_histogram(alpha=.7, binwidth = 0.005)
@@ -144,20 +147,50 @@ ggplot(df) +
   xlab("")  + ylab("Alleles per nucleotidee") +
   geom_text( data=subset(df, allelic.div > .1 | allelic.div < 0.02), aes(x=category, y=allelic.div, label=name), size=4, alpha=.8, vjust=-1.5, position = position_jitter(width=0.3)) 
 
+# by z score
+df$allelic.div.z <- scale(df$allelic.div, center = TRUE, scale = TRUE)
+
+ggplot(df) +
+  geom_point( data=subset(df, allelic.div.z < 1 | allelic.div.z > -1),aes(y=allelic.div.z), size=5, alpha=.5, position = position_jitter(w=0.15, h=0)) + 
+  coord_flip() + theme_minimal() + 
+  theme(axis.text.y=element_text(size=14), plot.title = element_text(face="bold"), axis.title.x=element_text(vjust=-.5, size=14)) +
+  geom_hline(yintercept=mean(df$allelic.div.z), size=1, colour="blue", linetype="dashed") +
+  ggtitle("Genetic diversity of loci, split by locus functional category") +
+  xlab("")  + ylab("Alleles per nucleotidee") +
+  geom_text( data=subset(df, allelic.div.z > 3), aes(x=category, y=allelic.div.z, label=name), size=4, alpha=.8, vjust=-1.5, position = position_jitter(width=0.3)) 
+
+
+ggplot(df) +
+  geom_boxplot(aes(x=category, y=allelic.div.z), alpha = 0, outlier.shape = " ") +
+  geom_point( data=subset(df, allelic.div.z < 1 | allelic.div.z > -1),aes(x=category, y=allelic.div.z), size=5, alpha=.5, position = position_jitter(w=0.15, h=0)) + 
+  geom_point( data=subset(df, allelic.div.z > 1 | allelic.div.z < -1),aes(x=category, y=allelic.div.z), size=5, alpha=.5) +
+  coord_flip() + theme_minimal() + 
+  theme(axis.text.y=element_text(size=14), plot.title = element_text(face="bold"), axis.title.x=element_text(vjust=-.5, size=14)) +
+  geom_hline(yintercept=mean(df$allelic.div.z), size=1, colour="blue", linetype="dashed") +
+  ggtitle("Genetic diversity of loci, split by locus functional category") +
+  xlab("")  + ylab("Alleles per nucleotidee") +
+  geom_text( data=subset(df, allelic.div.z > 3), aes(x=category, y=allelic.div.z, label=name), size=4, alpha=.8, vjust=-1.5, position = position_jitter(width=0.3)) 
+
+
+
+
 # with null model measure
 ggplot(df) +
   geom_boxplot(aes(x=category, y=div.diff), alpha = 0, outlier.shape = " ") +
   geom_point( data=subset(df, div.diff < 0.09 | div.diff > -0.03),aes(x=category, y=div.diff), colour="coral2", size=5, alpha=.5, position = position_jitter(w=0.15, h=0)) + 
   geom_point( data=subset(df, div.diff > 0.09 | div.diff < -0.03),aes(x=category, y=div.diff), colour="coral2", size=5, alpha=.5) +
   coord_flip() + theme_minimal() + guides(fill=FALSE) +
-  theme(axis.text.y=element_text(size=14), plot.title = element_text(face="bold"), axis.title.x=element_text(vjust=-.5, size=14)) +
+  theme(axis.text.y=element_text(size=14), plot.title = element_text(size="20", face="bold"), axis.title.x=element_text(vjust=-.5, size=14)) +
   geom_hline(yintercept=mean(df$div.diff), size=1, colour="blue", linetype="dashed") +
   ggtitle("Genetic diversity of loci, split by locus functional category") +
   xlab("")  + ylab("Difference in alleles/nucleotide from expected based on mean") +
   geom_text( data=subset(df, div.diff > 0.09 | div.diff < -0.03), aes(x=category, y=div.diff, label=name), size=4, alpha=.8, vjust=-1.5, position = position_jitter(width=0.3)) 
 
+
+
+
 # by proportion of variable sites (nuc)
-ggplot(df) +
+ggplot(subset(df, category != "" > 0.09 | div.diff < -0.03)) +
   geom_boxplot(aes(x=category, y=p.vs.nuc), alpha = 0, outlier.shape = " ") +
   geom_point( aes(x=category, y=p.vs.nuc), colour="coral2", size=5, alpha=.5, position = position_jitter(w=0.15, h=0)) +
   coord_flip() + theme_minimal() + 
@@ -174,9 +207,24 @@ ggplot(df) +
   coord_flip() + theme_minimal() + 
   theme(axis.text.y=element_text(size=14), legend.position=c(.1, .85), plot.title = element_text(face="bold"), axis.title.x=element_text(vjust=-.5, size=14)) +
   geom_hline(yintercept=mean(df$r.count), size=1, colour="blue", linetype="dashed") +
-  ggtitle("Genetic diversity of loci, split by locus functional category and coloured by gene length") +
+  ggtitle("Measure of selection per locus, split by locus functional category") +
   xlab("")  + ylab("Ratio of unique alleles in nucleotide to amino acid format") +
   geom_text( data=subset(df, r.count > .92 | r.count < .3), aes(x=category, y=r.count, label=name), size=4, alpha=.8, vjust=-1.5, position = position_jitter(width=0.3)) 
+
+# by z
+df$r.count.z <- scale(df$r.count, center = TRUE, scale = TRUE)
+ggplot(df) +
+  geom_boxplot(aes(x=category, y=r.count.z), alpha = 0, outlier.shape = " ") +
+  geom_point( aes(x=category, y=r.count.z), colour="coral2", size=5, alpha=.5, position = position_jitter(w=0.15, h=0)) +
+  coord_flip() + theme_minimal() + 
+  theme(axis.text.y=element_text(size=14), legend.position=c(.1, .85), plot.title = element_text(face="bold"), axis.title.x=element_text(vjust=-.5, size=14)) +
+  geom_hline(yintercept=mean(df$r.count), size=1, colour="blue", linetype="dashed") +
+  ggtitle("Measure of selection per locus, split by locus functional category") +
+  xlab("")  + ylab("Ratio of unique alleles in nucleotide to amino acid format") +
+  geom_text( data=subset(df, r.count > .92 | r.count < .3), aes(x=category, y=r.count, label=name), size=4, alpha=.8, vjust=-1.5, position = position_jitter(width=0.3)) 
+
+
+
 
 # by ratio of variable sites in nucleotide or amino acid form
 ggplot(df) +
@@ -187,14 +235,20 @@ ggplot(df) +
   geom_hline(yintercept=mean(df$r.vs), size=1, colour="blue", linetype="dashed") +
   ggtitle("Genetic diversity of loci, split by locus functional category and coloured by gene length") +
   xlab("")  + ylab("Ratio of variable sites in nucletodie to ami alleles in nucleotide to amino acid format") +
-  geom_text( data=subset(df, r.vs > 2.8 | r.vs < 1), aes(x=category, y=r.vs, label=name), size=4, alpha=.8, vjust=-1.5, position = position_jitter(width=0.3)) 
+  geom_text( data=subset(df, r.vs > 0.8 | r.vs < 1), aes(x=category, y=r.vs, label=name), size=4, alpha=.8, vjust=-1.5, position = position_jitter(width=0.3)) 
 
 
-
+t.test(0.0714,mu=mean(df$div.diff))
 
 ggplot(df, aes(p.vs.aa, allelic.div)) + geom_point() +
   geom_text( data=subset(df, p.vs.aa < 0.01), aes(x=p.vs.aa, y=allelic.div, label=name), size=4)
 
 ggplot(df, aes(p.vs.nuc, div.diff)) + geom_point() +
+  geom_text( data=subset(df, div.diff > 0.15), aes(x=p.vs.nuc, y=div.diff, label=name), size=4)
+
+ggplot(df, aes(missing, div.diff)) + geom_point()
+ggplot(df, aes(missing, p.vs.nuc)) + geom_point()
+
++
   geom_text( data=subset(df, div.diff > 0.15), aes(x=p.vs.nuc, y=div.diff, label=name), size=4)
 

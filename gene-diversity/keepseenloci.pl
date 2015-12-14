@@ -18,7 +18,7 @@ sub Usage( ; $ );
 my $fTab;    # file with isolate/locus table where relevant loci are named
 my $dFAS;    # directory where all the FASTA files for each locus are
 my $dOut;    # directory where only the relevant parts of those FASTA files will be copied to
-my $dup = 1; #  turned to the smallest number of duplicates necessary for locus to be considered, default is 1
+my $dup = 1; # turned to the smallest number of duplicates necessary for locus to be considered, default is 1
 
 # Get Command line options, exits if conditions don't look right
 if( scalar(@ARGV) < 1 ) { Usage("Not enough command line options"); exit; }
@@ -43,7 +43,7 @@ if(! -e $fTab)  { Usage("Input file does not exist: $fTab"); exit; }
 if(! -e $dFAS)  { Usage("Input directory doesn't exist: $dFAS"); exit; }
 if(  -e $dOut)  { Usage("Output directory already exists: $dOut"); exit; }
 
-# Makes output directory and prepared output count file, including header
+# Makes output directory and prepares output count file, including header
 mkdir $dOut;
 my $uniquefile = $dOut . "-count-nuc.txt";
 
@@ -53,7 +53,7 @@ open(UNIQUENUC, '>', $uniquefile) or die "Cannot open $uniquefile\n";
 	print UNIQUENUC "locus,count-nuc,missing\n";
 
 
-# Transposing:
+# Transposing, starting with set up...
 print "\nTransposing...";
 my @original = (); #where data will go in the beginning
 my @transposed = (); #where data is moved as its processed
@@ -121,14 +121,9 @@ foreach my $locusrow (@newtable) # loop per locus
     	{
     		if ( $allele =~ /;/ ) # in case of paralogous loci
     		{    			
-    			my @paralogous = split (';', $allele);
-    			    			
     			foreach my $paraallele (@paralogous) #go through each allele in locus
-			{ $unique_alleles{$paraallele}++; } #increase the frequency count
-			
     		}
     		
-    		elsif ( $allele !~ /\d+/ ) # in case it isn't a numeric allele designation
     		{ $unique_alleles{"0"}++; } # just add as 0
     		
     		else # if just one numeric value, add it 
@@ -206,7 +201,6 @@ foreach my $locusrow (@newtable) # loop per locus
 			{ print " etc."; last; }
 		 }
 		print "\n";
-	}	
 
 } # closes per-locus loop
 
