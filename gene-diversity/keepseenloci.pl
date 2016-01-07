@@ -26,7 +26,7 @@ my $i = 0;
 my $arg_cnt = 0; 
 for ($i=0; $i<=$#ARGV; $i++)
 {
-	if($ARGV[$i] eq "-h")	          { Usage("You asked for help"); exit; }
+	if($ARGV[$i] eq "-h")	    { Usage("You asked for help"); exit; }
 	if($ARGV[$i] eq "-tin")           { $fTab = $ARGV[$i+1] || ''; $arg_cnt++; }
 	if($ARGV[$i] eq "-din")           { $dFAS = $ARGV[$i+1] || ''; $arg_cnt++; }
 	if($ARGV[$i] eq "-dout")          { $dOut = $ARGV[$i+1] || ''; $arg_cnt++; }
