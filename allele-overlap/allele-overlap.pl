@@ -4,15 +4,31 @@
 # PROGRAM: allele-overlap.pl
 # AUTHOR:  Sofia Hauck
 # CREATED: 20.06.2014
-# UPDATED: ----------
-# VERSION: v1.00
+# UPDATED: 26.01.2016
+# VERSION: v1.10
 #--------------------------------------------------------
 # VERSION HISTORY
 # v1.00 (20.06.2014) created from spilicing older perl script together
-# v2.00 (09.04.2014) major re-write, against splicing things 
+# v1.10 (26.01.2016) making it work with big table and separating list 
 #--------------------------------------------------------
 # transposing adapted from http://stackoverflow.com/questions/3249508/transpose-in-perl
 #--------------------------------------------------------
+
+# start with a table and list that separates into two groups
+# read the list into hash with keys as isolate names, values as name of list groups
+	# check that only two values exist
+# read the table, isolate by isolate
+# only if isolate exists in grouping hash
+# read into locus allele frequency hash for that group 
+# do the usual results from there?
+#
+#
+
+
+
+
+
+
 
 use strict;
 use warnings;
@@ -21,9 +37,10 @@ use warnings;
 sub Usage( ; $ );
 
 # Defines scalars needed from command line
-my $fIn1;
-my $fIn2;
+my $fTable;
+my $fGroup;
 my $fOut;
+my $skipZero;
 
 # Get Command line options, exits if conditions don't look right
 if( scalar(@ARGV) < 1 ) { Usage("Not enough command line options"); exit; }
@@ -31,23 +48,26 @@ my $i = 0;
 my $arg_cnt = 0; 
 for ($i=0; $i<=$#ARGV; $i++)
 {
-	if($ARGV[$i] eq "-h")	       { Usage("You asked for help"); exit; }
-	if($ARGV[$i] eq "-in1")         { $fIn = $ARGV[$i+1] || ''; $arg_cnt++; }
-	if($ARGV[$i] eq "-in2")         { $fIn = $ARGV[$i+1] || ''; $arg_cnt++; }
-	if($ARGV[$i] eq "-out")        { $fOut = $ARGV[$i+1] || ''; $arg_cnt++; }
+	if($ARGV[$i] eq "-h")			{ Usage("You asked for help"); exit; }
+	if($ARGV[$i] eq "-table")		{ $fTable = $ARGV[$i+1] || ''; $arg_cnt++; }
+	if($ARGV[$i] eq "-group")		{ $fGroup = $ARGV[$i+1] || ''; $arg_cnt++; }
+	if($ARGV[$i] eq "-out")			{ $fOut = $ARGV[$i+1] || ''; $arg_cnt++; }
+	if($ARGV[$i] eq "-skipzero")	{ $skipZero = 1 || ''; $arg_cnt++; }
 }
 
 # Command line option checks
-if(! defined $fIn) { Usage("Missing Option: -i|--in <FILE>"); exit; }
-if(! defined $fOut) { Usage("Missing Option: -o|--out <FILE>"); exit; }
+if(! defined $fTable) 	{ Usage("Missing Option: -table <FILE>"); exit; }
+if(! defined $fGroup) 	{ Usage("Missing Option: -group <FILE>"); exit; }
+if(! defined $fOut) 	{ Usage("Missing Option: -out <FILE>"); exit; }
 
 # File checks
-if(! -e $fIn)   { Usage("Input file does not exist: $fIn"); exit; }
-if(  -e $fOut)  { Usage("Output file already exists: $fOut"); exit; }
+if(! -e $fTable)	{ Usage("Input file does not exist: $fTable"); exit; }
+if(! -e $fGroup)	{ Usage("Input file does not exist: $fGroup"); exit; }
+if(  -e $fOut )		{ Usage("Output file already exists: $fOut"); exit; }
 
 
 # Transponsing if necessary
-if($transpose == 1)
+if($transpose == 1) #!! change to detection?
 {
 	my $t_fIn = $fIn . "-transp"; 
 	my @original = (); #where data will go in the beginning
@@ -94,9 +114,7 @@ if($transpose == 1)
 
 #from this point on, if asks for infile, check if transpose, then use middle file?
 
-if ($transpose == 1)
-{ open(INFILE, $t_fIn) or die "Cannot open $t_fIn \n"; }
-else
+
 { open(INFILE, $fIn) or die "Cannot open $fIn \n"; }
 
 	<INFILE>; # Skips header
