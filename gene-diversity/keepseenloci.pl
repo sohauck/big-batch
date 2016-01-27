@@ -65,7 +65,7 @@ open(INFILE, $fTab) or die "Cannot open $fTab\n";
 	{
 		chomp($line); $line =~ s/\r\n?|\n//g; #just in case, removes all other types of line break
 	
-		my @row = split (/[,\t]/, $line); # works if comma-separated file
+		my @row = split (/\t/, $line); # separates by tabs
 
 		$rowcount = @row;
 		$columncount ++;
