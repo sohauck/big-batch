@@ -1,0 +1,10 @@
+765	M. bovis
+766	M. bovis
+767	M. bovis
+67794	M. bovis
+67795	M. bovis
+55602	M. canetti
+55603	M. canetti
+55604	M. canetti
+55605	M. canetti
+55606	M. canetti
