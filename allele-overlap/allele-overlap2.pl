@@ -78,13 +78,13 @@ open(INGROUPS, $fTable) or die "Cannot open $fTable\n";
 
 	   my @row = split ('\t', $line); # split row by tabs into array of cells
 
-		$groups{@row[0]} = @row[1]; # uses only the first and second column, extra is ignored
+		$groups{$row[0]} = $row[1]; # uses only the first and second column, extra is ignored
 	}
 close(INGROUPS);
 
 # check that only two values exist
-my @groupnames = values %hash;
-print "The groups are @groupsnames.\n";
+my @groupnames = values %groups;
+print "The groups are @groupnames.\n";
 
 if ( @groupnames != 2 )
 { print "If there aren't just two groups, this isn't going to work.\n"; exit;}
@@ -93,21 +93,20 @@ if ( @groupnames != 2 )
 # Read in the main table
 
 # if no manual override, read first line to check whether to transpose
-if ( $transpose = "check needed" )
+open(INTABLE, $fTable) or die "Cannot open $fTable\n";
+my $header = <INTABLE>; 
+my @headerrow = split ('\t', $line)
+
+if ( $transpose == "check needed" )
 {
 	print "Since direction of table isn't specific, now taking a guess...\n";
 	
-	open(INTABLE, $fTable) or die "Cannot open $fTable\n";
-	
-	my $header = <INTABLE>; 
-	my @row = split ('\t', $line)
-	
-	if ( @row[0] = "Locus" ) # if the top right cell is "Locus" as Genome Comparator tables...
+	if ( $headerrow[0] = "Locus" ) # if the top right cell is "Locus" as Genome Comparator tables...
 	{
 		$transpose = 0;
 		print "Since 'Locus' is at the top right, looks like GC format, and no transposing needed.\n";
 	}
-	elsif ( @row[0] = "id" ) # if the top right cell is "id" as most exported datasets are...
+	elsif ( $headerrow[0] = "id" ) # if the top right cell is "id" as most exported datasets are...
 	{
 		$transpose = 1;
 		print "Since 'id' is at the top right, looks like 'Export Data set' format, and will be transposing.\n";
@@ -125,7 +124,7 @@ if ( $transpose = "check needed" )
 			$itemcount ++;
 		}
 		
-		if ( $lookslikelocus >= (0.9 * $itemcount) ) # if mostly matches to the locus name format
+		if ( $lookslikelocus >= (0.9 * $itemcount) ) # if mostly matches to the locus name format (to account for fragments)
 		{
 			$transpose = 1;
 			print "Looks like there are loci names in the header row, so will be transposing the table.\n";
@@ -186,7 +185,7 @@ if ( $transpose = 0 )
 		push ( @aoaTable, [ @row ] );
 	} 
 
-	if ( $rowcount >= 1 ) { die "You only have no or just one column so your csv is probably not in Unix (LF) format.\n"; }
+	if ( $rowcount >= 1 ) { die "You only have one column so something has probably gone wrong with line breaks.\n"; }
 }
 
 close(INTABLE);
@@ -196,6 +195,18 @@ close(INTABLE);
 
 # end up with two arrays with the indexes of the groups
 
+if ( $transpose = 0 )
+{
+}
+
+elsif ( $ transpose = 1 )
+{
+}
+
+
+
+
+
 
 # Actually the interesting bit of sorting alleles
 
@@ -204,80 +215,80 @@ close(INTABLE);
 # each array 
 
 
-open(OUTFILE, '>>', $fOut); #open results file
-	print OUTFILE "locus" ."\t". "status" ."\t". "total alleles" ."\t". "specific alleles" ."\t". "shared alleles" ."\t". "alleles shared"."\n";
-close(OUTFILE); 
-
-# goes through each locus (as key in hash) and its array (list of allele numbers)
-my @hashkeys = keys(%locitable);
-@hashkeys = sort(@hashkeys); 
-
-foreach my $locus ( @hashkeys )
-{
-	# start with empty hash and array
-	my %unique_alleles = ();
-	my @sharedalleles = ();
-	
-	# take all the elements of the array (list of allelel numbers) at that key (locus)
-	my @alleleArray = @{ $locitable{$locus} };
-	
-	# go through array for each element, making a frequency count hash 
-	foreach my $allele (@alleleArray)
-	{
-    		# create that allele number as a value in hash if it doesn't yet exist
-    		if ( !exists($unique_alleles{$allele}))
-    		{ $unique_alleles{$allele} = 1; }
-    		
-    		else
-    		{ 
-    			$unique_alleles{$allele} ++;
-    			if ($unique_alleles{$allele} == 2) 
-    			{ push @sharedalleles, $allele; } #when allele is known to be shared, add to @sharedallele
-    		} 
-	}
-	
-	# take values (frequencies of alleles) from frequency count hash
-	my @values = values(%unique_alleles);
-	@values = sort {$a <=> $b} @values;
-	
-	# determine count of total, shared and specific alleles
-	my $alleleCount = @values;
-	my $specificCount = $alleleCount - @sharedalleles;
-	my $sharedCount = @sharedalleles;
-	my $status;
-	
-	# determining results
-	
-	# only one allele, means there is no variation and hence no specificity is possible
-	if ($#values == 0)
-	{ $status = "no variation"; }
-	
-	else
-	{
-		my $first = shift(@values); #first value in frequencies into $first
-		my $last = pop(@values); #last value in frequencies into $last
-		
-		if ($first == $last) #if first and last are all the same, then all are the same since array is sorted
-		{
-			if ($first == 1) #if all alleles occur only once across all groups
-			{ $status = "all specific"; } #then must be specific to the group
-			elsif ($first == 2) #if all alleles occur in each group once
-			{ $status = "all shared"; } #then must all overlap
-		}
-		else #mix of frequencies
-		{
-			if ($last == 2) #if highest frequency is total number of files compared
-			{ $status = "shared"; }
-			else #no alleles shared among all of the groups
-			{ $status = "some shared"; }
-		}
-	}
-	
-	open(OUTFILE, '>>', $fOut); #open results file
-	print OUTFILE $locus ."\t". $status ."\t". $alleleCount ."\t". $specificCount ."\t". $sharedCount ."\t". join(", ", @sharedalleles) ."\n";
-	close(OUTFILE); 
-	
-}
+# open(OUTFILE, '>>', $fOut); #open results file
+# 	print OUTFILE "locus" ."\t". "status" ."\t". "total alleles" ."\t". "specific alleles" ."\t". "shared alleles" ."\t". "alleles shared"."\n";
+# close(OUTFILE); 
+# 
+# # goes through each locus (as key in hash) and its array (list of allele numbers)
+# my @hashkeys = keys(%locitable);
+# @hashkeys = sort(@hashkeys); 
+# 
+# foreach my $locus ( @hashkeys )
+# {
+# 	# start with empty hash and array
+# 	my %unique_alleles = ();
+# 	my @sharedalleles = ();
+# 	
+# 	# take all the elements of the array (list of allelel numbers) at that key (locus)
+# 	my @alleleArray = @{ $locitable{$locus} };
+# 	
+# 	# go through array for each element, making a frequency count hash 
+# 	foreach my $allele (@alleleArray)
+# 	{
+#     		# create that allele number as a value in hash if it doesn't yet exist
+#     		if ( !exists($unique_alleles{$allele}))
+#     		{ $unique_alleles{$allele} = 1; }
+#     		
+#     		else
+#     		{ 
+#     			$unique_alleles{$allele} ++;
+#     			if ($unique_alleles{$allele} == 2) 
+#     			{ push @sharedalleles, $allele; } #when allele is known to be shared, add to @sharedallele
+#     		} 
+# 	}
+# 	
+# 	# take values (frequencies of alleles) from frequency count hash
+# 	my @values = values(%unique_alleles);
+# 	@values = sort {$a <=> $b} @values;
+# 	
+# 	# determine count of total, shared and specific alleles
+# 	my $alleleCount = @values;
+# 	my $specificCount = $alleleCount - @sharedalleles;
+# 	my $sharedCount = @sharedalleles;
+# 	my $status;
+# 	
+# 	# determining results
+# 	
+# 	# only one allele, means there is no variation and hence no specificity is possible
+# 	if ($#values == 0)
+# 	{ $status = "no variation"; }
+# 	
+# 	else
+# 	{
+# 		my $first = shift(@values); #first value in frequencies into $first
+# 		my $last = pop(@values); #last value in frequencies into $last
+# 		
+# 		if ($first == $last) #if first and last are all the same, then all are the same since array is sorted
+# 		{
+# 			if ($first == 1) #if all alleles occur only once across all groups
+# 			{ $status = "all specific"; } #then must be specific to the group
+# 			elsif ($first == 2) #if all alleles occur in each group once
+# 			{ $status = "all shared"; } #then must all overlap
+# 		}
+# 		else #mix of frequencies
+# 		{
+# 			if ($last == 2) #if highest frequency is total number of files compared
+# 			{ $status = "shared"; }
+# 			else #no alleles shared among all of the groups
+# 			{ $status = "some shared"; }
+# 		}
+# 	}
+# 	
+# 	open(OUTFILE, '>>', $fOut); #open results file
+# 	print OUTFILE $locus ."\t". $status ."\t". $alleleCount ."\t". $specificCount ."\t". $sharedCount ."\t". join(", ", @sharedalleles) ."\n";
+# 	close(OUTFILE); 
+# 	
+# }
 
 
 #---------------------------------------------------------------
@@ -293,14 +304,24 @@ sub Usage( ; $ )
 allele-overlap.pl
 
 Description:
-  Takes two lists, removes all items in second list from first list, returns remaining
+	
 
 Example Input Format:
-  Dataset as exported from PubMLST
+  Dataset as exported from PubMLST or Genome Comparator
+  
+  Locus			Asdfg	Qwert	Zxcvb
+  BACT000001	1		3		X
+  BACT000002	I		new#1	0
+  
+  List of 
+  Asdfg	L2
+  Qwert	L2
+  Zxcvb	L1
   
 Example Output Format:
   		AB		BC		AC		ACB
   BACT01	unique	
+  
   
 Usage:
 Program.pl [ options ]
@@ -313,5 +334,5 @@ Program.pl [ options ]
 EOU
 
 print "Quit because: $message\n";
-print "ARGV was " . join (", ", @ARGV);
+print "ARGV was..." . join ("\n", @ARGV);
 }
