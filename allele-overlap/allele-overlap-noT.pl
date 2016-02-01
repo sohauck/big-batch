@@ -24,8 +24,7 @@
 # only if isolate exists in grouping hash
 # read into locus allele frequency hash for that group 
 # do the usual results from there?
-#
-#
+
 
 
 use strict;
@@ -33,6 +32,7 @@ use warnings;
 
 # Declares subroutines
 sub Usage( ; $ );
+sub Unique( ); 
 
 # Defines scalars needed from command line
 my $fTable;
@@ -53,7 +53,6 @@ for ($i=0; $i<=$#ARGV; $i++)
 	if($ARGV[$i] eq "-out")			{ $fOut = $ARGV[$i+1] || ''; $arg_cnt++; }
 	if($ARGV[$i] eq "-skipsymbols")	{ $skipSym = 1 || ''; $arg_cnt++; }
 	if($ARGV[$i] eq "-transpose")	{ $transpose = $ARGV[$i+1] || ''; $arg_cnt++; }
-
 }
 
 # Check that required options were included
@@ -66,120 +65,38 @@ if(! -e $fTable)	{ Usage("Input file does not exist: $fTable"); exit; }
 if(! -e $fGroup)	{ Usage("Input file does not exist: $fGroup"); exit; }
 if(  -e $fOut )		{ Usage("Output file already exists: $fOut"); exit; }
 
-
 # Read in the "groups" file
 # into a hash where isolates are keys, and groups are values
 my %groups = ();
 
-open(INGROUPS, $fTable) or die "Cannot open $fTable\n";
+open(INGROUPS, $fGroup) or die "Cannot open $fGroup\n";
 	while ( my $line = <INGROUPS> )
 	{
-	   chomp($line); $line =~ s/\r\n?|\n//g; # clean up line breaks
-
-	   my @row = split ('\t', $line); # split row by tabs into array of cells
-
+		chomp($line); $line =~ s/\r\n?|\n//g; # clean up line breaks
+		my @row = split ('\t', $line); # split row by tabs into array of cells
 		$groups{$row[0]} = $row[1]; # uses only the first and second column, extra is ignored
 	}
 close(INGROUPS);
 
-# check that only two values exist
-my @groupnames = values %groups;
-print "The groups are @groupnames.\n";
+# check that only two groups exist exist
+my @groupnames =  ( values %groups );
+@groupnames = Unique ( @groupnames );
+
 
 if ( @groupnames != 2 )
 { print "If there aren't just two groups, this isn't going to work.\n"; exit;}
-
+else
+{ print "The groups are '" . $groupnames[0] . "' and '" . $groupnames[1] . "'.\n"; }
 
 # Read in the main table
-
-# if no manual override, read first line to check whether to transpose
-if ( $transpose == "check needed" )
-{
-	print "Since direction of table isn't specific, now taking a guess...\n";
-	
-	open(INTABLE, $fTable) or die "Cannot open $fTable\n";
-	my $header = <INTABLE>; 
-	close(INTABLE);
-	my @headerrow = split ('\t', $header);
-	
-	if ( $headerrow[0] = "Locus" ) # if the top right cell is "Locus" as Genome Comparator tables...
-	{
-		$transpose = 0;
-		print "Since 'Locus' is at the top right, looks like GC format, and no transposing needed.\n";
-	}
-	elsif ( $headerrow[0] = "id" ) # if the top right cell is "id" as most exported datasets are...
-	{
-		$transpose = 1;
-		print "Since 'id' is at the top right, looks like 'Export Data set' format, and will be transposing.\n";
-	}
-	
-	else # if the top right cell isn't anything helpful
-	{
-		my $itemcount = 0;
-		my $lookslikelocus = 0;
-		
-		foreach @row # read each item in that first line
-		{
-			if ( /^[A-Z]{4}[0-9]{6}/ ) # see if it has the AAAA123456 format
-			{ $lookslikelocus ++; }
-			$itemcount ++;
-		}
-		
-		if ( $lookslikelocus >= (0.9 * $itemcount) ) # if mostly matches to the locus name format (to account for fragments)
-		{
-			$transpose = 1;
-			print "Looks like there are loci names in the header row, so will be transposing the table.\n";
-		}
-		else # if not very many matches for locus name format, the loci are probably in the rows already
-		{
-			$transpose = 0;
-			print "Doesn't look like we have loci names in the header row, so no transposing needed.\n";
-		}
-	}
-	
-}
 
 # now that we know whether to transpose or not, read the table
 
 my @aoaTable = ();
-
-if ( $transpose == 1 )
-{
-	my @original = (); my @aoaTable = ();
-	my $columncount = 0; my $rowcount = 0; # refers to rows and columns of the transposed table, not the original
+my $rowcount = 0;
 	
 	open(INTABLE, $fTable) or die "Cannot open $fTable\n";
-	my $header = <INTABLE>; 
-	my @headerrow = split ('\t', $header);
-	
-	while ( my $line = <INTABLE> )
-	{
-		chomp($line); $line =~ s/\r\n?|\n//g; # clean up line breaks
-	   
-		my @row = split ('\t', $line); # split row by tabs into array of cells
-		if ( $rowcount < 2 ) { $rowcount = @row; } # transposed row count determined from header of original 
-		
-		$columncount ++; #add to columncount with each row (will become column)
-		   
-		push ( @original, [ @row ] );
-	} 
 
-	if ( $columncount == 1 ) { die "You only have one column so your csv is probably not in Unix (LF) format.\n"; }
-
-	for my $row (@original) #actually does the transposition
-	{
-		for my $column (0 .. $rowcount) 
-		{ push(@{$aoaTable[$column]}, $row->[$column]); }
-	}
-	
-	@aoaTable = splice (@aoaTable, 0, $rowcount); #removes empty rows if more isolates than loci
-}
-
-
-if ( $transpose == 0 ) 
-{
-	my $rowcount = 0;
-	
 	while ( my $line = <INTABLE> )
 	{
 		chomp($line); $line =~ s/\r\n?|\n//g; # clean up line breaks
@@ -190,25 +107,17 @@ if ( $transpose == 0 )
 		push ( @aoaTable, [ @row ] );
 	} 
 
-	if ( $rowcount >= 1 ) { die "You only have one column so something has probably gone wrong with line breaks.\n"; }
-}
+	if ( $rowcount <= 1 ) { die "You only have one column so something has probably gone wrong with line breaks.\n"; }
+
 
 close(INTABLE);
 
 
 # Determining which columns go to which group
 
-# end up with two arrays with the indexes of the groups
+my @headerrow = $aoaTable[0];
 
-if ( $transpose == 0 )
-{
-}
-
-elsif ( $ transpose == 1 )
-{
-}
-
-
+print @headerrow; 
 
 
 
@@ -300,9 +209,17 @@ elsif ( $ transpose == 1 )
 # Subroutines
 #---------------------------------------------------------------
 
-sub 
 
-sub Transpose( )
+sub Unique
+ {
+    my %seen;
+    grep !$seen{$_}++, @_;
+}
+
+my @array = qw(one two three two three);
+my @filtered = uniq(@array);
+
+print "@filtered\n";
 
 sub Usage( ; $ )
 {
@@ -318,26 +235,24 @@ Description:
 Example Input Format:
   Dataset as exported from PubMLST or Genome Comparator
   
-  Locus			Asdfg	Qwert	Zxcvb
+  Locus		Asdfg	Qwert	Zxcvb
   BACT000001	1		3		X
   BACT000002	I		new#1	0
   
-  List of 
+  List of isolate names / ids and groups 
   Asdfg	L2
   Qwert	L2
   Zxcvb	L1
   
 Example Output Format:
-  		AB		BC		AC		ACB
-  BACT01	unique	
   
   
 Usage:
 Program.pl [ options ]
 
---in        <FILE> - input filename
---subtract	<FILE>,<FILE>,... - any number of filenames, separated by commas
---out       <FILE> - output filename
+-intable        <FILE> - input filename
+-ingroup        <FILE> - input filename
+-out       <FILE> - output filename
 -h|--help     - print usage instructions
 
 EOU
