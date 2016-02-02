@@ -14,10 +14,8 @@
 # transposing adapted from http://stackoverflow.com/questions/3249508/transpose-in-perl
 #--------------------------------------------------------
 
-# start with a table and list that separates into two groups
 # read the table, isolate by isolate
 	# make an educated guess on which way around the table is?? ^[A-Z]{4}[0-9]{6}
-	# either way, end up with array of arrays
 	# for each array, take first item as locus name, others go as alleles into frequency hash
 		# don't need to be integers
 		# have specific checks for "X", "0" and "I"?
@@ -32,7 +30,7 @@ use warnings;
 
 # Declares subroutines
 sub Usage( ; $ );
-sub Unique( ); 
+# also Unique, ReadTableIn, 
 
 # Defines scalars needed from command line
 my $fTable;
@@ -74,13 +72,15 @@ open(INGROUPS, $fGroup) or die "Cannot open $fGroup\n";
 	{
 		chomp($line); $line =~ s/\r\n?|\n//g; # clean up line breaks
 		my @row = split ('\t', $line); # split row by tabs into array of cells
-		$groups{$row[0]} = $row[1]; # uses only the first and second column, extra is ignored
+		
+		# first column is isolate unique ID, second column is whatever group, ignore the rest
+		$groups{$row[0]} = $row[1]; 
 	}
 close(INGROUPS);
 
 # check that only two groups exist exist
-my @groupnames =  ( values %groups );
-@groupnames = Unique ( @groupnames );
+my @groupnames =  ( values %groups ); # groups are the values in the hash that had isolate-group pairs
+@groupnames = Unique ( @groupnames ); # only really care about the count of 2
 
 
 if ( @groupnames != 2 )
@@ -88,41 +88,77 @@ if ( @groupnames != 2 )
 else
 { print "The groups are '" . $groupnames[0] . "' and '" . $groupnames[1] . "'.\n"; }
 
-# Read in the main table
 
+# Read in the main table
 # now that we know whether to transpose or not, read the table
 
-my @aoaTable = ();
-my $rowcount = 0;
-	
-	open(INTABLE, $fTable) or die "Cannot open $fTable\n";
-
-	while ( my $line = <INTABLE> )
-	{
-		chomp($line); $line =~ s/\r\n?|\n//g; # clean up line breaks
-		  
-		my @row = split ('\t', $line); # split row by tabs into array of cells
-		$rowcount ++;
-		
-		push ( @aoaTable, [ @row ] );
-	} 
-
-	if ( $rowcount <= 1 ) { die "You only have one column so something has probably gone wrong with line breaks.\n"; }
-
-
-close(INTABLE);
-
+my $tableref = ReadTableIn ( $fTable );
+my @aoaTable = @$tableref; #puts table, in array of arrays format, into aoaTable
 
 # Determining which columns go to which group
 
-my @headerrow = $aoaTable[0];
+my $headerref = $aoaTable[0]; #dereferences the first line of the table
+my @grouporder = (); 
 
-print @headerrow; 
+foreach ( @$headerref )
+{
+	if ( /^(\S+)/ && $groups{$1} )
+	{
+		push @grouporder, $groups{$1};
+	}
+	else 
+	{ 
+		push @grouporder, "Neither Group";
+		print "'" . $_ . "' was not an isolate found in the grouping list.\n"; 
+	}
+}
 
+
+# @grouporder should contain only the two names that exist in @groupnames, and undefined elements where not interested
 
 
 
 # Actually the interesting bit of sorting alleles
+my %firstGroup =  (); # corresponds to $groupnames[0]
+my %secondGroup = (); # corresponds to $groupnames[1]
+
+
+for  (my $i = 0; $i < $#aoaTable; $i++)
+{
+	my $lineref = $aoaTable[$i]; # find reference to line in AoA table
+	
+	my $locus = shift(@$lineref); # put first item in line into $locus scalar
+	$locus =~ /^(\S+)/; $locus = $1; # keep only what's before the first white space
+	
+	print "Now at $i, locus is $locus.\n";
+	
+	for (my $i = 0; $i < scalar(@$lineref); $i++)
+	{
+		if ( $grouporder[$i] == $groupnames[0] )
+		{ print "Match for $groupnames[0];"} 
+		elsif ( $grouporder[$i] == $groupnames[1] )
+		{ print "Match for $groupnames[1];"} 
+		elsif ( $grouporder[$i] == "Neither Group" )
+		{ print "Skipping since not in interest groups"} 
+		print "\n";
+	}
+# 		
+# 	adds every allele number to loci table under that locus name, except "ignore" values
+#	foreach my $allele (@$lineref)
+#	{
+# 		
+# 		
+# 		
+# 		unless ( $skipSym == 1 && ( $allele == "X" || $allele == "I" || $allele == "0" ) )
+# 		{ 
+# 		push @{$firstGroup{$locus}}, $allele; 
+# 		print @{$firstGroup{$locus}} . " has value " . $allele . "\n";
+# 		}
+#	}	
+
+	print "\n\n";
+}  
+
 
 
 # go through table that is now in AoA format
@@ -216,10 +252,34 @@ sub Unique
     grep !$seen{$_}++, @_;
 }
 
-my @array = qw(one two three two three);
-my @filtered = uniq(@array);
+sub ReadTableIn
+{
+	my $infile = $_[0];
+	my @aoaTable = ();
+	my $rowcount = 0; 
+	
+	open(INTABLE, $infile) or die "Cannot open $infile\n";
 
-print "@filtered\n";
+		while ( my $line = <INTABLE> )
+		{
+			chomp($line); $line =~ s/\r\n?|\n//g; # clean up line breaks
+		  
+			my @row = split ('\t', $line); # split row by tabs into array of cells
+			$rowcount ++;
+		
+			push ( @aoaTable, [ @row ] );
+		} 
+
+		if ( $rowcount <= 1 ) { die "You only have one column so something has probably gone wrong with line breaks.\n"; }
+	close(INTABLE);
+	
+	return \@aoaTable;
+}
+
+sub TransposeTable
+{
+
+}
 
 sub Usage( ; $ )
 {
@@ -231,6 +291,7 @@ allele-overlap.pl
 
 Description:
 	
+	Symbols that are excluded: X (missing), I (incomplete), 0 (zero)
 
 Example Input Format:
   Dataset as exported from PubMLST or Genome Comparator
@@ -240,12 +301,14 @@ Example Input Format:
   BACT000002	I		new#1	0
   
   List of isolate names / ids and groups 
+  
   Asdfg	L2
   Qwert	L2
   Zxcvb	L1
   
-Example Output Format:
   
+Example Output Format:
+  (not too sure yet...)
   
 Usage:
 Program.pl [ options ]
