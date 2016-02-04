@@ -149,8 +149,6 @@ if ( $transpose == 1 )
 my $headerref = $aoaTable[0]; #dereferences the first line of the table
 my @grouporder = (); # @grouporder should contain only the two names that exist in @groupnames, and undef otherwise
 
-print @$headerref;
-
 foreach ( @$headerref ) # loops through each item in first row
 {
 	if ( /^(\S+)/ && $groups{$1} ) # takes only the first "word", and only if it exists in the %groups hash
@@ -295,22 +293,29 @@ sub ReadTableIn
 }
 
 sub TransposeTable
-{
-	my $aoaRef = $_[0]; print "Hello 1\n";
-	my @original = @$aoaRef; print @$original[0];
+{	
+	print "Passed $_[0]   ";
 	
-	my $rowcount = @original; # refers to rows and columns of the transposed table, not the original
+	my $aoaRef = $_[0]; 
+	my @original = @$aoaRef; # @original is now array of references to arrays
 	
-	for my $row (@original)
+	print "Original now holds @original";
+		
+	my @transposed = ();
+	my $columncount = 0; 
+		
+	for my $row (@original) 
 	{
-		for my $column (0 .. $rowcount) 
-		{ push(@{$aoaTable[$column]}, $row->[$column]); print "Hello N\n"; }
+  		for my $column (0 .. $#{$row}) 
+  		{
+    		push(@{$transposed[$column]}, $row->[$column]);
+    		$columncount = $#{$row};
+  		}
 	}
 	
-	@aoaTable = splice (@aoaTable, 0, $rowcount); #removes empty rows if more isolates than loci
-	print "Hello 3\n";
+	@transposed = splice (@transposed, 0, $columncount); #removes empty rows if more isolates than loci
 	
-	return \@aoaTable; 
+	return \@transposed; 
 }
 
 sub Usage( ; $ )
