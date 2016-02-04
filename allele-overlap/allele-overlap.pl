@@ -119,7 +119,7 @@ if ( $transpose eq "check needed" )
 			$itemcount ++;
 		}
 		
-		if ( $lookslikelocus >= (0.9 * $itemcount) ) # if mostly matches to the locus name format (to account for fragments)
+		if ( $lookslikelocus >= (0.75 * $itemcount) ) # if mostly matches to the locus name format (to account for fragments)
 		{
 			$transpose = 1;
 			print "Looks like there are loci names in the header row, so will be transposing the table.\n";
