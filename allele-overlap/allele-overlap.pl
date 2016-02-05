@@ -293,13 +293,9 @@ sub ReadTableIn
 }
 
 sub TransposeTable
-{	
-	print "Passed $_[0]   ";
-	
+{		
 	my $aoaRef = $_[0]; 
 	my @original = @$aoaRef; # @original is now array of references to arrays
-	
-	print "Original now holds @original";
 		
 	my @transposed = ();
 	my $columncount = 0; 
@@ -313,7 +309,9 @@ sub TransposeTable
   		}
 	}
 	
-	@transposed = splice (@transposed, 0, $columncount); #removes empty rows if more isolates than loci
+	print "After transposing, the header row is " . join  ("\n", @{$transposed[0]});
+	
+	@transposed = splice (@transposed, 0, scalar(@{$original[0]})); #removes empty rows if more isolates than loci
 	
 	return \@transposed; 
 }
