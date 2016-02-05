@@ -251,15 +251,12 @@ for (my $i = 1; $i <= $#aoaTable; $i++) # going through each locus (one per line
 
 }  # closes locus loop
 
-
 close(OUTFILE); 
-
 
 
 #---------------------------------------------------------------
 # Subroutines
 #---------------------------------------------------------------
-
 
 sub Unique
  {
