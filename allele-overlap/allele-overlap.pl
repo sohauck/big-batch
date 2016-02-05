@@ -26,8 +26,8 @@ sub Usage( ; $ );
 my $fTable;
 my $fGroup;
 my $fOut;
-my $skipSym = 1;
-my @symbols = ( "X", "I", "0" ); 
+my $skipSym = 1; my @symbols = ( "X", "I", "0" ); # will eventually add an option 
+
 my $transpose = "check needed"; # unless manually specified, will take a guess
 
 # Get Command line options, exits if conditions don't look right
@@ -308,9 +308,7 @@ sub TransposeTable
     		$columncount = $#{$row};
   		}
 	}
-	
-	print "After transposing, the header row is " . join  ("\n", @{$transposed[0]});
-	
+		
 	@transposed = splice (@transposed, 0, scalar(@{$original[0]})); #removes empty rows if more isolates than loci
 	
 	return \@transposed; 
