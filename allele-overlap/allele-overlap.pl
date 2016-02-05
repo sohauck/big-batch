@@ -26,8 +26,7 @@ sub Usage( ; $ );
 my $fTable;
 my $fGroup;
 my $fOut;
-my $skipSym = 1; my @symbols = ( "X", "I", "0" ); # will eventually add an option 
-
+my $skipSym = 1; my @symbols = ( "X", "I", "0" ); # will eventually add an option to change symbols
 my $transpose = "check needed"; # unless manually specified, will take a guess
 
 # Get Command line options, exits if conditions don't look right
@@ -40,7 +39,7 @@ for ($i=0; $i<=$#ARGV; $i++)
 	if($ARGV[$i] eq "-table")		{ $fTable = $ARGV[$i+1] || ''; $arg_cnt++; }
 	if($ARGV[$i] eq "-group")		{ $fGroup = $ARGV[$i+1] || ''; $arg_cnt++; }
 	if($ARGV[$i] eq "-out")			{ $fOut = $ARGV[$i+1] || ''; $arg_cnt++; }
-	if($ARGV[$i] eq "-skipsymbols")	{ $skipSym = 1 || ''; $arg_cnt++; }
+	if($ARGV[$i] eq "-keepsymbols")	{ $skipSym = 0 || ''; $arg_cnt++; }
 	if($ARGV[$i] eq "-transpose")	{ $transpose = $ARGV[$i+1] || ''; $arg_cnt++; }
 }
 
@@ -98,12 +97,12 @@ if ( $transpose eq "check needed" )
 	
 	if ( $headerrow[0] eq "Locus" ) # if the top right cell is "Locus" as Genome Comparator tables...
 	{
-		$transpose = 0;
+		$transpose = "No";
 		print "Since 'Locus' is at the top right, looks like GC format, and no transposing needed.\n";
 	}
 	elsif ( $headerrow[0] eq "id" ) # if the top right cell is "id" as most exported datasets are...
 	{
-		$transpose = 1;
+		$transpose = "Yes";
 		print "Since 'id' is at the top right, looks like 'Export Data set' format, and will be transposing.\n";
 	}
 	
@@ -121,12 +120,12 @@ if ( $transpose eq "check needed" )
 		
 		if ( $lookslikelocus >= (0.75 * $itemcount) ) # if mostly matches to the locus name format (to account for fragments)
 		{
-			$transpose = 1;
+			$transpose = "Yes";
 			print "Looks like there are loci names in the header row, so will be transposing the table.\n";
 		}
 		else # if not very many matches for locus name format, the loci are probably in the rows already
 		{
-			$transpose = 0;
+			$transpose = "No";
 			print "Doesn't look like we have loci names in the header row, so no transposing needed.\n";
 		}
 	}
@@ -138,7 +137,7 @@ if ( $transpose eq "check needed" )
 
 my $tableref = ReadTableIn ( $fTable );
 my @aoaTable = @$tableref; #puts table, in array of arrays format, into aoaTable
-if ( $transpose == 1 )
+if ( $transpose eq "Yes" )
 {
 	$tableref = TransposeTable ( \@aoaTable );
 	@aoaTable = @$tableref;
@@ -340,6 +339,11 @@ Example Input Format:
   Asdfg	L2
   Qwert	L2
   Zxcvb	L1
+  
+  
+Other options: 
+  -transpose Yes // -transpose No, if rows are not / are loci
+  -keepsymbols, if don't want to throw out "X", "I" or "0" are alleles
   
   
 Example Output Format:
