@@ -38,70 +38,77 @@ for ($i=0; $i<=$#ARGV; $i++)
 }
 
 print "\n\n\nYou've started the gene diversity script!\n\n";
+my $dbname = "";
 
 # Command line option checks
 if(! defined $fTable) 
 { 
 	print "Where is the table with isolates and loci?\n"; 
 	$fTable = <STDIN>; 
-	chomp $fTable; $fTable =~ s/\s+$//;
+	chomp $fTable; $fTable =~ s/\s+$//; # removes white spaces and line breaks
 }
 if(! -e $fTable)  { Usage("Input table file does not exist: $fTable"); exit; }
 
 
 if(! defined $dFAS)  
 { 
-	print 	"Where is the directory that includes the FASTA sequences?\n".
+	print 	"\n\nWhere is the directory that includes the FASTA sequences?\n".
 			"Alternatively, enter the name of the sequence database in BIGSDB ".
 			"(for example: pubmlst_chlamydiales_seqdef) for exporting out of the BIGDdb API.\n";
 	$dFAS = <STDIN>; 
-	chomp $fTable; $fTable =~ s/\s+$//;
+	chomp $dFAS; $dFAS =~ s/\s+$//; # removes white spaces and line breaks
 	
 	if ( $dFAS =~ /\./ ) # if it looks like a file address
 	{ if(! -e $dFAS)  { Usage("Input FASTA directory doesn't exist: $dFAS"); exit; } }
 	else 
-	{ my $dbname = $dFAS; }
+	{ $dbname = $dFAS; }
 }
 
 if(! defined $dOut)  
 { 
-	# 
+	my @tableaddress = split ("/", $fTable);
+	my $tablename = $tableaddress[-1] =~ s/\.[^.]+$//;
 	
-	print 	"Name the directory where you'd like the results to go.\n".
-			"If you can't decide, leave this blank and a new folder, in the same place ".
-			"as your table is held will be created will be in a folder labelled 'GeneDiversityResults' 
-			in the same enclosing folder as where your table is.\n";
+	print 	"\n\nName the directory where you'd like the results to go.\n".
+			"If you can't decide, leave this blank and a new folder, in the same place as your ".
+			"table is held will be created, named 'GeneDiv-$tablename'\n";
 	$dOut = <STDIN>;
-	if ( chomp $dOut eq "")
+
+	if ( $dOut =~ /\w/ )
+	{ if(  -e $dOut)  { Usage("Output directory already exists: $dOut"); exit; } }
+	else 
 	{
-		pop ( split (".", shift ( split ("/", $fTable) ) ) ); 
+		push (@tableaddress, "GeneDiv-". $tablename . "/" ); 
+		$dOut = join ("/", @tableaddress); 
 	}
-	if(  -e $dOut)  { Usage("Output directory already exists: $dOut"); exit; }
 
 }
 
-print "Let's check if everything is correct before we start...\n";
+print "\n\n\nLet's check if everything is correct before we start...\n\n";
 
 if ( $transpose eq "No" )
-{ print	"Your table of isolates as columns and loci as rows is held at $fTable.\n" .}
+{ print	"Your table of isolates as columns and loci as rows is held at $fTable.\n"  }
 elsif ( $transpose eq "Yes" )
 { print	"Your table of loci as columns and isolates as rows is held at $fTable.\n"  }
 
-if (! defined $dbname )
-{ print "Your directory of FASTA sequences is at $dFAS.\n" }
+if ( $dbname =~ /\w/)
+{ print "FASTA sequences will be downloaded from the BIGSdb API from database $dbname.\n"; }
 else 
-{ print "FASTA sequences will be downloaded from the BIGSdb API from database $dbname"; }
+{ print "Your directory of FASTA sequences is at $dFAS.\n" }
 
 
 # Preparing for folder for output
 if( -e $dOut) { Usage("Output directory already exists: $dOut"); exit; }
-mkdir $dOut; 
+else
+{
+	print "Your results will be in the new directory $dOut\n";
+	mkdir $dOut; 
+}
 
 print "Taking alleles from BIGSDB via the API, now up to...\n";
 
 =begin GHOST 
 # Makes output directory and prepares output count file, including header
-	print UNIQUENUC "locus,count-nuc,missing\n";
 
 
 # Transposing, starting with set up...
@@ -246,6 +253,7 @@ foreach my $locusrow (@aoaTable) # loop per locus
 
 close(UNIQUENUC);
 
+	print UNIQUENUC "locus,count-nuc,missing\n";
 
 =cut GHOST
 
