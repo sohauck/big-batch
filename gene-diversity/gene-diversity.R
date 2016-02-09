@@ -6,6 +6,7 @@ library(corrplot)
 df <- read.csv(file.choose())
 
 dfref <- read.table(file.choose(), sep="\t")
+dfref <- read.csv(file.choose())
 df <- merge(df,dfref,by="locus")
 
 dfref <- read.csv('/Volumes/sofia/Mycobacterium/MTBC allelic diversity/ECCMID/Ref/id-name-cat-conv.csv')
@@ -51,7 +52,7 @@ ggplot(df.all, aes(x=missing)) +
 
 # correlation plots for all numeric variables
 df.num <- subset(df, select = -c(locus,name,category,drug.resistance) )
-df.num <- subset(df, select = -c(locus)
+df.num <- subset(df, select = -c(locus,category) ) 
 
 M <- cor(df.num)
 corrplot(M, method = "circle")
@@ -158,9 +159,9 @@ ggplot(df) +
 
 
 ggplot(df) +
-  geom_boxplot(aes(x=scheme, y=allelic.div), alpha = 0, outlier.shape = " ") +
-  geom_point( data=subset(df, allelic.div < .1 | allelic.div > 0.02),aes(x=scheme, y=allelic.div, colour=drug.resistance), size=5, alpha=.5, position = position_jitter(w=0.15, h=0)) + 
-  geom_point( data=subset(df, allelic.div > .1 | allelic.div < 0.02),aes(x=scheme, y=allelic.div, colour=drug.resistance), size=5, alpha=.5) +
+  geom_boxplot(aes(x=category, y=allelic.div), alpha = 0, outlier.shape = " ") +
+  geom_point( data=subset(df, allelic.div < .1 | allelic.div > 0.02),aes(x=category, y=allelic.div), size=5, alpha=.5, position = position_jitter(w=0.15, h=0)) + 
+  geom_point( data=subset(df, allelic.div > .1 | allelic.div < 0.02),aes(x=category, y=allelic.div), size=5, alpha=.5) +
   coord_flip() + scale_fill_manual(values=c("#56B4E9","#E69F00")) + 
   guides(col = guide_legend(title = "Drug Resistance")) +
   theme_minimal() + 
@@ -196,7 +197,7 @@ ggplot(df) +
   geom_hline(yintercept=mean(df$allelic.div.z), size=1, colour="blue", linetype="dashed") +
   ggtitle("Genetic diversity of loci, split by locus functional category") +
   xlab("")  + ylab("Alleles per nucleotidee") +
-  geom_text( data=subset(df, allelic.div.z > 3), aes(x=category, y=allelic.div.z, label=name), size=4, alpha=.8, vjust=-1.5, position = position_jitter(width=0.3)) 
+  geom_text( data=subset(df, allelic.div.z > 2.2), aes(x=category, y=allelic.div.z, label=locus), size=4, alpha=.8, vjust=1.5, position = position_jitter(width=0.3)) 
 
 
 
@@ -220,13 +221,25 @@ ggplot(df) +
   coord_flip() + theme_minimal() + guides(fill=FALSE) +
   theme(axis.text.y=element_text(size=14), plot.title = element_text(size="20", face="bold"), axis.title.x=element_text(vjust=-.5, size=14)) +
   geom_hline(yintercept=mean(df$div.diff.z), size=1, colour="blue", linetype="dashed") +
-  ggtitle("Genetic diversity of loci, split by locus functional category") +
-  xlab("")  + ylab("Difference in alleles/nucleotide from expected based on mean") +
+  ggtitle("Genetic diversity of loci, split by product function") +
+  xlab("")  + ylab("Difference in alleles/nucleotide from genome average, by standard deviation") +
   geom_text( data=subset(df, div.diff.z > 3), aes(x=category, y=div.diff.z, label=locus), size=4, alpha=.8, vjust=1.5) 
+
+
+ggplot(df) +
+  geom_point( data=subset(df, div.diff.z < 0.09 | div.diff.z > -0.03),aes(x=category, y=div.diff.z), size=5, alpha=.5, position = position_jitter(w=0.15, h=0)) + 
+  geom_point( data=subset(df, div.diff.z > 0.09 | div.diff.z < -0.03),aes(x=category, y=div.diff.z), size=5, alpha=.5) +
+  coord_flip() + theme_minimal() + guides(fill=FALSE) +
+  theme(axis.text.y=element_text(size=14), plot.title = element_text(size="20", face="bold"), axis.title.x=element_text(vjust=-.5, size=14)) +
+  geom_hline(yintercept=mean(df$div.diff.z), size=1, colour="blue", linetype="dashed") +
+  ggtitle("Genetic diversity of loci, split by product function") +
+  xlab("")  + ylab("Difference in alleles/nucleotide from genome average, by standard deviation") +
+  geom_text( data=subset(df, div.diff.z > 2.2), aes(x=category, y=div.diff.z, label=locus), size=4, alpha=.8, vjust=1.5) 
 
 
 
 df$div.diff.z <- scale(df$div.diff, center = TRUE, scale = TRUE)
+
 
 ggplot(df) +
   geom_point( data=subset(df, div.diff.z < 1 | div.diff.z > -1),aes(x=1, y=div.diff.z), size=5, alpha=.5, position = position_jitter(w=0.5, h=0)) + 
