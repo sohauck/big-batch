@@ -6,47 +6,91 @@
 # CREATED: 05.02.2016
 #--------------------------------------------------------
 
-
 use strict;
 use warnings;
 use LWP::Simple;
 
 $| = 1; # for dynamic output
 
+
 # Declares subroutines
 sub Usage( ; $ );
 
+
 # Get Command line options, exits if conditions don't look right
 my $fTable;			# table with isolates and loci
-my $transpose; 
-my $dFAS;			# directory where all the FASTA files for each locus are, if have yet
-my $dup = 1;		# turned to the smallest number of duplicates necessary for locus to be considered, default is 1
+my $transpose = "No";	# whether the table needs to be transposed or no
+my $dFAS;			# directory where all the FASTA files for each locus are, if they don't need to be exported
+my $dOut;			# directory where the results will go
+my $dup = 1;		# the smallest number of duplicates necessary for locus to be considered "seen", default is 1
 
 
-
-if( scalar(@ARGV) < 2 ) { Usage("Not enough command line options"); exit; }
 my $i = 0; 
 my $arg_cnt = 0; 
 for ($i=0; $i<=$#ARGV; $i++)
 {
-	if($ARGV[$i] eq "-h")		{ Usage("You asked for help"); exit; }
-	if($ARGV[$i] eq "-table")		{ $fIn  = $ARGV[$i+1] || ''; $arg_cnt++; }
-	if($ARGV[$i] eq "-transpose")		{ $dOut = $ARGV[$i+1] || ''; $arg_cnt++; }
-	if($ARGV[$i] eq "-FAS")		{ $fTab = $ARGV[$i+1] || ''; $arg_cnt++; }
-	if($ARGV[$i] eq "-dup")		{ $dup  = $ARGV[$i+1] || ''; $arg_cnt++; }
+	if($ARGV[$i] eq "-help")		{ Usage("You asked for help"); exit; }
+	if($ARGV[$i] eq "-table")		{ $fTable  = $ARGV[$i+1] || ''; $arg_cnt++; }
+	if($ARGV[$i] eq "-transpose")	{ $transpose = "Yes"  || ''; $arg_cnt++; }
+	if($ARGV[$i] eq "-FASTA")		{ $dFAS = $ARGV[$i+1] || ''; $arg_cnt++; }
+	if($ARGV[$i] eq "-out")			{ $dOut  = $ARGV[$i+1] || ''; $arg_cnt++; }
+	if($ARGV[$i] eq "-dup")			{ $dup  = $ARGV[$i+1] || ''; $arg_cnt++; }
 }
 
+print "\n\n\nYou've started the gene diversity script!\n\n";
+
 # Command line option checks
-if(! defined $fIn) { Usage("Missing Option: input file <FILE>"); exit; }
-if(! -e $fIn) { Usage("Input file does not exist: $fIn"); exit; }
-if(! defined $fTab)  { Usage("Missing Option: -table <FILE>"); exit; }
-if(! defined $dFAS)  { Usage("Missing Option: -dfasta DIRECTORY"); exit; }
-if(! defined $dOut)  { Usage("Missing Option: -out DIRECTORY"); exit; }
+if(! defined $fTable) 
+{ 
+	print "Where is the table with isolates and loci?\n"; 
+	$fTable = <STDIN>; 
+	chomp $fTable; $fTable =~ s/\s+$//;
+}
+if(! -e $fTable)  { Usage("Input table file does not exist: $fTable"); exit; }
 
-if(! -e $fTab)  { Usage("Input file does not exist: $fTab"); exit; }
-if(! -e $dFAS)  { Usage("Input directory doesn't exist: $dFAS"); exit; }
-if(  -e $dOut)  { Usage("Output directory already exists: $dOut"); exit; }
 
+if(! defined $dFAS)  
+{ 
+	print 	"Where is the directory that includes the FASTA sequences?\n".
+			"Alternatively, enter the name of the sequence database in BIGSDB ".
+			"(for example: pubmlst_chlamydiales_seqdef) for exporting out of the BIGDdb API.\n";
+	$dFAS = <STDIN>; 
+	chomp $fTable; $fTable =~ s/\s+$//;
+	
+	if ( $dFAS =~ /\./ ) # if it looks like a file address
+	{ if(! -e $dFAS)  { Usage("Input FASTA directory doesn't exist: $dFAS"); exit; } }
+	else 
+	{ my $dbname = $dFAS; }
+}
+
+if(! defined $dOut)  
+{ 
+	# 
+	
+	print 	"Name the directory where you'd like the results to go.\n".
+			"If you can't decide, leave this blank and a new folder, in the same place ".
+			"as your table is held will be created will be in a folder labelled 'GeneDiversityResults' 
+			in the same enclosing folder as where your table is.\n";
+	$dOut = <STDIN>;
+	if ( chomp $dOut eq "")
+	{
+		pop ( split (".", shift ( split ("/", $fTable) ) ) ); 
+	}
+	if(  -e $dOut)  { Usage("Output directory already exists: $dOut"); exit; }
+
+}
+
+print "Let's check if everything is correct before we start...\n";
+
+if ( $transpose eq "No" )
+{ print	"Your table of isolates as columns and loci as rows is held at $fTable.\n" .}
+elsif ( $transpose eq "Yes" )
+{ print	"Your table of loci as columns and isolates as rows is held at $fTable.\n"  }
+
+if (! defined $dbname )
+{ print "Your directory of FASTA sequences is at $dFAS.\n" }
+else 
+{ print "FASTA sequences will be downloaded from the BIGSdb API from database $dbname"; }
 
 
 # Preparing for folder for output
@@ -55,14 +99,8 @@ mkdir $dOut;
 
 print "Taking alleles from BIGSDB via the API, now up to...\n";
 
-
+=begin GHOST 
 # Makes output directory and prepares output count file, including header
-mkdir $dOut;
-my $uniquefile = $dOut . "-count-nuc.txt";
-
-if( -e $uniquefile)  { Usage("Output file already exists: $uniquefile"); exit; }
-
-open(UNIQUENUC, '>', $uniquefile) or die "Cannot open $uniquefile\n";
 	print UNIQUENUC "locus,count-nuc,missing\n";
 
 
@@ -206,9 +244,11 @@ foreach my $locusrow (@aoaTable) # loop per locus
 
 
 
-
-
 close(UNIQUENUC);
+
+
+=cut GHOST
+
 print "All done!\n";
 
 #---------------------------------------------------------------
@@ -272,8 +312,8 @@ sub GetFASTASeqs
 	my $dbname	= $_[0];
 	my @loci	= @$_[1];
 
-	my $dOut = #??
-	chdir $dOut;
+	#my $dOut = #??
+	#chdir $dOut;
 	
 	# For each locus in the list, get URL of FASTA file and save it to directory
 	foreach my $locus ( @loci )											
@@ -283,7 +323,7 @@ sub GetFASTASeqs
 		my $file = $locus.".FAS";
 		getstore($url, $file);
 	
-		print "\r$line";
+		print "\r$locus";
 	}
 
 	print "Now completed importing FASTA sequences. They are at: $dOut\n";
