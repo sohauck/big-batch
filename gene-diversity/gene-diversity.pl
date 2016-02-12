@@ -175,71 +175,63 @@ foreach my $locusrow (@aoaTable) # loop per locus
 			
 	# populates that hash with unique allele numbers as keys and their number of appearances as values
 	foreach my $allele (@{$locusrow}) #go through each allele in locus
-    	{
-    		if ( $allele =~ /;/ ) # in case of paralogous loci
-    		{  
-    			my @paralogous = split (/;/, $allele);
-    			    			
-    			foreach my $paraallele (@paralogous) #go through each allele in locus
-				{ $unique_alleles{$paraallele}++; } #increase the frequency count	
-    		}
-
-    		else 
-    		{ $unique_alleles{$allele}++; } 
+    {
+    		my @alleles = split (/;/, $allele); # in case of paralogous loci
+    		
+    		foreach (@alleles) # go through each allele in locus
+			{ 
+				if ( $_ eq "" || $_ eq "X" || $_ eq "0") #if allele is missing, add as "0" 
+				{ $unique_alleles{"0"}++; }
+				else 
+				{ $unique_alleles{$_}++; } #increase the frequency count	
+			} 
 	}
 
 	# find the file where the original FASTA sequences are
-	my $originalFAS; 
+	my $fullFAS; 
 	
 	if ( $dbname =~ /\w/ )
 	{
 		GetFASTASeqs ( $dbname, $locusname ) ;
-		$originalFAS = $dOut."/BIGSdb-FASTA/".$locusname.".FAS";
+		$fullFAS = $dOut."/BIGSdb-FASTA/".$locusname.".FAS";
 	}
 	else
-	{	
-		$originalFAS = $dFAS."/".$locusname.".FAS";
-	}
+	{	$fullFAS = $dFAS."/".$locusname.".FAS"; }
 	
 	# name where the file with the reduced number of FASTA sequences will go
 	my $reducedFAS = $dOut."/Observed-FASTA/".$locusname.".FAS";
 
 
-	if ( open(FULLFASTA, $originalFAS) ) # if can actually find the original file
+	if ( open(FULLFASTA, $fullFAS) ) # if can actually find the full FASTA file 
 	{
-		open(REDFASTA, '>', $reducedFAS) or die "Cannot open $reducedFAS\n";
+		open(REDFASTA, '>', $reducedFAS) or die "Cannot open $reducedFAS\n"; # then also open where the reduced one will go
 		{       
 			my $save = 1; # whether to copy the sequence following a >identifier line
 			my $countnuc = 0; # counts how many alleles are copied over
 			
-			while ( my $line = <FULLFASTA> )
+			while ( my $line = <FULLFASTA> ) # reading through original FASTA
 			{
 				if ( $line =~ /^>/ ) # if line is >identifier
 				{
-					chomp $line; # ??? COME BACK TO THIS MESS
-					my @alleletitle = split ('_', $line); #if in allele name_1 format
-					my $allelenumber = pop @alleletitle;
-					$allelenumber =~ s/[>]+//g; #in case > is still in there if there is no other ID
+					chomp $line; 
 					
-					if ( exists($unique_alleles{$allelenumber}) ) # exists in hash of wanted loci
+					$line =~ /([^>_]+)$/; $line = $1; #removes > and anything before the last _
+					
+					if ( exists($unique_alleles{$line}) && $unique_alleles{$line} >= $dup ) # exists in hash of wanted loci
 					{
-						if ($unique_alleles{$allelenumber} >= $dup ) # and in frequency at or above cutoff
-						{
-							print REDFASTA "\n", $line, "\n";
-							$save = 1;
-							$countnuc ++;
-							$unique_alleles{$allelenumber} = 0; # set frequency to 0 as check that was copied
-						}
-						else # knows to skip the sequences lines that follow unwanted identifiers below cutoff
-						{ $save = 0; }
+						print REDFASTA "\n>", $line, "\n";
+						$save = 1;
+						$countnuc ++;
+						$unique_alleles{$line} = 0; # set value to zero (usu. undef or 1+) as check that has been read
 					} 
-					else { $save = 0; }
+					else # if not in the hash created from the table, indicating whether this allele is observed
+					{ $save = 0; } 
 				}
 				
-				elsif ( $line =~ /^[A-Z]/ ) # if is a sequence line, copy only is "save" is turned on by wanted identifier
+				elsif ( $line =~ /^([A-Za-z*-])/ ) # if is a sequence line (starts with a letter, - or *) 
 				{
 					chomp $line; 
-					if ($save == 1)
+					if ($save == 1) # copy only if "save" is turned on because last ID was wanted
 					{ print REDFASTA $line; }
 				}	
 			}
@@ -247,8 +239,9 @@ foreach my $locusrow (@aoaTable) # loop per locus
 			my $missing = 0; # sets the missing count back to empty
 			
 			if ( exists($unique_alleles{"0"}) ) # move count away from empty if any missing alleles were seen
-			{ $missing = $unique_alleles{"0"}; } # gives the value in the frequency hash when the key is allele "0", the missing allele
-			print  $locusname . "," . $countnuc . "," . $missing . "\n"; 
+			{	$missing = $unique_alleles{"0"} } # gives the value in the frequency hash when the key is allele "0", the missing allele
+			
+			print  $locusname . ": found" . $countnuc . ", missing " . $missing . "\n"; 
 
 		}  
 		close(FULLFASTA);
@@ -257,7 +250,7 @@ foreach my $locusrow (@aoaTable) # loop per locus
 		# check if all alleles seen in table were copied 
 		foreach my $key ( sort keys %unique_alleles ) 
 		{ 
-			if ( $unique_alleles{$key} >= $dup && $key != 0 ) # if frequency is still above cut-off (copied ones are reset to 0) and isn't the missing allele, 0
+			if ( $unique_alleles{$key} >= $dup && $key ne 0 ) # if frequency is still above cut-off (copied ones are reset to 0) and isn't the missing allele, 0
 			{ print "Did not find sequence for locus $locusname, allele $key.\n"; }
 		}			
 	}
