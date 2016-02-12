@@ -123,6 +123,10 @@ elsif ( mkdir $dOut )
 }
 else { Usage("Could not create output directory: $dOut"); exit; }
 
+open ( RESULTS, '>', $dOut."/ResultsTable.txt" ) or die "$dOut /ResultsTable.txt"; # then also open where the reduced one will go
+	print RESULTS join ("\t", ("Locus","Missing","Paralogous","Count-Nuc","Count-AA",) );
+
+# and where the FASTA sequences are / will be
 if ( $dbname =~ /\w/) # if given database name instead of folder, create that folder now
 { 
 	print "FASTA sequences will be downloaded from the BIGSdb API from database $dbname.\n"; 
@@ -160,31 +164,35 @@ if ( $transpose eq "Yes" ) # transposes the table and puts it back in aoaTable
 
 # Going through table
 
-if ( mkdir $dOut."/Observed-FASTA/" )
-{ }
-else 
-{ Usage("Could not create filtered FASTA folder: $dOut/Observed-FASTA/"); exit; }
+mkdir $dOut."/Observed-FASTA/" or die "Could not create filtered FASTA folder: $dOut/Observed-FASTA/";
 
 foreach my $locusrow (@aoaTable) # loop per locus
 {
-	# empty hash to find unique values, set locus name
+	# empty hash to find unique values, values to be found
 	my %unique_alleles = ();
-	
+	my $paralogous = 0; 
+	my $missing = 0;
+	my $countnuc = 0;
+
+	# set locus name
 	my $locusname = shift(@{$locusrow});
 	$locusname =~ /^(\S+)/; $locusname = $1; # if there are aliases or anything else after the locus ID
 			
 	# populates that hash with unique allele numbers as keys and their number of appearances as values
 	foreach my $allele (@{$locusrow}) #go through each allele in locus
     {
-    		my @alleles = split (/;/, $allele); # in case of paralogous loci
+    		if ( length ( $allele ) == 0 || $allele eq "X" || $allele eq "I" )
+    		{	$unique_alleles{"0"}++;	} # if cell is empty or has "X", file as "missing locus"
     		
-    		foreach (@alleles) # go through each allele in locus
-			{ 
-				if ( $_ eq "" || $_ eq "X" || $_ eq "0") #if allele is missing, add as "0" 
-				{ $unique_alleles{"0"}++; }
-				else 
-				{ $unique_alleles{$_}++; } #increase the frequency count	
-			} 
+    		else
+    		{
+    			my @alleles = split (/;/, $allele); # in case of paralogous loci
+				if ( scalar(@alleles) >= 2 )
+				{	$paralogous++; }
+
+				foreach (@alleles) # go through each allele in locus
+				{	$unique_alleles{$_}++;	} #increase the frequency count	
+			}
 	}
 
 	# find the file where the original FASTA sequences are
@@ -207,7 +215,6 @@ foreach my $locusrow (@aoaTable) # loop per locus
 		open(REDFASTA, '>', $reducedFAS) or die "Cannot open $reducedFAS\n"; # then also open where the reduced one will go
 		{       
 			my $save = 1; # whether to copy the sequence following a >identifier line
-			my $countnuc = 0; # counts how many alleles are copied over
 			
 			while ( my $line = <FULLFASTA> ) # reading through original FASTA
 			{
@@ -222,7 +229,7 @@ foreach my $locusrow (@aoaTable) # loop per locus
 						print REDFASTA "\n>", $line, "\n";
 						$save = 1;
 						$countnuc ++;
-						$unique_alleles{$line} = 0; # set value to zero (usu. undef or 1+) as check that has been read
+						$unique_alleles{$line} = 0; # set value to zero (normally would be undef or 1+) as check that has been read
 					} 
 					else # if not in the hash created from the table, indicating whether this allele is observed
 					{ $save = 0; } 
@@ -235,14 +242,10 @@ foreach my $locusrow (@aoaTable) # loop per locus
 					{ print REDFASTA $line; }
 				}	
 			}
-			
-			my $missing = 0; # sets the missing count back to empty
-			
+						
 			if ( exists($unique_alleles{"0"}) ) # move count away from empty if any missing alleles were seen
 			{	$missing = $unique_alleles{"0"} } # gives the value in the frequency hash when the key is allele "0", the missing allele
 			
-			print  $locusname . ": found" . $countnuc . ", missing " . $missing . "\n"; 
-
 		}  
 		close(FULLFASTA);
 		close(REDFASTA);
@@ -268,8 +271,92 @@ foreach my $locusrow (@aoaTable) # loop per locus
 		 }
 		print "\n";
 	}
+	
+	print RESULTS join ("\t", ($locusname, $missing, $paralogous, $countnuc) );
+} # close per locus loop
 
-} # closes per-locus loop
+
+# Translating 
+mkdir $dOut."/Translated-FASTA/" or die "Cannot create /Translated-FASTA/ folder";
+
+# opening the directory where the observed alleles are and getting all the file names
+opendir (OBSDIR, $dOut."/Observed-FASTA/" ) or die "Cannot open directory: $!";
+	my @files = readdir OBSDIR;
+	@files = grep(/^([A-Za-z0-9])/,@files);
+	if ($#files < 1)
+	{ die "It looks like you have no FASTA files to align. If their file names don't begin with letters or numbers they are not being included.\n";}
+closedir OBSDIR;
+
+
+# Loop that translates all the files and puts them in new directory
+print "Translated up to...\n";
+my @lengths;
+
+foreach my $file (@files)
+{
+ 	my $infile  = $dOut . "/Observed-FASTA/"   . $file; # file with FASTA sequences in nucleotide form
+ 	my $outfile = $dOut . "/Translated-FASTA/" . $file; # file with FASTA sequences in amino acid form
+ 	
+	my %unique = (); # empty hash to check for synonymous mutations 
+
+	open(NUCLEOTIDE, $infile) 		or die "Cannot open $infile\n";
+	open(AMINOACID, '>', $outfile) 	or die "Cannot open $outfile\n";
+
+ 	while ( my $line = <NUCLEOTIDE> )
+	{
+		if ( $line =~ /^>/ ) # if line is title of sequence
+		{ 
+			print AMINOACID $line;
+		}
+		elsif ( $line =~ /^[A-Z]/ ) # if line is sequence
+		{
+			chomp $line;
+			my $peptide = Translate($line, "1");
+			
+			# for later checking the count of unique amino acids
+			if ( !exists($unique{$peptide})) #if allele doesn't exist in unique-hash
+			{ $unique{$peptide} = 1; } #then add it with allele number as key, value as 1
+			
+			print AMINOACID $peptide, "\n";
+		}	
+	}
+	
+	# counting number of unique amino acids and measuring the length of the locus
+ 	my ($locusname, $extension) = split (/\./, $file);
+ 	my $countaa = 0; 
+ 	my @lengths;
+ 	
+ 	foreach my $key ( sort keys %unique ) # goes through hash where keys are the amino acid sequences for each allele
+ 	{ 	
+ 		$countaa++;
+ 		push (@lengths, (3 * length($key) ) );
+ 	}
+
+	if ( $countaa == 0 ) # if no alleles for that locus, have an escape route
+	{	my ($min, $max, $avg) = 0, 0, 0; }
+	else 
+	{
+		use List::Util qw( min max sum );
+		my $min = min @lengths;
+		my $max = max @lengths;
+		my $avg = (sum @lengths) / $countaa;
+ 	}
+ 	
+ 	close NUCLEOTIDE; close AMINOACID;
+ 	
+ 	print RESULTS join ("\t", ($locusname, $missing, $paralogous, $countnuc) ); $count . "," . $avg . "\n";
+
+ 	#So you have something to watch while it runs... 
+ 	print "\r$locusname";
+}
+
+print "\nCompleted translation\n";
+
+
+
+
+
+# closes per-locus loop
 
 =begin GHOST 
 
