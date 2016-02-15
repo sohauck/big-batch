@@ -9,6 +9,7 @@
 use strict;
 use warnings;
 use LWP::Simple;
+use List::Util qw( min max sum );
 
 $| = 1; # for dynamic output
 
@@ -124,7 +125,7 @@ elsif ( mkdir $dOut )
 else { Usage("Could not create output directory: $dOut"); exit; }
 
 open ( RESULTS, '>', $dOut."/ResultsTable.txt" ) or die "$dOut /ResultsTable.txt"; # then also open where the reduced one will go
-	print RESULTS join ("\t", ("Locus","Missing","Paralogous","Count-Nuc","Count-AA",) );
+	print RESULTS join ("\t", ("Locus","Missing","Paralogous","CountNuc","CountAA","MinLength","MaxLength","AvgLength","NonVarNuc","NonVarAA"), "\n" );
 
 # and where the FASTA sequences are / will be
 if ( $dbname =~ /\w/) # if given database name instead of folder, create that folder now
@@ -162,7 +163,7 @@ if ( $transpose eq "Yes" ) # transposes the table and puts it back in aoaTable
 }
 
 
-# Going through table
+# Going through table and keeping the observed alleles, plus counting missing and unique nucleotide sequences 
 
 mkdir $dOut."/Observed-FASTA/" or die "Could not create filtered FASTA folder: $dOut/Observed-FASTA/";
 
@@ -255,7 +256,10 @@ foreach my $locusrow (@aoaTable) # loop per locus
 		{ 
 			if ( $unique_alleles{$key} >= $dup && $key ne 0 ) # if frequency is still above cut-off (copied ones are reset to 0) and isn't the missing allele, 0
 			{ print "Did not find sequence for locus $locusname, allele $key.\n"; }
-		}			
+		}
+		
+		print RESULTS join ("\t", ($locusname, $missing, $paralogous, $countnuc) ), "\t\n";
+
 	}
 	
 	else # if there isn't a FASTA file to copy over, give warning plus example alleles (might be just "0" which would explain missing file)
@@ -272,9 +276,13 @@ foreach my $locusrow (@aoaTable) # loop per locus
 		print "\n";
 	}
 	
-	print RESULTS join ("\t", ($locusname, $missing, $paralogous, $countnuc) );
+	
 } # close per locus loop
 
+close RESULTS; # close results file to adding one line per locus as it goes through table-reading loop
+
+
+my %results = (); # creates a hash where the rest of results go under the locusname as the key, to be added to the results table at the end
 
 # Translating 
 mkdir $dOut."/Translated-FASTA/" or die "Cannot create /Translated-FASTA/ folder";
@@ -284,13 +292,12 @@ opendir (OBSDIR, $dOut."/Observed-FASTA/" ) or die "Cannot open directory: $!";
 	my @files = readdir OBSDIR;
 	@files = grep(/^([A-Za-z0-9])/,@files);
 	if ($#files < 1)
-	{ die "It looks like you have no FASTA files to align. If their file names don't begin with letters or numbers they are not being included.\n";}
+	{ die "Couldn't find any FASTA files. Maybe their names don't begin with a letter or number?\n";}
 closedir OBSDIR;
 
 
 # Loop that translates all the files and puts them in new directory
 print "Translated up to...\n";
-my @lengths;
 
 foreach my $file (@files)
 {
@@ -324,7 +331,7 @@ foreach my $file (@files)
 	# counting number of unique amino acids and measuring the length of the locus
  	my ($locusname, $extension) = split (/\./, $file);
  	my $countaa = 0; 
- 	my @lengths;
+ 	my @lengths = ();
  	
  	foreach my $key ( sort keys %unique ) # goes through hash where keys are the amino acid sequences for each allele
  	{ 	
@@ -332,83 +339,114 @@ foreach my $file (@files)
  		push (@lengths, (3 * length($key) ) );
  	}
 
-	if ( $countaa == 0 ) # if no alleles for that locus, have an escape route
-	{	my ($min, $max, $avg) = 0, 0, 0; }
-	else 
+	my $min = "0";
+	my $max = "0";
+	my $avg = "0";
+
+	if ( $countaa != 0 ) # if no alleles for that locus, just keep it all at 0
 	{
-		use List::Util qw( min max sum );
-		my $min = min @lengths;
-		my $max = max @lengths;
-		my $avg = (sum @lengths) / $countaa;
+		$min =  &min ( @lengths ); 
+		$max =  &max ( @lengths ) ;
+		$avg = (&sum ( @lengths )) / $countaa;
  	}
  	
  	close NUCLEOTIDE; close AMINOACID;
  	
- 	print RESULTS join ("\t", ($locusname, $missing, $paralogous, $countnuc) ); $count . "," . $avg . "\n";
+ 	$results{$locusname} = join ("\t", ($countaa, $min, $max, $avg) ) . "\t" ;
 
  	#So you have something to watch while it runs... 
  	print "\r$locusname";
-}
+} #close translating loop
 
 print "\nCompleted translation\n";
 
 
 
+# Alignments!
 
+my @mafftarg = (); # get from command or ask?
+push @mafftarg, ("--clustalout","--quiet"); # for ClustalW output format and no tons of alignment stats
 
-# closes per-locus loop
+mkdir $dOut."/AlignedNuc-FASTA/" or die "Cannot create /AlignedNuc-FASTA/ folder";
+mkdir $dOut."/AlignedAA-FASTA/"  or die "Cannot create /AlignedAA-FASTA/ folder";
 
-=begin GHOST 
+print "Currently aligning...\n";
 
-
-
-
-
-# Getting the list of loci from the table
-my $headerref = $aoaTable[0]; #dereferences the first line of the table
-my @locuslist = (); 
-
-foreach ( @$headerref ) # loops through each item in first row
+foreach my $file (@files)
 {
-	if ( /^(\S+)/ ) # takes only the first "word", and only if it exists in the %groups hash
-	{ push @locuslist, $1; } # silently add name of group to array as in order
-}
+ 	# where all my files at
+ 	my $inNuc	=	$dOut."/Observed-FASTA/"	. $file; 
+ 	my $inAA	=	$dOut."/Translated-FASTA/"	. $file;
+ 	my $outNuc	=	$dOut."/AlignedNuc-FASTA/"	. $file; 
+ 	my $outAA	=	$dOut."/AlignedAA-FASTA/"	. $file; 
 
+	# runs MAFFT commands 
+ 	system ( "mafft " . join (" ", @mafftarg) . " " . $inNuc . " > " . $outNuc  ); 
+ 	system ( "mafft " . join (" ", @mafftarg) . " " . $inAA . " > " . $outAA  ); 
 
-
-
-if ( $dbname =~ /\w/)
-{
-	print "We'll start by exporting those FASTA files from $dbname.\n";
+	# now counting the variable sites
+	my $varsitesNuc = 0;
+	my $varsitesAA = 0;
 	
-	# first, make and go to the folder where they'll go
+	open (ALIGNEDNUC , $dOut."/AlignedNuc-FASTA/".$file) or die "Cannot open /AlignedNuc-FASTA/$file";
+		while (my $line = <ALIGNEDNUC>)
+		{	$varsitesNuc = $varsitesNuc + ($line =~ tr/\*//)	}
+	close ALIGNEDNUC;
+
+	open (ALIGNEDNUC , $dOut."/AlignedNuc-FASTA/".$file) or die "Cannot open /AlignedNuc-FASTA/$file";
+		while (my $line = <ALIGNEDNUC>)
+		{	$varsitesAA = $varsitesAA + ($line =~ tr/\*//)	}
+	close ALIGNEDNUC;
 	
-	if ( mkdir "BIGSdb-FASTA/" )
-	{ print "They'll be going in a folder called BIGSdb-FASTA within your results folder. \n" }
-	else 
-	{ Usage("Could not create FASTA exports folder: $dOut/BIGSdb-FASTA/"); exit; }
 	
-	GetFASTASeqs ( $dbname, \@locuslist ) 
-}
+	my ($locusname, $extension) = split (/\./, $file);
+
+	$results{$locusname} = $results{$locusname} . join ("\t", ($varsitesNuc, $varsitesAA) ) ;
 
 
-close(UNIQUENUC);
+ 	# So you have something to watch while it runs... 
+ 	print "\r$file";
+} # closes per-locus loop
 
-	print UNIQUENUC "locus,count-nuc,missing\n";
+print "\nAlignments complete!\n";
 
-=cut GHOST
 
-print "All done!\n";
+
+# Then put remaining results back into that table
+
+open ( RESULTSIN,  '<', $dOut."/ResultsTable.txt" ) or die "$dOut /ResultsTable.txt";
+open ( RESULTSOUT, '>', $dOut."/ResultsTable-tmp.txt" ) or die "$dOut /ResultsTable.txt";
+
+	my $header = <RESULTSIN>;
+	print RESULTSOUT $header;
+	
+	while ( my $line = <RESULTSIN> )
+	{
+		chomp $line; 
+		
+		$line =~ /^(\S+)/; 
+		my $locusname = $1;
+		
+		print RESULTSOUT $line . $results{$locusname} . "\n";
+	}
+	
+close RESULTSIN;
+close RESULTSOUT; 
+
+rename ( $dOut."/ResultsTable-tmp.txt" , $dOut."/ResultsTable.txt" ) or die "Cannot rename tmp results over older.";
+
+
+# Making graph in R
+
+system ( ); 
+
+
+print "Gene diversity script all complete!\n";
 
 #---------------------------------------------------------------
 # Subroutines
 #---------------------------------------------------------------
 
-sub Unique
- {
-    my %seen;
-    grep !$seen{$_}++, @_;
-}
 
 sub ReadTableIn
 {
