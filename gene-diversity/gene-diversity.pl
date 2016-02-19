@@ -283,7 +283,7 @@ foreach my $locusrow (@aoaTable) # loop per locus
 			}
 						
 			if ( exists($unique_alleles{"0"}) ) # move count away from empty if any missing alleles were seen
-			{	$missing = $unique_alleles{"0"} } # gives the value in the frequency hash when the key is allele "0", the missing allele
+			{	$missing = $unique_alleles{"0"}	} # gives the value in the frequency hash when the key is allele "0", the missing allele
 			
 		}  
 		close(FULLFASTA);
@@ -403,7 +403,7 @@ print "\nTranslation complete.\n";
 #Alignments!
 if( scalar(@mafftarg) == 2) 
 { 
-	print "/n/nWe're going to do the alignments now. Do you have any MAFFT arguments to include?\n" . 
+	print "\n\nWe're going to do the alignments now. Do you have any MAFFT arguments to include?\n" . 
 		"You can just leave this blank if not, and MAFFT will run using its automatic option.\n"; 
 	my $addtoMAFFT = <STDIN>; 
 	chomp $addtoMAFFT; # removes white spaces and line breaks
@@ -414,7 +414,7 @@ if( scalar(@mafftarg) == 2)
 mkdir $dOut."/AlignedNuc-FASTA/" or die "Cannot create /AlignedNuc-FASTA/ folder";
 mkdir $dOut."/AlignedAA-FASTA/"  or die "Cannot create /AlignedAA-FASTA/ folder";
 
-print "\n\nCurrently aligning...\n";
+print "\nCurrently aligning...\n";
 
 foreach my $file (@files)
 {
@@ -482,7 +482,7 @@ rename ( $dOut."/ResultsTable-tmp.txt" , $dOut."/ResultsTable.txt" ) or die "Can
 
 # Making graph in R
 my $Rscript = $0;
-$Rscript =~ s/\.[^.]+$/\.R/;
+$Rscript =~ s/\.[^.]+$/\.R/; # works if gene-diversity.pl was loaded and gene-diversity.R in the same folder is where R script is
 
 if ( mkdir $dOut."/Graphs/" )
 { print "\n\nGraphs generated from your data will be at the Graphs folder.\n" }
@@ -490,7 +490,7 @@ else
 { Usage("Could not create Graphs folder: $dOut/Graphs/"); exit; }
 
 
-my $command = "R --slave --args $dOut < $Rscript";
+my $command = "R --slave --args $dOut < $Rscript"; #making the full thing, adding --slave for silence
 
 print "Now running R script... \n";
 
