@@ -20,10 +20,12 @@ sub Usage( ; $ );
 
 # Get Command line options, exits if conditions don't look right
 my $fTable;			# table with isolates and loci
-my $transpose = "No";	# whether the table needs to be transposed or no
+my $transpose = "No";	# whether the table needs to be transposed or no, default is no
 my $dFAS;			# directory where all the FASTA files for each locus are, if they don't need to be exported
+my $dbname;	# database name if want to export the files
 my $dOut;			# directory where the results will go
 my $dup = 1;		# the smallest number of duplicates necessary for locus to be considered "seen", default is 1
+my @mafftarg = ("--clustalout","--quiet"); # start with at least these, can ask for more, add "-mafft --auto" to keep silent
 
 
 my $i = 0; 
@@ -34,13 +36,15 @@ for ($i=0; $i<=$#ARGV; $i++)
 	if($ARGV[$i] eq "-table")		{ $fTable  = $ARGV[$i+1] || ''; $arg_cnt++; }
 	if($ARGV[$i] eq "-transpose")	{ $transpose = "Yes"  || ''; $arg_cnt++; }
 	if($ARGV[$i] eq "-FASTA")		{ $dFAS = $ARGV[$i+1] || ''; $arg_cnt++; }
+	if($ARGV[$i] eq "-BIGSdb")		{ $dbname = $ARGV[$i+1] || ''; $arg_cnt++; }
 	if($ARGV[$i] eq "-out")			{ $dOut  = $ARGV[$i+1] || ''; $arg_cnt++; }
 	if($ARGV[$i] eq "-dup")			{ $dup  = $ARGV[$i+1] || ''; $arg_cnt++; }
+	if($ARGV[$i] eq "-mafft")		{ push (@mafftarg, $ARGV[$i+1]) || ''; $arg_cnt++; }
 }
 
 # Hello!
 print "\n\n\nYou've started the gene diversity script!\n\n";
-my $dbname = "";
+
 
 # Do we have everything we need to start?
 
@@ -71,31 +75,49 @@ if(! -e $fTable)  { Usage("Input table file does not exist: $fTable"); exit; }
 
 
 # a directory with FASTA files
-if(! defined $dFAS)  
+if( ! defined $dFAS && ! defined $dbname)  
 { 
-	print 	"\n\nWhere is the directory that includes the FASTA sequences?\n".
-			"Alternatively, enter the name of the sequence database in BIGSDB ".
-			"(for example: pubmlst_chlamydiales_seqdef) for exporting out of the BIGSdb API.\n";
-	$dFAS = <STDIN>; 
-	chomp $dFAS; $dFAS =~ s/\s+$//; # removes white spaces and line breaks
+	print 	"\n\nWhere is your deposit of FASTA sequences? Choose a number.\n".
+			"1. You have a folder with all the sequences that you can point me to (fastest)".
+			"2. You want to get all the sequences from BIGSDB to have your own deposit (slow now, fast later)".
+			"3. You want to grab only the relevant sequences for this (best if you're doing just this run)\n";
+	my $FASTAoption = <STDIN>;
 	
-	if ( $dFAS =~ /\./ ) # if it looks like a file address
-	{ if(! -e $dFAS)  { Usage("Input FASTA directory doesn't exist: $dFAS"); exit; } }
-	else 
-	{ $dbname = $dFAS; }
+	if ( $FASTAoption =~ /^1/ ) # You have a folder with all the sequences that you can point me to
+	{
+		print "Where is your deposit then?\n";
+		
+		$dFAS = <STDIN>; 
+		chomp $dFAS; $dFAS =~ s/\s+$//; # removes white spaces and line breaks
+		
+		if(! -e $dFAS)
+		{ Usage("Input FASTA directory doesn't exist: $dFAS"); exit; }
+	}
+	elsif	( $FASTAoption =~ /^[23]/ ) # You want to get all the sequences from BIGSDB to have your own deposit
+	{
+		print "What's the name of the database in BIGSDB? For example: 'pubmlst_mycobacteria_seqdef'.\n";
+		$dbname = <STDIN>; 
+		chomp $dbname; $dbname =~ s/\s+$//; # removes white spaces and line breaks
+	}
 }
+else
+{
+	
+}
+
 
 # a directory where results can go
 if(! defined $dOut)  
 { 
 	my @tableaddress = split ("/", $fTable);
-	$tableaddress[-1] =~ s/\.[^.]+$//;
+	$tableaddress[-1] =~ s/\.[^.]+$//; # remove extension from name of the last thing in the address, the table
 	$tableaddress[-1] = "GeneDiv-" . $tableaddress[-1];
 	
 	print 	"\n\nName the directory where you'd like the results to go.\n".
 			"If you can't decide, leave this blank and a new folder, in the same place as your ".
 			"table is held will be created, named '$tableaddress[-1]'\n";
-	$dOut = <STDIN>;
+	$dOut = <STDIN>; 
+	chomp $dOut; $dOut =~ s/\s+$//;
 
 	if ( $dOut =~ /\w/ )
 	{ if(  -e $dOut)  { Usage("Output directory already exists: $dOut"); exit; } }
@@ -104,7 +126,6 @@ if(! defined $dOut)
 		#push (@tableaddress, "/" ); 
 		$dOut = join ("/", @tableaddress); 
 	}
-
 }
 
 # Now that we've asked for everything, let's check that it's all what we expect... 
@@ -125,9 +146,10 @@ elsif ( mkdir $dOut )
 else { Usage("Could not create output directory: $dOut"); exit; }
 
 open ( RESULTS, '>', $dOut."/ResultsTable.txt" ) or die "$dOut /ResultsTable.txt"; # then also open where the reduced one will go
-	print RESULTS join ("\t", ("Locus","Missing","Paralogous","CountNuc","CountAA","MinLength","MaxLength","AvgLength","NonVarNuc","NonVarAA"), "\n" );
+	print RESULTS join ("\t", ("Locus","Missing","Paralogous","CountNuc","CountAA","MinLength","MaxLength","AvgLength","NonVarNuc","NonVarAA") ) . "\n" ;
 
 # and where the FASTA sequences are / will be
+
 if ( $dbname =~ /\w/) # if given database name instead of folder, create that folder now
 { 
 	print "FASTA sequences will be downloaded from the BIGSdb API from database $dbname.\n"; 
@@ -136,6 +158,28 @@ if ( $dbname =~ /\w/) # if given database name instead of folder, create that fo
 	{ print "They'll be going into a folder called /BIGSdb-FASTA within your results folder. \n" }
 	else 
 	{ Usage("Could not create FASTA exports folder: $dOut/BIGSdb-FASTA/"); exit; }
+	
+	elsif	( $FASTAoption =~ /^2/ ) # You want to get all the sequences from BIGSDB to have your own deposit
+	{
+	print "What's the name of the database in BIGSDB? For example: 'pubmlst_mycobacteria_seqdef'.\n";
+	
+	$dbname = <STDIN>; 
+	chomp $dbname; $dbname =~ s/\s+$//; # removes white spaces and line breaks
+	
+	if(! -e $dFAS)
+	{ Usage("Input FASTA directory doesn't exist: $dFAS"); exit; }
+	}
+	elsif	( $FASTAoption =~ /^3/ ) # You want to grab only the relevant sequences for this
+	{
+	print "What's the name of the database in BIGSDB? For example: 'pubmlst_mycobacteria_seqdef'.\n";
+	
+	$dbname = <STDIN>; 
+	chomp $dbname; $dbname =~ s/\s+$//; # removes white spaces and line breaks
+	
+	if(! -e $dFAS)
+	{ Usage("Input FASTA directory doesn't exist: $dFAS"); exit; }
+	}
+
 }
 else 
 { print "Your directory of FASTA sequences is at $dFAS.\n" }
@@ -297,7 +341,7 @@ closedir OBSDIR;
 
 
 # Loop that translates all the files and puts them in new directory
-print "Translated up to...\n";
+print "\n\nTranslated up to...\n";
 
 foreach my $file (@files)
 {
@@ -363,14 +407,20 @@ print "\nCompleted translation\n";
 
 
 # Alignments!
-
-my @mafftarg = (); # get from command or ask?
-push @mafftarg, ("--clustalout","--quiet"); # for ClustalW output format and no tons of alignment stats
+# if( scalar(@mafftarg) == 2) 
+# { 
+# 	print "/n/nWe're going to do the alignments now. Do you have any MAFFT arguments to include?\n" . 
+# 		"You can just leave this blank if not, and MAFFT will run using its '--auto' option.\n"; 
+# 	my $addtoMAFFT = <STDIN>; 
+# 	chomp $addtoMAFFT; # removes white spaces and line breaks
+# 	
+# 	push ( @mafftarg, $addtoMAFFT );
+# }
 
 mkdir $dOut."/AlignedNuc-FASTA/" or die "Cannot create /AlignedNuc-FASTA/ folder";
 mkdir $dOut."/AlignedAA-FASTA/"  or die "Cannot create /AlignedAA-FASTA/ folder";
 
-print "Currently aligning...\n";
+print "\n\nCurrently aligning...\n";
 
 foreach my $file (@files)
 {
@@ -381,6 +431,9 @@ foreach my $file (@files)
  	my $outAA	=	$dOut."/AlignedAA-FASTA/"	. $file; 
 
 	# runs MAFFT commands 
+	print    "mafft " . join (" ", @mafftarg) . " " . $inNuc . " > " . $outNuc ;
+	print    "mafft " . join (" ", @mafftarg) . " " . $inAA . " > " . $outAA ;
+
  	system ( "mafft " . join (" ", @mafftarg) . " " . $inNuc . " > " . $outNuc  ); 
  	system ( "mafft " . join (" ", @mafftarg) . " " . $inAA . " > " . $outAA  ); 
 
@@ -393,10 +446,10 @@ foreach my $file (@files)
 		{	$varsitesNuc = $varsitesNuc + ($line =~ tr/\*//)	}
 	close ALIGNEDNUC;
 
-	open (ALIGNEDNUC , $dOut."/AlignedNuc-FASTA/".$file) or die "Cannot open /AlignedNuc-FASTA/$file";
-		while (my $line = <ALIGNEDNUC>)
+	open (ALIGNEDAA , $dOut."/AlignedAA-FASTA/".$file) or die "Cannot open /AlignedAA-FASTA/$file";
+		while (my $line = <ALIGNEDAA>)
 		{	$varsitesAA = $varsitesAA + ($line =~ tr/\*//)	}
-	close ALIGNEDNUC;
+	close ALIGNEDAA;
 	
 	
 	my ($locusname, $extension) = split (/\./, $file);
@@ -437,11 +490,23 @@ rename ( $dOut."/ResultsTable-tmp.txt" , $dOut."/ResultsTable.txt" ) or die "Can
 
 
 # Making graph in R
+my $Rscript = $0;
+$Rscript =~ s/\.[^.]+$/\.R/;
 
-system ( ); 
+if ( mkdir $dOut."/Graphs/" )
+{ print "\n\nGraphs generated from your data will be at the Graphs folder.\n" }
+else 
+{ Usage("Could not create Graphs folder: $dOut/Graphs/"); exit; }
 
 
-print "Gene diversity script all complete!\n";
+my $command = "R --slave --args $dOut < $Rscript";
+
+print "Now running R script... \n";
+
+system ( $command ); 
+
+
+print "Gene diversity scripts all complete!\n";
 
 #---------------------------------------------------------------
 # Subroutines
