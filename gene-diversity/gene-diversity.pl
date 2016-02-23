@@ -23,7 +23,7 @@ my $fTable;			# table with isolates and loci
 my $transpose;		# whether the table needs to be transposed or no, default is no
 my $dFAS;			# directory where all the FASTA files for each locus are, if they don't need to be exported
 my $dbname;			# database name if want to export the files
-my $FASTAoption;	# 1 = have complete dir, 2 = make complete dir, 3 = take straight to Observed
+my $FASTAoption = 0;# 1 = have complete dir, 2 = make complete dir, 3 = take straight to Observed
 my $dOut;			# directory where the results will go
 my $dup = 1;		# the smallest number of duplicates necessary for locus to be considered "seen", default is 1
 my @mafftarg = ("--clustalout","--quiet"); # start with at least these, can ask for more, add "-mafft --auto" to keep silent
@@ -79,23 +79,31 @@ if (! defined $transpose )
 }
 
 # a directory with FASTA files
-if( ! defined $dFAS && ! defined $dbname)  
+if( ! defined $dFAS && ! defined $dbname)  # don't have anything defined 
 { 
-	print 	"\n\nWhere is your deposit of FASTA sequences? Choose a number.\n".
-			"1. You have a folder with all the sequences that you can point me to (fastest)\n".
-			"2. You want to get all the sequences from BIGSDB to have your own deposit (slow now, fast later)\n".
-			"3. You want to grab only the relevant sequences for this (best if you're doing just this run)\n";
-	$FASTAoption = <STDIN>;
+	print "Hello 1\n";
 	
 	if ( ! $FASTAoption =~ /^[123]/ ) # if doesn't start with 1, 2 or 3
 	{ 
-		print "That didn't look like a 1, 2 or 3... Try again? \n";
-		$transpose = <STDIN>; 
+		print 	"\n\nWhere is your deposit of FASTA sequences? Choose a number.\n".
+		"1. You have a folder with all the sequences that you can point me to (fastest)\n".
+		"2. You want to get all the sequences from BIGSDB to have your own deposit (slow now, fast later)\n".
+		"3. You want to grab only the relevant sequences for this (best if you're doing just this run)\n";
+		$FASTAoption = <STDIN>;
+		
+		print "Hello 2\n";
+
+		if ( ! $FASTAoption =~ /^[123]/ )
+		{
+			print "That didn't look like a 1, 2 or 3... Try again? \n";
+			$FASTAoption = <STDIN>; 
+		}
 	}
 
-	if ( $FASTAoption =~ /^1/ ) # You have a folder with all the sequences that you can point me to
+	elsif ( $FASTAoption =~ /^1/ ) # You have a folder with all the sequences that you can point me to
 	{
-		print "Where is your deposit then?\n";
+		print "Hello 3\n";
+		print "Where is your folder with your complete FASTA sequence deposit then?\n";
 		
 		$dFAS = <STDIN>; 
 		chomp $dFAS; $dFAS =~ s/\s+$//; # removes white spaces and line breaks
@@ -105,24 +113,35 @@ if( ! defined $dFAS && ! defined $dbname)
 	}
 	elsif	( $FASTAoption =~ /^[23]/ ) # You want to get all the sequences from BIGSDB to have your own deposit
 	{
+		print "Hello 4\n";
 		print "What's the name of the database in BIGSDB? For example: 'pubmlst_mycobacteria_seqdef'.\n";
 		$dbname = <STDIN>; 
 		chomp $dbname; $dbname =~ s/\s+$//; # removes white spaces and line breaks
 	}
 	
 	else
-	{ Usage("Something went wrong with the FASTA deposit options, maybe you didn't choose 1, 2 or 3?"); exit; }
-}
-elsif ( defined $dFAS )
-{	$FASTAoption = "1";	}
-elsif ( defined $dbname && ! $FASTAoption =~ /^[23]/ )
-{	
-	print "Do you want to grab the complete FASTA sequences (enter 2) or just the necessary ones for this run (3)?\n";
-	$FASTAoption = <STDIN>;
+	{ Usage("Something went wrong with the FASTA deposit options"); exit; }
 	
-	if ( ! $FASTAoption =~ /^[23]/ ) 
-	{	Usage("Something went wrong with the FASTA deposit options, maybe you didn't choose 1, 2 or 3?"); exit; }
 }
+
+elsif ( defined $dFAS ) # had defined a folder in the command line options, so going for option 1
+{	$FASTAoption = "1";	print "Hello 5\n"; }
+
+elsif ( defined $dbname ) # had defined a BIGSdb database name in the command line, so options 2 or 3
+{	
+	print "Hello 6\n";
+	unless ( $FASTAoption =~ /^[23]/ )
+	{
+		print "Do you want to grab the complete FASTA sequences (enter 2) or just the necessary ones for this run (3)?\n";
+		$FASTAoption = <STDIN>;
+	
+		if ( ! $FASTAoption =~ /^[23]/ ) 
+		{	Usage("Something went wrong with the FASTA deposit options, maybe you didn't choose 1, 2 or 3?"); exit; }
+	}	
+}
+else { print "Hello 7\n"; }
+
+print "My FASTA option is $FASTAoption";
 
 
 # a directory where results can go
@@ -142,7 +161,6 @@ if(! defined $dOut)
 	{ if(  -e $dOut)  { Usage("Output directory already exists: $dOut"); exit; } }
 	else 
 	{
-		#push (@tableaddress, "/" ); 
 		$dOut = join ("/", @tableaddress); 
 	}
 }
@@ -156,38 +174,13 @@ elsif ( $transpose =~ /^[Yy]/ )
 { print	"Your table of loci as columns and isolates as rows is held at $fTable.\n"  }
 
 
-# including that folder we'll be putting all the results into
-if( -e $dOut) { Usage("Output directory already exists: $dOut"); exit; }
-elsif ( mkdir $dOut )
-{ 
-	print "Your results will be in the new directory $dOut\n"; 
-}
-else { Usage("Could not create output directory: $dOut"); exit; }
-
-open ( RESULTS, '>', $dOut."/ResultsTable.txt" ) or die "$dOut /ResultsTable.txt"; # then also open where the reduced one will go
-	print RESULTS join ("\t", ("Locus","Missing","Paralogous","CountNuc","CountAA","MinLength","MaxLength","AvgLength","NonVarNuc","NonVarAA") ) . "\n" ;
-
 # and where the FASTA sequences are / will be
-if ( defined $dFAS )
-{
-	print "Your directory of FASTA sequences is at $dFAS.\n"
-}
-elsif ( defined $dbname ) # You want to get all the sequences from BIGSDB to have your own deposit
-{
-	if ( $FASTAoption =~ /^2/ )
-	{
-		print "All FASTA sequences will be downloaded from the BIGSdb API from database $dbname. \n"; 
-		
-		if ( mkdir $dOut."/BIGSdb-FASTA/" )
-		{ print "They'll be going into a folder called /BIGSdb-FASTA within your results folder. \n" }
-		else 
-		{ Usage("Could not create FASTA exports folder: $dOut/BIGSdb-FASTA/"); exit; }
-	}
-	elsif ( $FASTAoption =~ /^3/ )
-	{
-		print "There won't be a deposit of FASTA sequence, we'll grab them straight from $dbname. \n"; 
-	}
-}
+if ( $FASTAoption =~ /^1/ )
+{	print "Your directory of FASTA sequences is at $dFAS.\n";	}
+elsif ( $FASTAoption =~ /^2/ )
+{	print "The complete FASTA sequences will be downloaded from the BIGSdb API from database $dbname, and put in /BIGSdb-FASTA/ in your results folder.\n"; 	}
+elsif ( $FASTAoption =~ /^3/ )
+{	print "There won't be a deposit of FASTA sequences, we'll grab them straight from $dbname. \n";	}
 
 
 # Give the option to get out if it goes in fact look dodgy
@@ -195,6 +188,21 @@ print "\nLeave blank to continue, enter any letters to exit.\n\n";
 my $confirmation = <STDIN>;
 if ( $confirmation =~ /\w/ )
 { Usage("You chose to exit: $confirmation"); exit;  }
+
+
+if( -e $dOut) { Usage("Output directory already exists: $dOut"); exit; }
+
+if ( mkdir $dOut )
+{ print "Your results will be in the new directory $dOut\n\n\n"; }
+else { Usage("Could not create output directory: $dOut"); exit; }
+
+if ( $FASTAoption =~ /^2/ )
+{ mkdir $dOut."/BIGSdb-FASTA/" or Usage("Could not create FASTA exports folder: $dOut/BIGSdb-FASTA/"); }
+
+
+
+open ( RESULTS, '>', $dOut."/ResultsTable.txt" ) or die "$dOut /ResultsTable.txt"; # then also open where the reduced one will go
+	print RESULTS join ("\t", ("Locus","Missing","Paralogous","CountNuc","CountAA","MinLength","MaxLength","AvgLength","NonVarNuc","NonVarAA") ) . "\n" ;
 
 
 
@@ -205,7 +213,7 @@ if ( $confirmation =~ /\w/ )
 my $tableref = ReadTableIn ( $fTable );
 my @aoaTable = @$tableref; #puts table, in array of arrays format, into aoaTable
 
-if ( $transpose eq "Yes" ) # transposes the table and puts it back in aoaTable
+if ( $transpose =~ /^[Yy]/ ) # transposes the table and puts it back in aoaTable
 {
 	print "Now transposing your table...";
 	$tableref = TransposeTable ( \@aoaTable );
@@ -252,16 +260,11 @@ foreach my $locusrow (@aoaTable) # loop per locus
 	{	$missing = $unique_alleles{"0"}	} # gives the value in the frequency hash when the key is allele "0", the missing allele		
 
 
-	# find the file where the original FASTA sequences are
-	
-	
-	my $reducedFAS = $dOut."/Observed-FASTA/".$locusname.".FAS"; # where the "seen" alleles get copied to  
-	open(REDFASTA, '>', $reducedFAS) or die "Cannot open $reducedFAS\n"; # then also open where the reduced one will go
-	
+	# find the file where the original FASTA sequences are	
 	
 	if ( $FASTAoption =~ /^[12]/ ) # if there is or will be a directory
 	{
-		my $fullFAS; # where the directory with all possible sequence is
+		my $fullFAS; # where the directory with all possible sequence is / will be
 		
 		if ( $FASTAoption =~ /^2/ ) # making directory by exporting from BIGS
 		{
@@ -274,6 +277,9 @@ foreach my $locusrow (@aoaTable) # loop per locus
 		if ( open(FULLFASTA, $fullFAS) )# if can open file in directory 
 		{
 			my $save = 1; # whether to copy the sequence following a >identifier line
+		
+			my $reducedFAS = $dOut."/Observed-FASTA/".$locusname.".FAS"; # where the "seen" alleles get copied to  
+			open(REDFASTA, '>', $reducedFAS) or die "Cannot open $reducedFAS\n"; # then also open where the reduced one will go
 		
 			while ( my $line = <FULLFASTA> ) # reading through original FASTA
 			{
@@ -301,7 +307,15 @@ foreach my $locusrow (@aoaTable) # loop per locus
 					{ print REDFASTA $line; }
 				}	
 			}
+			
+			# check if all alleles seen in table were copied 
+			foreach my $key ( sort keys %unique_alleles ) 
+			{ 
+				if ( $unique_alleles{$key} >= $dup && $key ne 0 ) # if frequency is still above cut-off (copied ones are reset to 0) and isn't the missing allele, 0
+				{ print "Did not find sequence for locus $locusname, allele $key.\n"; }
+			}
 		}
+		
 		else # if couldn't open the file
 		{ 
 			my @seenalleles = sort keys %unique_alleles;
@@ -309,7 +323,7 @@ foreach my $locusrow (@aoaTable) # loop per locus
 			if ( scalar(@seenalleles) == 1 && $seenalleles[0] eq "0" )
 			{ print "$locusname is being removed because it only appeared on the table as missing.\n"; }
 		
-			else
+			else # if there are more alleles than just "0" which isn't even an allele, give some examples
 			{
 				print "$locusname did not exist as a FASTA file. Alleles in table were..."; 
 			
@@ -320,53 +334,66 @@ foreach my $locusrow (@aoaTable) # loop per locus
 					{ print " $key"; $sampleallele++; }
 					else # if already printed 5 allele numbers, just leave it
 					{ print " etc."; last; }
-				 } print "\n";
+				 } print "\n"; 
 			}
-		}
+			
+			next; # since don't need to include results for a non-locus
+		} 
+		
 		close(FULLFASTA);
 	}
 	
 	elsif ( $FASTAoption =~ /^3/ )
 	{ 		 
- 		foreach my $allele ( sort keys %unique_alleles )
+ 		my $locusurl = "http://rest.pubmlst.org/db/".$dbname."/loci/".$locusname ;
+ 		
+ 		print "Now we're loading the address '$locusurl'\n";
+ 		
+ 		my $locusJSON = get($locusurl);
+ 		
+ 		print "And we got...\n" . $locusJSON . "\n\n"; 
+ 		
+ 		if ( ! defined $locusJSON || ( $locusJSON =~ /"status":404/ && $locusJSON =~ /"message":"Locus/) )
  		{
- 			my $url = "http://rest.pubmlst.org/db/".$dbname."/loci/".$locusname."/alleles/".$allele;
- 			my $wholeJSON = get($url);
- 			
- 			if ( $wholeJSON =~ /"status":404/ )
+ 			my $message =~ /"message":"(.+?)"/ ;
+			print $1 . "\n"; # print error 
+			last; # and get out since no alleles will be found
+ 		}
+ 		else # not a locus based 404, so it exists 
+ 		{
+ 		 	my $reducedFAS = $dOut."/Observed-FASTA/".$locusname.".FAS"; # where the "seen" alleles get copied to  
+			open(REDFASTA, '>', $reducedFAS) or die "Cannot open $reducedFAS\n"; # then also open where the reduced one will go
+ 		 	
+ 		 	foreach my $allele ( sort keys %unique_alleles )
 			{
-				if ( $wholeJSON =~ /"message":"Locus/ ) # then probably the locus isn't really a locus
-				{
-					my $message =~ /"message":"(.+?)"/ ;
-					print $1 . "\n"; last; # and get out since no alleles will be found
-				}
-				elsif ( $wholeJSON =~ /"status":"Allele/ ) # then just couldn't find this allele
+	 			my $url = $locusurl . "/alleles/".$allele;
+	 			my $alleleJSON = get($url);
+				
+				if ( ! defined $alleleJSON )
+				{ print "Could not find locus $locusname, allele $allele"; next; }
+				
+				print "Looked up locus $locusname and allele $allele, got...\n" . $alleleJSON . "\n\n";
+				
+				if ( $alleleJSON =~ /"status":"Allele/ ) # then just couldn't find this allele
 				{
 					my $message =~ /"message":"(.+?)"/ ;
 					print $1 . "\n";
 				}
-			} 			
- 			else 
- 			{
-				$wholeJSON =~ /"sequence":"([a-zA-Z]+?)"/; # assuming sequence will only have letters
-				my $sequence = $1;
-				$wholeJSON =~ /"allele_id":"([0-9]+?)"/; # assuming allele ID will only be integers (in BIGS anyway)
-				my $allele_id = $1;
+				else
+				{
+					$alleleJSON =~ /"sequence":"([a-zA-Z]+?)"/; # assuming sequence will only have letters
+					my $sequence = $1;
+					$alleleJSON =~ /"allele_id":"([0-9]+?)"/; # assuming allele ID will only be integers (in BIGS anyway)
+					my $allele_id = $1;
 	
-				print REDFASTA ">" . $allele_id . "\n" . $sequence . "\n\n";
- 			}
- 		}
-	}
+					print REDFASTA ">" . $allele_id . "\n" . $sequence . "\n\n";
+				}
+ 			} # closes foreach allele loop
+ 		} # closes not 404 else
+	} # closes opt 3 loop
 	
 	close(REDFASTA);
-	
-	# check if all alleles seen in table were copied 
-	foreach my $key ( sort keys %unique_alleles ) 
-	{ 
-		if ( $unique_alleles{$key} >= $dup && $key ne 0 ) # if frequency is still above cut-off (copied ones are reset to 0) and isn't the missing allele, 0
-		{ print "Did not find sequence for locus $locusname, allele $key.\n"; }
-	}
-	
+		
 	print RESULTS join ("\t", ($locusname, $missing, $paralogous, $countnuc) ), "\t\n";	
 	
 } # close per locus loop

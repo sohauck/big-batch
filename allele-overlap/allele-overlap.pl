@@ -323,14 +323,14 @@ Description:
 	Symbols that are excluded: X (missing), I (incomplete), 0 (zero)
 
 Example Input Format:
-  Dataset as exported from PubMLST or Genome Comparator
+ 1. Dataset as exported from PubMLST or Genome Comparator
   Table of isolates x loci 
   
-  Locus		Asdfg	Qwert	Zxcvb
+  Locus			Asdfg	Qwert	Zxcvb
   BACT000001	1		3		X
   BACT000002	I		new#1	0
   
-  List of isolate names / ids and groups 
+ 2. List of isolate names / ids and groups 
   columns beyond the first and second will be ignored
   
   Asdfg	L2
@@ -340,7 +340,7 @@ Example Input Format:
   
 Other options: 
   -transpose Yes // -transpose No, if rows are not / are loci
-  -keepsymbols, if don't want to throw out "X", "I" or "0" are alleles
+  -keepsymbols, if don't want to throw out "X", "I" or "0" as alleles
   
   
 Example Output Format:
@@ -349,10 +349,10 @@ Example Output Format:
 Usage:
 Program.pl [ options ]
 
--intable        <FILE> - input filename
--ingroup        <FILE> - input filename
+-table        <FILE> - input filename
+-group        <FILE> - input filename
 -out       <FILE> - output filename
--h|--help     - print usage instructions
+-h    	 - print usage instructions
 
 EOU
 
