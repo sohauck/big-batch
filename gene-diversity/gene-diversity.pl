@@ -20,9 +20,10 @@ sub Usage( ; $ );
 
 # Get Command line options, exits if conditions don't look right
 my $fTable;			# table with isolates and loci
-my $transpose = "No";	# whether the table needs to be transposed or no, default is no
+my $transpose;		# whether the table needs to be transposed or no, default is no
 my $dFAS;			# directory where all the FASTA files for each locus are, if they don't need to be exported
-my $dbname;		# database name if want to export the files
+my $dbname;			# database name if want to export the files
+my $FASTAoption;	# 1 = have complete dir, 2 = make complete dir, 3 = take straight to Observed
 my $dOut;			# directory where the results will go
 my $dup = 1;		# the smallest number of duplicates necessary for locus to be considered "seen", default is 1
 my @mafftarg = ("--clustalout","--quiet"); # start with at least these, can ask for more, add "-mafft --auto" to keep silent
@@ -34,9 +35,10 @@ for ($i=0; $i<=$#ARGV; $i++)
 {
  	if($ARGV[$i] eq "-help")		{ Usage("You asked for help"); exit; }
  	if($ARGV[$i] eq "-table")		{ $fTable		= $ARGV[$i+1] || ''; $arg_cnt++; }
- 	if($ARGV[$i] eq "-transpose")	{ $transpose 	= "Yes"  || ''; $arg_cnt++; }
- 	if($ARGV[$i] eq "-FASTA")		{ $dFAS 		= $ARGV[$i+1] || ''; $arg_cnt++; }
- 	if($ARGV[$i] eq "-BIGSdb")		{ $dbname 		= $ARGV[$i+1] || ''; $arg_cnt++; }
+ 	if($ARGV[$i] eq "-transpose")	{ $transpose 	= $ARGV[$i+1] || ''; $arg_cnt++; }
+ 	if($ARGV[$i] eq "-FASTA")		{ $dFAS 		= $ARGV[$i+1] || ''; $FASTAoption = "1"; $arg_cnt++; }
+ 	if($ARGV[$i] eq "-dbname")		{ $dbname 		= $ARGV[$i+1] || ''; $arg_cnt++; }
+ 	if($ARGV[$i] eq "-dboption")	{ $FASTAoption 	= $ARGV[$i+1] || ''; $arg_cnt++; }
  	if($ARGV[$i] eq "-out")			{ $dOut  		= $ARGV[$i+1] || ''; $arg_cnt++; }
  	if($ARGV[$i] eq "-dup")			{ $dup  		= $ARGV[$i+1] || ''; $arg_cnt++; }
  	if($ARGV[$i] eq "-mafft")		{ push (@mafftarg, $ARGV[$i+1]) ; $arg_cnt++; }
@@ -48,14 +50,18 @@ print "\n\n\nYou've started the gene diversity script!\n\n";
 
 # Do we have everything we need to start?
 
-# a table of loci and isolates and whether to transpose it or no
+# a table of loci and isolates 
 if(! defined $fTable) 
 { 
 	print "Where is the table with isolates and loci?\n"; 
 	$fTable = <STDIN>; 
 	chomp $fTable; $fTable =~ s/\s+$//; # removes white spaces and line breaks
-	
-	
+}
+if(! -e $fTable)  { Usage("Input table file does not exist: $fTable"); exit; }
+
+# and whether to transpose that table or no
+if (! defined $transpose )
+{
 	print "\n\nDoes the table have loci as columns? \nIf yes, please enter 'Yes' as the table needs transposing. " .
 	"\nIf no, that is, if the each row of your table is a locus, transposing is not needed, so enter 'No' below.\n"; 
 	$transpose = <STDIN>; 
@@ -71,12 +77,8 @@ if(! defined $fTable)
 	else 
 	{ Usage("Something went wrong with the transposing options"); exit; }
 }
-if(! -e $fTable)  { Usage("Input table file does not exist: $fTable"); exit; }
-
 
 # a directory with FASTA files
-my $FASTAoption;
-
 if( ! defined $dFAS && ! defined $dbname)  
 { 
 	print 	"\n\nWhere is your deposit of FASTA sequences? Choose a number.\n".
@@ -109,7 +111,17 @@ if( ! defined $dFAS && ! defined $dbname)
 	}
 	
 	else
-	{ Usage("Something went wrong with the FASTA deposit options"); exit; }
+	{ Usage("Something went wrong with the FASTA deposit options, maybe you didn't choose 1, 2 or 3?"); exit; }
+}
+elsif ( defined $dFAS )
+{	$FASTAoption = "1";	}
+elsif ( defined $dbname && ! $FASTAoption =~ /^[23]/ )
+{	
+	print "Do you want to grab the complete FASTA sequences (enter 2) or just the necessary ones for this run (3)?\n";
+	$FASTAoption = <STDIN>;
+	
+	if ( ! $FASTAoption =~ /^[23]/ ) 
+	{	Usage("Something went wrong with the FASTA deposit options, maybe you didn't choose 1, 2 or 3?"); exit; }
 }
 
 
@@ -138,9 +150,9 @@ if(! defined $dOut)
 # Now that we've asked for everything, let's check that it's all what we expect... 
 print "\n\n\nLet's check if everything is correct before we start...\n\n";
 
-if ( $transpose eq "No" )
+if ( $transpose =~ /^[Nn]/ )
 { print	"Your table of isolates as columns and loci as rows is held at $fTable.\n"  }
-elsif ( $transpose eq "Yes" )
+elsif ( $transpose =~ /^[Yy]/ )
 { print	"Your table of loci as columns and isolates as rows is held at $fTable.\n"  }
 
 
@@ -171,7 +183,7 @@ elsif ( defined $dbname ) # You want to get all the sequences from BIGSDB to hav
 		else 
 		{ Usage("Could not create FASTA exports folder: $dOut/BIGSdb-FASTA/"); exit; }
 	}
-	elsif ( $FASTAoption =~ /^2/ )
+	elsif ( $FASTAoption =~ /^3/ )
 	{
 		print "There won't be a deposit of FASTA sequence, we'll grab them straight from $dbname. \n"; 
 	}
@@ -195,8 +207,10 @@ my @aoaTable = @$tableref; #puts table, in array of arrays format, into aoaTable
 
 if ( $transpose eq "Yes" ) # transposes the table and puts it back in aoaTable
 {
+	print "Now transposing your table...";
 	$tableref = TransposeTable ( \@aoaTable );
 	@aoaTable = @$tableref;
+	print " and done.\n";
 }
 
 
@@ -234,35 +248,41 @@ foreach my $locusrow (@aoaTable) # loop per locus
 			}
 	}
 
+	if ( exists($unique_alleles{"0"}) ) # move count away from empty if any missing alleles were seen
+	{	$missing = $unique_alleles{"0"}	} # gives the value in the frequency hash when the key is allele "0", the missing allele		
+
+
 	# find the file where the original FASTA sequences are
-	my $fullFAS; 
 	
-	if ( defined $dbname )
-	{
-		GetFASTASeqs ( $dbname, $locusname ) ; # the bit where the file is copied from BIGSdb
-		$fullFAS = $dOut."/BIGSdb-FASTA/".$locusname.".FAS";
-	}
-	else
-	{	$fullFAS = $dFAS."/".$locusname.".FAS"; }
 	
-	# name where the file with the reduced number of FASTA sequences will go
-	my $reducedFAS = $dOut."/Observed-FASTA/".$locusname.".FAS";
-
-
-	if ( open(FULLFASTA, $fullFAS) ) # if can actually find the full FASTA file 
+	my $reducedFAS = $dOut."/Observed-FASTA/".$locusname.".FAS"; # where the "seen" alleles get copied to  
+	open(REDFASTA, '>', $reducedFAS) or die "Cannot open $reducedFAS\n"; # then also open where the reduced one will go
+	
+	
+	if ( $FASTAoption =~ /^[12]/ ) # if there is or will be a directory
 	{
-		open(REDFASTA, '>', $reducedFAS) or die "Cannot open $reducedFAS\n"; # then also open where the reduced one will go
-		{       
+		my $fullFAS; # where the directory with all possible sequence is
+		
+		if ( $FASTAoption =~ /^2/ ) # making directory by exporting from BIGS
+		{
+			GetFASTASeqs ( $dbname, $locusname ) ; # the bit where the file is copied from BIGSdb
+			$fullFAS = $dOut."/BIGSdb-FASTA/".$locusname.".FAS";
+		}
+		elsif ( $FASTAoption =~ /^1/ ) # directory already exists
+		{	$fullFAS = $dFAS."/".$locusname.".FAS"; }
+		
+		if ( open(FULLFASTA, $fullFAS) )# if can open file in directory 
+		{
 			my $save = 1; # whether to copy the sequence following a >identifier line
-			
+		
 			while ( my $line = <FULLFASTA> ) # reading through original FASTA
 			{
 				if ( $line =~ /^>/ ) # if line is >identifier
 				{
 					chomp $line; 
-					
+				
 					$line =~ /([^>_]+)$/; $line = $1; #removes > and anything before the last _
-					
+				
 					if ( exists($unique_alleles{$line}) && $unique_alleles{$line} >= $dup ) # exists in hash of wanted loci
 					{
 						print REDFASTA "\n>", $line, "\n";
@@ -273,7 +293,7 @@ foreach my $locusrow (@aoaTable) # loop per locus
 					else # if not in the hash created from the table, indicating whether this allele is observed
 					{ $save = 0; } 
 				}
-				
+			
 				elsif ( $line =~ /^([A-Za-z*-])/ ) # if is a sequence line (starts with a letter, - or *) 
 				{
 					chomp $line; 
@@ -281,39 +301,73 @@ foreach my $locusrow (@aoaTable) # loop per locus
 					{ print REDFASTA $line; }
 				}	
 			}
-						
-			if ( exists($unique_alleles{"0"}) ) # move count away from empty if any missing alleles were seen
-			{	$missing = $unique_alleles{"0"}	} # gives the value in the frequency hash when the key is allele "0", the missing allele
-			
-		}  
-		close(FULLFASTA);
-		close(REDFASTA);
-	
-		# check if all alleles seen in table were copied 
-		foreach my $key ( sort keys %unique_alleles ) 
-		{ 
-			if ( $unique_alleles{$key} >= $dup && $key ne 0 ) # if frequency is still above cut-off (copied ones are reset to 0) and isn't the missing allele, 0
-			{ print "Did not find sequence for locus $locusname, allele $key.\n"; }
 		}
-		
-		print RESULTS join ("\t", ($locusname, $missing, $paralogous, $countnuc) ), "\t\n";
-
-	}
-	
-	else # if there isn't a FASTA file to copy over, give warning plus example alleles (might be just "0" which would explain missing file)
-	{ 
-		print "$locusname did not exist as a FASTA file. Alleles in table were..."; 
-		my $sampleallele = 0; 
-		foreach my $key ( sort keys %unique_alleles ) 
+		else # if couldn't open the file
 		{ 
-			if ( $sampleallele < 5 )
-			{ print " $key"; $sampleallele++; }
-			else # if already printed 5 allele numbers, just leave it
-			{ print " etc."; last; }
-		 }
-		print "\n";
+			my @seenalleles = sort keys %unique_alleles;
+
+			if ( scalar(@seenalleles) == 1 && $seenalleles[0] eq "0" )
+			{ print "$locusname is being removed because it only appeared on the table as missing.\n"; }
+		
+			else
+			{
+				print "$locusname did not exist as a FASTA file. Alleles in table were..."; 
+			
+				my $sampleallele = 0; 
+				foreach my $key ( @seenalleles ) 
+				{ 
+					if ( $sampleallele < 5 )
+					{ print " $key"; $sampleallele++; }
+					else # if already printed 5 allele numbers, just leave it
+					{ print " etc."; last; }
+				 } print "\n";
+			}
+		}
+		close(FULLFASTA);
 	}
 	
+	elsif ( $FASTAoption =~ /^3/ )
+	{ 		 
+ 		foreach my $allele ( sort keys %unique_alleles )
+ 		{
+ 			my $url = "http://rest.pubmlst.org/db/".$dbname."/loci/".$locusname."/alleles/".$allele;
+ 			my $wholeJSON = get($url);
+ 			
+ 			if ( $wholeJSON =~ /"status":404/ )
+			{
+				if ( $wholeJSON =~ /"message":"Locus/ ) # then probably the locus isn't really a locus
+				{
+					my $message =~ /"message":"(.+?)"/ ;
+					print $1 . "\n"; last; # and get out since no alleles will be found
+				}
+				elsif ( $wholeJSON =~ /"status":"Allele/ ) # then just couldn't find this allele
+				{
+					my $message =~ /"message":"(.+?)"/ ;
+					print $1 . "\n";
+				}
+			} 			
+ 			else 
+ 			{
+				$wholeJSON =~ /"sequence":"([a-zA-Z]+?)"/; # assuming sequence will only have letters
+				my $sequence = $1;
+				$wholeJSON =~ /"allele_id":"([0-9]+?)"/; # assuming allele ID will only be integers (in BIGS anyway)
+				my $allele_id = $1;
+	
+				print REDFASTA ">" . $allele_id . "\n" . $sequence . "\n\n";
+ 			}
+ 		}
+	}
+	
+	close(REDFASTA);
+	
+	# check if all alleles seen in table were copied 
+	foreach my $key ( sort keys %unique_alleles ) 
+	{ 
+		if ( $unique_alleles{$key} >= $dup && $key ne 0 ) # if frequency is still above cut-off (copied ones are reset to 0) and isn't the missing allele, 0
+		{ print "Did not find sequence for locus $locusname, allele $key.\n"; }
+	}
+	
+	print RESULTS join ("\t", ($locusname, $missing, $paralogous, $countnuc) ), "\t\n";	
 	
 } # close per locus loop
 
@@ -322,15 +376,18 @@ print "\nTable reading complete.\n";
 
 my %results = (); # creates a hash where the rest of results go under the locusname as the key, to be added to the results table at the end
 
+
+
 # Translating 
 mkdir $dOut."/Translated-FASTA/" or die "Cannot create /Translated-FASTA/ folder";
 
 # opening the directory where the observed alleles are and getting all the file names
 opendir (OBSDIR, $dOut."/Observed-FASTA/" ) or die "Cannot open directory: $!";
 	my @files = readdir OBSDIR;
-	@files = grep(/^([A-Za-z0-9])/,@files);
+	@files = grep(/^([A-Za-z0-9])/,@files); # remove any hidden files
 	if ($#files < 1)
 	{ die "Couldn't find any FASTA files. Maybe their names don't begin with a letter or number?\n";}
+	@files = sort @files; # so they're in order and the "Currently up to" is a bit more informative
 closedir OBSDIR;
 
 
@@ -404,7 +461,8 @@ print "\nTranslation complete.\n";
 if( scalar(@mafftarg) == 2) 
 { 
 	print "\n\nWe're going to do the alignments now. Do you have any MAFFT arguments to include?\n" . 
-		"You can just leave this blank if not, and MAFFT will run using its automatic option.\n"; 
+		"You can just leave this blank if not, and MAFFT will run using its automatic option.\n" .
+		"If you are using a large data set, try '--retree 1 --maxiterate 0' for the fast FFT-NS-1 method."; 
 	my $addtoMAFFT = <STDIN>; 
 	chomp $addtoMAFFT; # removes white spaces and line breaks
 	
@@ -557,7 +615,7 @@ sub GetFASTASeqs
 
 	my $url = "http://rest.pubmlst.org/db/".$dbname."/loci/".$locus."/alleles_fasta";
 	my $file = $dOut."/BIGSdb-FASTA/".$locus.".FAS";
-		
+
 	getstore($url, $file);
 }
 
