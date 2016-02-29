@@ -1,8 +1,9 @@
 ## What is necessary for these scripts to work correctly
-* Perl, including List::Util and LWP::Simple
+* Perl, including List::Util and LWP::Simple, download from https://www.perl.org/get.html
 * MAFFT — tested on v7.221, download from http://mafft.cbrc.jp/alignment/software/ 
 * R — tested on 3.0.2, download from https://cran.r-project.org/
   * ggplot2 — run 'install.packages("ggplot2")' from within R
+
 
 ## Options which may be added to command line:
 * *-help*: Will exit the script and call up the Usage instructions  
@@ -42,10 +43,10 @@
 * measure of GC content  
 * accepting loci categories  
 * option of checking for variable sites by \*, :, or .  
-* variable exclusion parameters for R step (currently need 10% tagging)
-* 
+* variable exclusion parameters for R step (currently cutoff at 10% of isolates tagged)
+ 
 
 ## Example
 From the folder where the Perl '' and R '' scripts are, along with the 'examples' folder, run this: 
-perl GbGDiv.pl -table examples/MYCO-table.txt -transpose Y -out examples/Trial-1/ -dbname pubmlst_mycobacteria_seqdef -dboption 2 -mafft --auto 
-The results should be identical to 
+```perl GbGDiv.pl -table examples/MYCO-table.txt -transpose Y -out examples/Trial-1/ -dbname pubmlst_mycobacteria_seqdef -dboption 2 -mafft --auto ```
+The results should be identical to Trial-0 folder.
