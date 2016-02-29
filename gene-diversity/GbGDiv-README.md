@@ -1,4 +1,13 @@
-## Options:
+## Options which may be added to command line:
+* "-help": Will exit the script and call up the Usage instructions  
+* "-table": A file containing a tab-separate table of loci vs. isolates with allele IDs in the cells  
+* "-transpose": "Yes" if the table has loci as columns and isolates as rows, "No" otherwise.  
+* "-FASTA": Directory with complete FASTA files where "locusname.FAS" is the file name, like BACT000001.FAS  
+* "-dbname": If grabbing FASTA sequences from BIGSdb, the name of the database, usu. pubmlst\_*genusname*\_seqdef  
+* "-dboption")	{ $FASTAoption 	= $ARGV[$i+1] || ''; $arg_cnt++; }
+* "-out")			{ $dOut  		= $ARGV[$i+1] || ''; $arg_cnt++; }
+* "-dup")			{ $dup  		= $ARGV[$i+1] || ''; $arg_cnt++; }
+* "-mafft")		{ push (@mafftarg, $ARGV[$i+1]) ; $arg_cnt++; }
 
 
 ## Parameters in the Results table:
@@ -29,3 +38,4 @@
 * option of checking for variable sites by \*, :, or .  
 
 
+## Example
