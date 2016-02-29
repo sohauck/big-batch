@@ -2,7 +2,7 @@
 * Perl, including List::Util and LWP::Simple, download from https://www.perl.org/get.html
 * MAFFT — tested on v7.221, download from http://mafft.cbrc.jp/alignment/software/ 
 * R — tested on 3.0.2, download from https://cran.r-project.org/
-  * ggplot2 — run 'install.packages("ggplot2")' from within R
+  * ggplot2 — run ```install.packages("ggplot2")``` from within R
 
 
 ## Options which may be added to command line:
