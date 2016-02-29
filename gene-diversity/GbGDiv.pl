@@ -565,7 +565,7 @@ rename ( $dOut."/ResultsTable-tmp.txt" , $dOut."/ResultsTable.txt" ) or die "Can
 
 # Making graph in R
 my $Rscript = $0;
-$Rscript =~ s/\.[^.]+$/-R\.R/; # works if gene-diversity.pl was loaded and gene-diversity.R in the same folder is where R script is
+$Rscript =~ s/\.[^.]+$/\.R/; # works if gene-diversity.pl was loaded and gene-diversity.R in the same folder is where R script is
 
 if ( mkdir $dOut."/Graphs/" )
 { print "\n\nGraphs generated from your data will be at the Graphs folder.\n" }
