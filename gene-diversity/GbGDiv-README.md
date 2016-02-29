@@ -48,5 +48,7 @@
 
 ## Example
 From the folder where the Perl '' and R '' scripts are, along with the 'examples' folder, run this: 
-```perl GbGDiv.pl -table examples/MYCO-table.txt -transpose Y -out examples/Trial-1/ -dbname pubmlst_mycobacteria_seqdef -dboption 2 -mafft --auto ```
+```
+perl GbGDiv.pl -table examples/MYCO-table.txt -transpose Y -out examples/Trial-1/ -dbname pubmlst_mycobacteria_seqdef -dboption 2 -mafft --auto 
+```
 The results should be identical to Trial-0 folder.
