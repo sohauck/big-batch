@@ -3,9 +3,9 @@
 
 ## Parameters in the Results table:
 
-*Locus*: name of locus as seen on input table
+*Locus*: name of locus as seen on input table  
 
-*Missing*: number of isolates for which no allele ID was present (missing, untagged, incomplete, etc.)
+*Missing*: number of isolates for which no allele ID was present (missing, untagged, incomplete, etc.)  
 
 *Paralogous*: number of isolates in which the locus had at least two tagged alleles
 
