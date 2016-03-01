@@ -27,6 +27,7 @@ my $FASTAoption = 0;# 1 = have complete dir, 2 = make complete dir, 3 = take str
 my $dOut;			# directory where the results will go
 my $dup = 1;		# the smallest number of duplicates necessary for locus to be considered "seen", default is 1
 my @mafftarg = ("--clustalout","--quiet"); # start with at least these, can ask for more, add "-mafft --auto" to keep silent
+my $locuscat; # file with categories of loci for graphs
 
 
 my $i = 0; 
@@ -42,6 +43,7 @@ for ($i=0; $i<=$#ARGV; $i++)
  	if($ARGV[$i] eq "-out")			{ $dOut  		= $ARGV[$i+1] || ''; $arg_cnt++; }
  	if($ARGV[$i] eq "-dup")			{ $dup  		= $ARGV[$i+1] || ''; $arg_cnt++; }
  	if($ARGV[$i] eq "-mafft")		{ push (@mafftarg, $ARGV[$i+1]) ; $arg_cnt++; }
+ 	if($ARGV[$i] eq "-locuscat")	{ $locuscat		= $ARGV[$i+1] || ''; $arg_cnt++; }
 }
 
 # Hello!
@@ -60,6 +62,13 @@ if(! defined $fTable)
 	chomp $fTable; $fTable =~ s/\s+$//; # removes white spaces and line breaks
 }
 if(! -e $fTable)  { Usage("Input table file does not exist: $fTable"); exit; }
+
+# are the loci split into categories?
+if ( defined $locuscat && ! -e $locuscat)
+{  Usage("Input file file does not exist: $locuscat"); exit; }
+elsif ( ! defined )
+{ 	$locuscat = " "	}
+
 
 # and whether to transpose that table or no
 if (! defined $transpose )
@@ -573,7 +582,7 @@ else
 { Usage("Could not create Graphs folder: $dOut/Graphs/"); exit; }
 
 
-my $command = "R --slave --args $dOut < $Rscript"; #making the full thing, adding --slave for silence
+my $command = "R --slave --args $dOut $locuscat < $Rscript"; #making the full thing, adding --slave for silence
 
 print "Running R script... ";
 
