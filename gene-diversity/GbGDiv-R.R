@@ -1,5 +1,7 @@
 Args <- commandArgs(TRUE);      # retrieve args
 
+# Args <- c("","") # if running manually for testing
+
 # Setting up packages
 library(ggplot2)
 
@@ -8,6 +10,16 @@ setwd(Args[1])
 
 # Reading in table with output from Perl runs
 df <- read.table("ResultsTable.txt", header = TRUE, sep = "\t")
+
+# Adding locus categories if they are included
+if exists(Args[2]) { 
+  df.cat <- read.table(Args[2], header = TRUE, sep = "\t")
+  names(dfref)[1] <- "Locus"
+  names(dfref)[2] <- "Category"
+  df <- merge(df,dfref,by="Locus")
+} 
+else {  } 
+
 
 # Setting up new variables 
 df$AllelicDiv <- c( df$CountNuc / df$AvgLength )
@@ -26,7 +38,7 @@ df$RatioVS    <- df$VSitesAA /  df$VSitesNuc
 write.table (df, "CalculationsTable.txt", sep = "\t", row.names = FALSE)
 
 # Moving to Graphs folder for saving graphs
-setwd( paste( Args[1] , "/Graphs/", sep = "" ) )
+setwd( paste (getwd(), "/Graphs/", sep = "") )
 
 # Making graphs!
 
@@ -41,6 +53,13 @@ ggplot(df, aes(x=Missing)) +
 
 ggsave("Dist-Missing.png", height = 9, width = 12, dpi = 100)
 
+df.all <- df
+cutoff <- (9/10)*nrow(df.all) # excluding anything tagged in less than 10% of isolate records
+df <- df[df$Missing < cutoff,]
+removed <- length(df.all[df.all$Missing > cutoff,1])
+print ( paste ("Number of loci excluded due to being tagged in less than 10% of isolates:", removed) )
+
+y6
 # Distribution of AllelicDiv and ADivNM
 ggplot(df, aes(x=AllelicDiv, fill="")) + 
   geom_histogram(alpha=.7, binwidth=((1/30)*(range(df$AllelicDiv)[2]-range(df$AllelicDiv)[1]))) + 

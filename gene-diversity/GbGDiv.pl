@@ -20,7 +20,7 @@ sub Usage( ; $ );
 
 # Get Command line options, exits if conditions don't look right
 my $fTable;			# table with isolates and loci
-my $transpose;		# whether the table needs to be transposed or no, default is no
+my $transpose;		# whether the table needs to be transposed or no
 my $dFAS;			# directory where all the FASTA files for each locus are, if they don't need to be exported
 my $dbname;			# database name if want to export the files
 my $FASTAoption = 0;# 1 = have complete dir, 2 = make complete dir, 3 = take straight to Observed
@@ -565,7 +565,7 @@ rename ( $dOut."/ResultsTable-tmp.txt" , $dOut."/ResultsTable.txt" ) or die "Can
 
 # Making graph in R
 my $Rscript = $0;
-$Rscript =~ s/\.[^.]+$/\.R/; # works if gene-diversity.pl was loaded and gene-diversity.R in the same folder is where R script is
+$Rscript =~ s/\.[^.]+$/-R\.R/; # works if gene-diversity.pl was loaded and gene-diversity.R in the same folder is where R script is
 
 if ( mkdir $dOut."/Graphs/" )
 { print "\n\nGraphs generated from your data will be at the Graphs folder.\n" }
@@ -876,7 +876,7 @@ Command line options:
 -transpose: "Yes" if the table has loci as columns and isolates as rows, "No" otherwise. 
 -FASTA: Directory with FASTA files where "locusname.FAS" is the file name, like BACT000001.FAS
 -dbname: If grabbing FASTA sequences from BIGSdb, the name of the database. 
--dout: Directory where all results will be saved.
+-out: Directory where all results will be saved.
 -dboption: 1 if complete FASTA directory exists, 2 if creating the same, 3 if pulling just what is needed
 -dup: Value for the mininum frequency for allele appearance to be included. Default is "1".
 -mafft: Can be used to add more parameters to MAFFT. 
