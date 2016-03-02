@@ -52,3 +52,8 @@ From the folder where the Perl '' and R '' scripts are, along with the 'examples
 perl GbGDiv.pl -table examples/MYCO-table.txt -transpose Y -out examples/Trial-1/ -dbname pubmlst_mycobacteria_seqdef -dboption 2 -mafft --auto 
 ```
 The results should be identical to Trial-0 folder.
+
+
+## Known Issues
+* MAFFT doesn't like file addresses with spaces
+* R doesn't like tables that include quotation marks such as ' in abcZ' locus name
