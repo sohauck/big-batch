@@ -44,7 +44,8 @@
 * accepting loci categories  
 * option of checking for variable sites by \*, :, or .  
 * variable exclusion parameters for R step (currently cutoff at 10% of isolates tagged)
- 
+* variable number of labelled points  
+* option to label axis by z-score not value  
 
 ## Example
 From the folder where the Perl '' and R '' scripts are, along with the 'examples' folder, run this: 
@@ -55,5 +56,7 @@ The results should be identical to Trial-0 folder.
 
 
 ## Known Issues
-* MAFFT doesn't like file addresses with spaces
-* R doesn't like tables that include quotation marks such as ' in abcZ' locus name
+* MAFFT doesn't like file addresses with spaces  
+* R doesn't like tables that include quotation marks such as ' in abcZ' locus name  
+* "Rplots.pdf" is created on the Graphs folder, doesn't harm anyone but isn't necessary...  
+
