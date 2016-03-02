@@ -20,13 +20,14 @@ sub Usage( ; $ );
 
 # Get Command line options, exits if conditions don't look right
 my $fTable;			# table with isolates and loci
-my $transpose;		# whether the table needs to be transposed or no, default is no
+my $transpose;		# whether the table needs to be transposed or no
 my $dFAS;			# directory where all the FASTA files for each locus are, if they don't need to be exported
 my $dbname;			# database name if want to export the files
 my $FASTAoption = 0;# 1 = have complete dir, 2 = make complete dir, 3 = take straight to Observed
 my $dOut;			# directory where the results will go
 my $dup = 1;		# the smallest number of duplicates necessary for locus to be considered "seen", default is 1
 my @mafftarg = ("--clustalout","--quiet"); # start with at least these, can ask for more, add "-mafft --auto" to keep silent
+my $locuscat; # file with categories of loci for graphs
 
 
 my $i = 0; 
@@ -42,6 +43,7 @@ for ($i=0; $i<=$#ARGV; $i++)
  	if($ARGV[$i] eq "-out")			{ $dOut  		= $ARGV[$i+1] || ''; $arg_cnt++; }
  	if($ARGV[$i] eq "-dup")			{ $dup  		= $ARGV[$i+1] || ''; $arg_cnt++; }
  	if($ARGV[$i] eq "-mafft")		{ push (@mafftarg, $ARGV[$i+1]) ; $arg_cnt++; }
+ 	if($ARGV[$i] eq "-locuscat")	{ $locuscat		= $ARGV[$i+1] || ''; $arg_cnt++; }
 }
 
 # Hello!
@@ -60,6 +62,13 @@ if(! defined $fTable)
 	chomp $fTable; $fTable =~ s/\s+$//; # removes white spaces and line breaks
 }
 if(! -e $fTable)  { Usage("Input table file does not exist: $fTable"); exit; }
+
+# are the loci split into categories?
+if ( defined $locuscat && ! -e $locuscat)
+{  Usage("Input file file does not exist: $locuscat"); exit; }
+elsif ( ! defined )
+{ 	$locuscat = " "	}
+
 
 # and whether to transpose that table or no
 if (! defined $transpose )
@@ -565,7 +574,7 @@ rename ( $dOut."/ResultsTable-tmp.txt" , $dOut."/ResultsTable.txt" ) or die "Can
 
 # Making graph in R
 my $Rscript = $0;
-$Rscript =~ s/\.[^.]+$/\.R/; # works if gene-diversity.pl was loaded and gene-diversity.R in the same folder is where R script is
+$Rscript =~ s/\.[^.]+$/-R\.R/; # works if gene-diversity.pl was loaded and gene-diversity.R in the same folder is where R script is
 
 if ( mkdir $dOut."/Graphs/" )
 { print "\n\nGraphs generated from your data will be at the Graphs folder.\n" }
@@ -573,7 +582,7 @@ else
 { Usage("Could not create Graphs folder: $dOut/Graphs/"); exit; }
 
 
-my $command = "R --slave --args $dOut < $Rscript"; #making the full thing, adding --slave for silence
+my $command = "R --slave --args $dOut $locuscat < $Rscript"; #making the full thing, adding --slave for silence
 
 print "Running R script... ";
 
@@ -876,7 +885,7 @@ Command line options:
 -transpose: "Yes" if the table has loci as columns and isolates as rows, "No" otherwise. 
 -FASTA: Directory with FASTA files where "locusname.FAS" is the file name, like BACT000001.FAS
 -dbname: If grabbing FASTA sequences from BIGSdb, the name of the database. 
--dout: Directory where all results will be saved.
+-out: Directory where all results will be saved.
 -dboption: 1 if complete FASTA directory exists, 2 if creating the same, 3 if pulling just what is needed
 -dup: Value for the mininum frequency for allele appearance to be included. Default is "1".
 -mafft: Can be used to add more parameters to MAFFT. 

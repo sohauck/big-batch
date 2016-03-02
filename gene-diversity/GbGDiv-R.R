@@ -1,13 +1,19 @@
+library(ggplot2) # setting up packages
 Args <- commandArgs(TRUE);      # retrieve args
+# Args <- c("/Volumes/sofia/big-batch/gene-diversity/examples/Trial-1/","/Volumes/sofia/big-batch/gene-diversity/examples/locicat.txt") # if running manually for testing
 
-# Setting up packages
-library(ggplot2)
-
-# Going to directory with results
-setwd(Args[1])
+setwd(Args[1]) # Going to directory with results
 
 # Reading in table with output from Perl runs
 df <- read.table("ResultsTable.txt", header = TRUE, sep = "\t")
+
+# Adding locus categories if they are included
+if (! is.null(Args[2]) ) { 
+  df.cat <- read.table(Args[2], header = TRUE, sep = "\t")
+  names(df.cat)[1] <- "Locus"
+  names(df.cat)[2] <- "Category"
+  df <- merge( df, df.cat, by="Locus")
+} else {  } 
 
 # Setting up new variables 
 df$AllelicDiv <- c( df$CountNuc / df$AvgLength )
@@ -26,7 +32,7 @@ df$RatioVS    <- df$VSitesAA /  df$VSitesNuc
 write.table (df, "CalculationsTable.txt", sep = "\t", row.names = FALSE)
 
 # Moving to Graphs folder for saving graphs
-setwd( paste( Args[1] , "/Graphs/", sep = "" ) )
+setwd( paste (getwd(), "/Graphs/", sep = "") )
 
 # Making graphs!
 
@@ -41,25 +47,45 @@ ggplot(df, aes(x=Missing)) +
 
 ggsave("Dist-Missing.png", height = 9, width = 12, dpi = 100)
 
+df.all <- df
+cutoff <- (9/10)*nrow(df.all) # excluding anything tagged in less than 10% of isolate records
+df <- df[df$Missing < cutoff,]
+removed <- length(df.all[df.all$Missing > cutoff,1])
+print ( paste ("Number of loci excluded due to being tagged in less than 10% of isolates:", removed) )
+
+
 # Distribution of AllelicDiv and ADivNM
-ggplot(df, aes(x=AllelicDiv, fill="")) + 
-  geom_histogram(alpha=.7, binwidth=((1/30)*(range(df$AllelicDiv)[2]-range(df$AllelicDiv)[1]))) + 
-  ggtitle("Density of alleles per nucleotide position") + 
-  theme_minimal() + 
-  theme(plot.title = element_text(face="bold"), axis.title.x=element_text(vjust=-.5, size=14)) +
-  geom_vline(xintercept=mean(df$AllelicDiv), colour = "red", linetype="dashed") +
-  ylab("Density")  + xlab("Alleles per length in nucleotides") + guides(fill=FALSE) 
+ggplot( df, 
+        aes( x = AllelicDiv, 
+             fill = "")) + 
+  geom_histogram( alpha=.7, 
+                  binwidth=((1/30)*(range(df$AllelicDiv)[2]-range(df$AllelicDiv)[1]))) + 
+  ggtitle( "Density of alleles per nucleotide position" ) + 
+  geom_vline( xintercept=mean(df$AllelicDiv), 
+              colour = "red", linetype="dashed") +
+  theme_minimal( ) + 
+  theme( plot.title = element_text(face="bold"), 
+         axis.title.x=element_text(vjust=-.5, size=14)) +
+  ylab("Density") + 
+  xlab("Alleles per length in nucleotides") + 
+  guides(fill=FALSE) 
 
 ggsave("Dist-AllelicDiv.png", height = 9, width = 12, dpi = 100)
 
 
-ggplot(df, aes(x=ADivNM, fill="")) + 
-  geom_histogram(alpha=.7, binwidth=((1/30)*(range(df$AllelicDiv)[2]-range(df$AllelicDiv)[1]))) + 
+ggplot( df, aes( x = ADivNM, 
+                 fill = "")) + 
+  geom_histogram( alpha=.7, 
+                  binwidth=((1/30)*(range(df$AllelicDiv)[2]-range(df$AllelicDiv)[1]))) + 
+  geom_vline( xintercept = mean(df$ADivNM), 
+              colour = "red", linetype = "dashed") +
   ggtitle("Density of alleles per nucleotide position, compared to null model") +
   theme_minimal() + 
-  theme(plot.title = element_text(face="bold"), axis.title.x=element_text(vjust=-.5, size=14)) +
-  geom_vline(xintercept=mean(df$ADivNM), colour = "red", linetype="dashed") +
-  ylab("Density")  + xlab("Difference in alleles per length in nucleotides from genome average") + guides(fill=FALSE) 
+  theme( plot.title = element_text(face="bold"), 
+         axis.title.x=element_text(vjust=-.5, size=14)) +
+  ylab("Density") + 
+  xlab("Difference in alleles per length in nucleotides from genome average") + 
+  guides(fill=FALSE) 
 
 ggsave("Dist-ADivNM.png", height = 9, width = 12, dpi = 100)
 
@@ -68,28 +94,54 @@ ggsave("Dist-ADivNM.png", height = 9, width = 12, dpi = 100)
 
 x1 <- sample(seq(from = 0, to = 1, by = .01), size = nrow(df), replace = TRUE)
 
-
 ggplot(df) +
-  geom_point( data=df , aes(x=x1, y=AllelicDiv), size=5, alpha=.5, label=df$Locus) +
-  coord_flip() + theme_minimal() + 
-  theme(axis.text.y=element_blank(), plot.title = element_text(face="bold"), axis.title.x=element_text(vjust=-.5, size=14), axis.text.y = element_blank()) +
-  geom_hline(yintercept=mean(df$AllelicDiv), size=1, colour="blue", linetype="dashed") +
-  ggtitle("Genetic diversity of loci") + xlab("")  + ylab("Alleles per nucleotide") +
-  geom_text(aes(x=x1, y=AllelicDiv, label=ifelse(AllelicDiv<head(sort(df$AllelicDiv),10)[10] | AllelicDiv>tail(sort(df$AllelicDiv),10)[1],
-                                          as.character(Locus),'')), size=4, alpha=.8, vjust=-1.5) 
+  geom_point( data=df, 
+              aes(x=x1, y=AllelicDiv), 
+              size=5, alpha=.5, 
+              label=df$Locus) +
+  geom_hline( yintercept = mean(df$AllelicDiv), 
+              size=1, colour="blue", linetype="dashed") +
+  geom_text( aes( x=x1, 
+                  y=AllelicDiv, 
+                  label=ifelse( AllelicDiv<head(sort(df$AllelicDiv),10)[10] | 
+                                AllelicDiv>tail(sort(df$AllelicDiv),10)[1],
+                                          as.character(Locus),'')), 
+             size=4, alpha=.8, vjust=-1.5)   +
+  ggtitle("Genetic diversity of loci") + 
+  xlab("") + 
+  ylab("Alleles per nucleotide") +  
+  coord_flip() + 
+  theme_minimal() + 
+  theme( axis.text.y = element_blank(), 
+         plot.title = element_text(face="bold"), 
+         axis.title.x = element_text(vjust=-.5, size=14))
 
 ggsave("Point-AllelicDiv.png", height = 9, width = 12, dpi = 100)
 
 x1 <- sample(seq(from = 0, to = 1, by = .01), size = nrow(df), replace = TRUE)
 
 ggplot(df) +
-  geom_point( data=df , aes(x=x1, y=ADivNM), size=5, alpha=.5, label=df$Locus) +
-  coord_flip() + theme_minimal() + 
-  theme(axis.text.y=element_blank(), plot.title = element_text(face="bold"), axis.title.x=element_text(vjust=-.5, size=14), axis.text.y = element_blank()) +
-  geom_hline(yintercept=mean(df$ADivNM), size=1, colour="blue", linetype="dashed") +
-  ggtitle("Genetic diversity of loci, compared to null model") + xlab("")  + ylab("Difference in alleles per nucleotide from genome average") +
-  geom_text(aes(x=x1, y=ADivNM, label=ifelse(ADivNM<head(sort(df$ADivNM),10)[10] | ADivNM>tail(sort(df$ADivNM),10)[1],
-                                             as.character(Locus),'')), size=4, alpha=.8, vjust=-1.5) 
+  geom_point( data=df, 
+              aes(x=x1, y
+                  =ADivNM),
+              size=5, alpha=.5, label=df$Locus) +
+  geom_hline( yintercept = mean(df$ADivNM), 
+              size=1, colour="blue", linetype="dashed") +
+  geom_text( aes( x=x1,
+                  y=ADivNM, 
+                  label=ifelse(ADivNM<head(sort(df$ADivNM),10)[10] | 
+                              ADivNM>tail(sort(df$ADivNM),10)[1],
+                                             as.character(Locus),'')), 
+             size=4, alpha=.8, vjust=-1.5) +
+  coord_flip() + 
+  theme_minimal() + 
+  theme( axis.text.y=element_blank(), 
+         plot.title = element_text(face="bold"), 
+         axis.title.x=element_text(vjust=-.5, size=14), 
+         axis.text.y = element_blank()) + 
+  ggtitle("Genetic diversity of loci, compared to null model") + 
+  xlab("") + 
+  ylab("Difference in alleles per nucleotide from genome average")
 
 ggsave("Point-ADivNM.png", height = 9, width = 12, dpi = 100)
 
@@ -98,27 +150,57 @@ ggsave("Point-ADivNM.png", height = 9, width = 12, dpi = 100)
 x1 <- sample(seq(from = 0, to = 1, by = .01), size = nrow(df), replace = TRUE)
 
 ggplot(df) +
-  geom_point( data=df , aes(x=x1, y=RatioCount), size=5, alpha=.5, label=df$Locus) +
-  coord_flip() + theme_minimal() + 
-  theme(axis.text.y=element_blank(), plot.title = element_text(face="bold"), axis.title.x=element_text(vjust=-.5, size=14), axis.text.y = element_blank()) +
-  geom_hline(yintercept=mean(df$RatioCount), size=1, colour="blue", linetype="dashed") +
-  ggtitle("Distribution of purifying to diversifying selection") + xlab("")  + ylab("Ratio of unique nucleotide to unique amino acid sequences per locus") +
-  geom_text(aes(x=x1, y=RatioCount, label=ifelse(RatioCount<head(sort(df$RatioCount),10)[10] | RatioCount>=tail(sort(df$RatioCount),10)[1],
-                                             as.character(Locus),'')), size=4, alpha=.8, vjust=-1.5) 
+  geom_point( data=df, 
+              aes(x=x1, 
+                  y=RatioCount), 
+              size=5, alpha=.5, 
+              label=df$Locus) +
+  geom_hline( yintercept = mean(df$RatioCount), 
+              size=1, colour="blue", linetype="dashed") +
+  geom_text( aes( x=x1, 
+                  y=RatioCount, 
+                  label=ifelse( RatioCount<head(sort(df$RatioCount),10)[10] | 
+                                RatioCount>=tail(sort(df$RatioCount),10)[1],
+                                             as.character(Locus),'')), 
+             size=4, alpha=.8, vjust=-1.5) +
+  coord_flip() + 
+  theme_minimal() + 
+  theme( axis.text.y=element_blank(), 
+         plot.title = element_text(face="bold"), 
+         axis.title.x=element_text(vjust=-.5, size=14), 
+         axis.text.y = element_blank(),
+         axis.ticks  = element_blank() ) +
+  ggtitle("Distribution of purifying to diversifying selection") + 
+  xlab("") + 
+  ylab("Ratio of unique nucleotide to unique amino acid sequences per locus")
 
 ggsave("Point-RatioCount.png", height = 9, width = 12, dpi = 100)
 
 
 # Ratio of variable sites
 x1 <- sample(seq(from = 0, to = 1, by = .01), size = nrow(df), replace = TRUE)
-
+x1 <- df$Category
+ 
 ggplot(df) +
-  geom_point( data=df , aes(x=x1, y=RatioVS), size=5, alpha=.5, label=df$Locus) +
-  coord_flip() + theme_minimal() + 
-  theme(axis.text.y=element_blank(), plot.title = element_text(face="bold"), axis.title.x=element_text(vjust=-.5, size=14), axis.text.y = element_blank()) +
-  geom_hline(yintercept=mean(df$RatioVS), size=1, colour="blue", linetype="dashed") +
-  ggtitle("Distribution of purifying to diversifying selection") + xlab("")  + ylab("Ratio of variable sites in nucleotide to amino acid format per locus") +
-  geom_text(aes(x=x1, y=RatioVS, label=ifelse(RatioVS<head(sort(df$RatioVS),10)[10] | RatioVS>=tail(sort(df$RatioVS),10)[1],
-                                                 as.character(Locus),'')), size=4, alpha=.8, vjust=-1.5) 
+  geom_point( data=df , 
+              aes(x=x1, y=RatioVS), 
+              size=5, alpha=.5, 
+              label=df$Locus ) +
+  geom_hline( yintercept = mean(df$RatioVS), 
+             size=1, colour="blue", linetype="dashed") + 
+  geom_text( aes( x=x1, y=RatioVS, 
+                 label=ifelse(RatioVS<head(sort(df$RatioVS),10)[10] | RatioVS>=tail(sort(df$RatioVS),10)[1],
+                              as.character(Locus),'')), 
+             size=4, alpha=.8, vjust=-1.5) + 
+  theme_minimal() + 
+  coord_flip() + 
+  theme(#axis.text.y =element_blank(), 
+        plot.title  = element_text(face="bold"), 
+        axis.title.x=element_text(vjust=-.5, size=14), 
+        axis.ticks  = element_blank() ) +
+  ggtitle("Distribution of purifying to diversifying selection") + 
+    xlab("") + 
+    ylab("Ratio of variable sites in nucleotide to amino acid format per locus")
+
 
 ggsave("Point-RatioVS.png", height = 9, width = 12, dpi = 100)
