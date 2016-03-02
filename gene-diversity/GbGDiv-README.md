@@ -42,7 +42,6 @@
 
 ## Possible additions:
 * measure of GC content  
-* accepting loci categories  
 * option of checking for variable sites by \*, :, or .  
 * variable exclusion parameters for R step (currently cutoff at 10% of isolates tagged)
 * variable number of labelled points  
