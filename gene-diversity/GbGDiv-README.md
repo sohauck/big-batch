@@ -14,7 +14,8 @@
 * *-dboption*: '1' if complete FASTA directory exists, '2' if creating the same, '3' if pulling just what is needed  
 * *-out*: Directory where all results will be saved.
 * *-dup*: Value for the mininum frequency for allele appearance to be included. Default is '1'.
-* *-mafft*: Can be used to add more parameters to MAFFT. 
+* *-mafft*: Can be used to add more parameters to MAFFT.  
+* *-locuscat*: A tab-separated file with locus names in the first column and categories on the second, used in making graphs.
 
 
 ## Parameters in the Results table:
