@@ -35,7 +35,7 @@
 * *AllelicDiv*: number of unique nucleotide sequences found divided by average length (greater if more diverse)  
 * *ADivNM*: the previous parameter subtracted by the genome-wide average 
 * *VSitesNuc*: proportion of sites in aligned nucleotide sequences which had some variation  
-* *VSitesAA*: proportion of sites in aligned nucleotide sequences which had some variation  
+* *VSitesAA*: proportion of sites in aligned amino acid sequences which had some variation  
 * *RatioCount*: ratio of unique nucleotide to unique amino acid sequences (increases with diversifying selective pressure)  
 * *RatioVS*: ratio of proportions of unique sites in nucleotide to amino acid sequences (increases with diversifying selective pressure)  
 
