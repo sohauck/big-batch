@@ -26,8 +26,8 @@ my $dbname;			# database name if want to export the files
 my $FASTAoption = 0;# 1 = have complete dir, 2 = make complete dir, 3 = take straight to Observed
 my $dOut;			# directory where the results will go
 my $dup = 1;		# the smallest number of duplicates necessary for locus to be considered "seen", default is 1
-my @mafftarg = ("--clustalout","--quiet"); # start with at least these, can ask for more, add "-mafft --auto" to keep silent
 my $locuscat; # file with categories of loci for graphs
+my @mafftarg = ("--clustalout","--quiet"); # start with at least these, can ask for more, add "-mafft --auto" to keep silent
 
 
 my $i = 0; 
@@ -42,8 +42,8 @@ for ($i=0; $i<=$#ARGV; $i++)
  	if($ARGV[$i] eq "-dboption")	{ $FASTAoption 	= $ARGV[$i+1] || ''; $arg_cnt++; }
  	if($ARGV[$i] eq "-out")			{ $dOut  		= $ARGV[$i+1] || ''; $arg_cnt++; }
  	if($ARGV[$i] eq "-dup")			{ $dup  		= $ARGV[$i+1] || ''; $arg_cnt++; }
- 	if($ARGV[$i] eq "-mafft")		{ push (@mafftarg, $ARGV[$i+1]) ; $arg_cnt++; }
  	if($ARGV[$i] eq "-locuscat")	{ $locuscat		= $ARGV[$i+1] || ''; $arg_cnt++; }
+ 	if($ARGV[$i] eq "-mafft")		{ push (@mafftarg, $ARGV[$i+1]) ; $arg_cnt++; }
 }
 
 # Hello!
@@ -66,8 +66,8 @@ if(! -e $fTable)  { Usage("Input table file does not exist: $fTable"); exit; }
 # are the loci split into categories?
 if ( defined $locuscat && ! -e $locuscat)
 {  Usage("Input file file does not exist: $locuscat"); exit; }
-elsif ( ! defined )
-{ 	$locuscat = " "	}
+elsif ( ! defined $locuscat )
+{ 	$locuscat = "notdef"	}
 
 
 # and whether to transpose that table or no
@@ -150,7 +150,7 @@ if(! defined $dOut)
 { 
 	my @tableaddress = split ("/", $fTable);
 	$tableaddress[-1] =~ s/\.[^.]+$//; # remove extension from name of the last thing in the address, the table
-	$tableaddress[-1] = "GeneDiv-" . $tableaddress[-1];
+	$tableaddress[-1] = "GbGDiv-" . $tableaddress[-1];
 	
 	print 	"\n\nName the directory where you'd like the results to go.\n".
 			"If you can't decide, leave this blank and a new folder, in the same place as your ".
@@ -572,23 +572,25 @@ close RESULTSOUT;
 rename ( $dOut."/ResultsTable-tmp.txt" , $dOut."/ResultsTable.txt" ) or die "Cannot rename temporary results over older.";
 
 
-# Making graph in R
-my $Rscript = $0;
-$Rscript =~ s/\.[^.]+$/-R\.R/; # works if gene-diversity.pl was loaded and gene-diversity.R in the same folder is where R script is
-
+# Making graphs in R
 if ( mkdir $dOut."/Graphs/" )
 { print "\n\nGraphs generated from your data will be at the Graphs folder.\n" }
 else 
 { Usage("Could not create Graphs folder: $dOut/Graphs/"); exit; }
 
+my $Rscript = $0; # starting from where .pl is
+$Rscript =~ s/\.[^.]+$/-R\.R/; # works if gene-diversity.pl was loaded and gene-diversity.R in the same folder is where R script is
 
-my $command = "R --slave --args $dOut $locuscat < $Rscript"; #making the full thing, adding --slave for silence
+my $zscore = "FALSE"; # may add options to change these
+my $labels = 6;
 
-print "Running R script... ";
+my $command = "R --slave --args $dOut $zscore $locuscat $labels < $Rscript"; #making the full thing, adding --slave for silence
+
+print "Running R script... \n\n";
 
 system ( $command ); 
 
-print "done!\n\n";
+print "\nFinished running R!\n\n";
 
 print "Gene diversity scripts all complete!\n";
 
