@@ -19,10 +19,7 @@ shinyUI(fluidPage(
                          'text/comma-separated-values,text/plain',
                          '.csv')),
       
-      conditionalPanel(
-        condition = "unless(input.categorytable)",
-        checkboxInput("cat", label = "Use categories", value = TRUE)
-      ),
+      checkboxInput("cat", label = "Use categories", value = FALSE),
       
       tags$hr(),
       
