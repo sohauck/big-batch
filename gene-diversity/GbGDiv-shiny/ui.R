@@ -35,13 +35,14 @@ shinyUI(fluidPage(
       h4("Options"),
         
       h6("Label axes with standard deviations, not absolute values"),
-      checkboxInput("zscore", label = "Use z-scores", value = TRUE)
+      checkboxInput("zscore", label = "Use z-scores", value = FALSE)
       
 
     ), # closes sidevar
 
     mainPanel(
-      plotOutput(outputId = "mainplot")
+      plotOutput(outputId = "mainplot" )
+      
     ) # closes main
   ) # closes layout
 )) #closes fluidPage & shinyUI
