@@ -19,7 +19,7 @@ shinyUI(fluidPage(
                          'text/comma-separated-values,text/plain',
                          '.csv')),
       
-      checkboxInput("cat", label = "Use categories", value = FALSE),
+      checkboxInput("categ", label = "Use categories", value = FALSE),
       
       tags$hr(),
       

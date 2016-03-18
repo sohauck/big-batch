@@ -35,7 +35,7 @@ shinyServer(function(input, output) {
       names(df.cat)[1] <- "Locus"
       names(df.cat)[2] <- "Category"
       df <- merge( df, df.cat, by="Locus")
-      }
+    }
     
     # Subsetting the chosen data
     
@@ -71,10 +71,12 @@ shinyServer(function(input, output) {
     }
     
     # x variable is either the category, or just a random number between 0 and 1, for visibility
-    if ( input$cat == TRUE ) {
+    if ( input$categ == TRUE ) {
       x1 <- df$Category }
     else { x1 <- sample(seq(from=0, to=1, by=.01), size = nrow(df.sel), replace = TRUE) }
 
+    
+    
     # creating the selected dataframe 
     df.sel <- data.frame(x1, y1)
     colnames(df.sel) <- c( "xsel" , "ysel" )
@@ -98,34 +100,33 @@ shinyServer(function(input, output) {
       #   ylab("") + 
       #   xlab("Percentage of isolates in which locus is known")
       
-    
-    # ifelse(cat,1/nlevels(df$Category)
-      
+
     ggplot(df.sel) +
       geom_point( data=df.sel,
                   aes( x=xsel,
-                       y=ysel
-                     #  colour = ifelse(input$cat,factor(df$Category),"coral2") 
+                       y=ysel,
+                       colour = factor(df$Category)
                        ),
-                  size=5, alpha=.5, colour = "coral2",
+                  size=5, alpha=.5, 
                   position = position_jitter(w=.5) ) + 
       geom_hline( yintercept = mean(df.sel$ysel),
                   size=1, colour="blue", linetype="dashed" ) +
-      # geom_text( aes( x=x1,
-      #                 y=y1,
-      #                 label=ifelse( y1 < head(sort(y1),lbl)[lbl] |
-      #                                 y1 > tail(sort(y1),lbl)[1],
-      #                               as.character(Locus),'') ),
-      #            size=4, alpha=.8, vjust=-.5, angle = 30) +
       ggtitle("Genetic diversity of loci") +
       xlab("") +
       ylab("Alleles per nucleotide") +
       coord_flip() + 
       theme_minimal() +
-      theme( axis.text.y = element_text(size=ifelse(input$cat,14,0)),
-             axis.ticks  = element_line(size=ifelse(input$cat,0.5,0)),
+      theme( axis.text.y = element_text(size=ifelse(input$categ,14,0)),
+             axis.ticks  = element_line(size=ifelse(input$categ,0.5,0)),
              plot.title = element_text(face="bold"),
              axis.title.x = element_text(vjust=-.5, size=14) )
+    # geom_text( aes( x=x1,
+    #                 y=y1,
+    #                 label=ifelse( y1 < head(sort(y1),lbl)[lbl] |
+    #                                 y1 > tail(sort(y1),lbl)[1],
+    #                               as.character(Locus),'') ),
+    #            size=4, alpha=.8, vjust=-.5, angle = 30) +
+    
   })
   
    
