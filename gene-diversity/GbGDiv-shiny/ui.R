@@ -19,8 +19,11 @@ shinyUI(fluidPage(
                          'text/comma-separated-values,text/plain',
                          '.csv')),
       
-      checkboxInput("categ", label = "Use categories", value = FALSE),
-      
+      conditionalPanel(condition = "output.catfileUp == true",
+                       checkboxInput(inputId = "categ",
+                                     label = "Use categories",
+                                     value = FALSE)),
+                       
       tags$hr(),
       
       h4("Choose data set"),
@@ -38,10 +41,11 @@ shinyUI(fluidPage(
       checkboxInput("zscore", label = "Use z-scores", value = FALSE)
       
 
-    ), # closes sidevar
+    ), # closes sidebar
 
     mainPanel(
       plotOutput(outputId = "mainplot" )
+      #tableOutput("my_output_data")
       
     ) # closes main
   ) # closes layout
