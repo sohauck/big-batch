@@ -3,11 +3,12 @@ library(ggplot2)
 
 shinyServer(function(input, output) {
 
-  df <- reactive({
+  df.all <- reactive({
     inFile <- input$resultstable
     
-    if (is.null(inFile)) # until have a file, 
-      return(NULL) # just keep it all blank
+    validate(
+      need(input$resultstable != "", "Please upload a table on the left")
+    )
     
     df <- read.table(inFile$datapath, # open the file once it's in
                      header=TRUE, sep="\t", # tab-separated with a header
@@ -23,7 +24,28 @@ shinyServer(function(input, output) {
     df$RatioCount <- df$CountAA  /  df$CountNuc
     df$RatioVS    <- df$VSitesAA /  df$VSitesNuc
     
-    return(df)
+    # df.all <- df # make back-up
+    # cutoff <- (9/10) * nrow(df.all) # excluding anything tagged in less than 10% of isolate records
+    # df <- df[df$Missing < cutoff,]
+    # removed <- length(df.all[df.all$Missing > cutoff,1])
+    # print ( paste ("Number of loci excluded due to being tagged in less than 10% of isolates:", removed) )
+    
+    
+    
+    return( df )
+  })
+  
+  df <- reactive({
+    df.all <- df.all()
+    
+    cutoff <- ((100-input$percexc)/100)*nrow(df.all)
+    df <- df.all[df.all$Missing < cutoff,]
+
+    total.isolates <<- nrow(df.all)
+    removed.isolates <<- nrow(df.all) - nrow(df)
+    remain.isolates <<- total.isolates - removed.isolates
+    
+    return ( df )
   })
 
   df.cat <- reactive({
@@ -43,27 +65,31 @@ shinyServer(function(input, output) {
     }
   })
 
+  # So that the "Use categories" checkbox only appears if a file is uploaded
   output$catfileUp <- reactive({
     return(!is.null(input$categorytable))
   })
-
   outputOptions(output, 'catfileUp', suspendWhenHidden=FALSE)
 
   df.sel <- reactive ({
-    
-    # making visible copies of the relevant tables
-    df     <- df()
-    
-    #
+    # making visible copies of the relevant large data table
+    df <- df()
+    # and likewise for the category table if it exists, and then also merge it into the main
     if (!is.null(input$categorytable)) { # until have a file,
       df.cat <- df.cat()
       df <- merge( df, df.cat, by = "Locus")
     }
     
+    # don't complain yet if nothing to compare to... 
+    # if  (is.null(input$categorytable))
+    # { return (NULL) }
+    
+    # make the x-variable into either the category or a random number between 0 and 1 for visibility
     if ( input$categ == TRUE ) {
       x1 <- df$Category }
-    else { x1 <- sample(seq(from=0, to=1, by=.01), size = 25, replace = TRUE) }
+    else { x1 <- sample(seq(from=0, to=1, by=.01), size = nrow(df), replace = TRUE) }
     
+    # make the y-variable whatever the selected variable is, with z-score scaling if necessary 
       if ( input$yVar == "AllelicDiv" ) {
         if ( input$zscore == FALSE ) { y1 <- df$AllelicDiv }
         else { y1 <- scale( df$AllelicDiv, center = TRUE, scale = TRUE) }
@@ -94,40 +120,56 @@ shinyServer(function(input, output) {
         else { y1 <- scale( df$RatioVS, center = TRUE, scale = TRUE) }
       }
     
+    # copy the Locus column to a vector for merging into the selected data frame
     Locus <- df$Locus
     
-
+    # make the selected data frame
     df.sel <- data.frame( Locus, x1, y1 )
     colnames(df.sel) <- c( "Locus", "xsel", "ysel" )
 
-    
     return ( df.sel )
-
   })
   
-#   output$my_output_data <- renderTable({ df.sel() })  
-
+  # if you want to check that the selected table looks like instead of the plot
+  output$data.table <- renderTable({ df() })
+  
+  output$distplot <- renderPlot({
+    
+    # make a copy of the table that will be used
+    df <- df.all()
+    
+    ggplot( df, aes(x=Missing) ) +
+      geom_histogram( binwidth=(nrow(df)/30) ) +
+      geom_vline( xintercept=((100-input$percexc)/100)*nrow(df),
+                  size=1, colour="red", linetype="dashed") +
+      theme_minimal() +
+      scale_x_continuous( limits=c( 0, nrow(df) ),
+                          breaks=c( (1:4*(1/4) )*nrow(df) ),
+                          labels=c("75%","50%","25%","00%")) +
+      theme( axis.text.y=element_text(size=14),
+             axis.text.x=element_text(size=14),
+             plot.title = element_text(face="bold"),
+             axis.title.x=element_text(vjust=-.5, size=14)) +
+      ggtitle("Distribution of loci by percentage of isolates where they have a known sequence") +
+      ylab("") +
+      xlab("Percentage of isolates in which locus is known")
+  
+  })
+  
+  output$corrplot <- renderPlot({
+    
+    # make a copy of the table that will be used
+    df <- df()
+    
+    qplot (Missing, paste(input$yVar), data = df)
+    
+  })
+  
+  # what actually does the plot
   output$mainplot <- renderPlot({
-
+  
+    # make a copy of the table that will be used
     df.sel <- df.sel()
-
-    # some way to plot distributions?
-
-      # ggplot( df, aes(x=Missing) ) +
-      #   geom_histogram( binwidth=(nrow(df)/30) ) +
-      #   geom_vline( xintercept=(9/10)*nrow(df),
-      #               size=1, colour="red", linetype="dashed") +
-      #   theme_minimal() +
-      #   scale_x_continuous( limits=c( 0, nrow(df) ),
-      #                       breaks=c( (1:4*(1/4) )*nrow(df) ),
-      #                       labels=c("75%","50%","25%","00%")) +
-      #   theme( axis.text.y=element_text(size=14),
-      #          axis.text.x=element_text(size=14),
-      #          plot.title = element_text(face="bold"),
-      #          axis.title.x=element_text(vjust=-.5, size=14)) +
-      #   ggtitle("Distribution of loci by percentage of isolates where they have a known sequence") +
-      #   ylab("") +
-      #   xlab("Percentage of isolates in which locus is known")
 
     # ifelse(input$categ,factor(xsel),
 
