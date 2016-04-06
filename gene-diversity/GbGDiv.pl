@@ -579,7 +579,7 @@ else
 { Usage("Could not create Graphs folder: $dOut/Graphs/"); exit; }
 
 my $Rscript = $0; # starting from where .pl is
-$Rscript =~ s/\.[^.]+$/-R\.R/; # works if gene-diversity.pl was loaded and gene-diversity.R in the same folder is where R script is
+$Rscript =~ s/\.[^.]+$/-tablemaker\.R/; # works if gene-diversity.pl was loaded and gene-diversity.R in the same folder is where R script is
 
 my $command = "R --slave --args $dOut $locuscat < $Rscript"; #making the full thing, adding --slave for silence
 
