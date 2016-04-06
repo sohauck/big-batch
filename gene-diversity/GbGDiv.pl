@@ -197,7 +197,7 @@ elsif ( $FASTAoption =~ /^3/ )
 
 # Other options
 print 	"Arguments that will be passed to MAFFT are: @mafftarg\n" . 
-		"Alleles must be seen at least $dup times in order to be included.\n\n"; 
+		"Alleles must be seen at least $dup time(s) in order to be included.\n\n"; 
 
 
 # Give the option to get out if it goes in fact look dodgy
