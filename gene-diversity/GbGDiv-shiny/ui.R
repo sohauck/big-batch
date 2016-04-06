@@ -14,9 +14,11 @@ shinyUI(fluidPage(
                          'text/comma-separated-values,text/plain',
                          '.csv')),
       
-      sliderInput("percexc", "Minimum percentage of isolates tagged for locus to be included:", 
+      sliderInput("percexc", "Percent of loci excluded due to high number of missing sequence tags:", 
                   min = 0, max = 100, value = 10, step = 1),
 
+      textOutput("exclusions"), 
+      
       tags$hr(),
       
       h4("Choose variable to plot"),
@@ -32,35 +34,37 @@ shinyUI(fluidPage(
         
       checkboxInput("zscore", label = "Use z-scores for y-axis values", value = FALSE),
       
-      fileInput('categorytable', 'Choose Category file',
-                accept=c('text/csv',
-                         'text/comma-separated-values,text/plain',
-                         '.csv')),
-      
-      conditionalPanel(condition = "output.catfileUp == true",
+      conditionalPanel(condition = "output.catinc == true",
                        checkboxInput(inputId = "categ",
                                      label = "Use categories",
                                      value = FALSE)),
       
       tags$hr(),
       
-      h4("Download images")
-      
-      # output$downloadData <- downloadHandler(
-      #   filename = function() { 
-      #     paste(input$yVar, '.csv', sep='') 
-      #   },
-      #   content = function(file) {
-      #     ( ggsave("GbGDiv.png", height = 9, width = 12, dpi = 100), file )
-      #   }
+      # download from Scatter Plot
+      conditionalPanel(condition = "input.conditionaltab == 1 && output.fileUp == true",
+                       h4("Download images"),
+                       downloadButton('downloadPlot', 'Download Plot'))
+
       
     ), # closes sidebar
 
     mainPanel(
-      tabsetPanel(type = "tabs", 
-        tabPanel("Scatter Plot", plotOutput(outputId = "mainplot")), 
-        tabPanel("Distribution Plot", plotOutput(outputId = "distplot"), plotOutput(outputId = "corrplot")),
-        tabPanel("Data Table", tableOutput("data.table"))
+      tabsetPanel(id = "conditionaltab", type = "tabs", 
+        tabPanel("Scatter Plot", value = "1", 
+                 plotOutput(outputId = "mainplot", 
+                            height = 800,
+                            click = "plot_click",
+                            brush = brushOpts(
+                             id = "plot_brush")
+                            ),
+                 textOutput(outputId = "info")
+                 ), 
+        tabPanel("Distribution Plot", value = "2", 
+                 plotOutput(outputId = "distplot", height = 250), 
+                 plotOutput(outputId = "corrplot")),
+        tabPanel("Data Table", value = "3", 
+                 dataTableOutput("data.table"))
        )
 
     ) # closes main
