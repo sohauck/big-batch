@@ -3,38 +3,18 @@ library(ggplot2)
 
 shinyServer(function(input, output) {
 
+  # reading the table in to one whole data frame
   df.all <- reactive({
     inFile <- input$resultstable
     
-    validate(
-      need(input$resultstable != "", "Please upload a table on the left")
-    )
+    validate( need(input$resultstable != "", "Please upload a table on the left") )
     
-    df <- read.table(inFile$datapath, # open the file once it's in
+    read.table(inFile$datapath, # open the file once it's in
                      header=TRUE, sep="\t", # tab-separated with a header
                      quote='"')
-    
-    # Setting up new variables 
-    df$AllelicDiv <- c( df$CountNuc / df$AvgLength )
-    df$ADivNM <- c( (df$CountNuc - (mean(df$CountNuc / df$AvgLength) * df$AvgLength) ) / df$AvgLength )
-
-    df$VSitesNuc <- (df$AvgLength     - df$NonVarNuc) /  df$AvgLength
-    df$VSitesAA <- ((df$AvgLength / 3) - df$NonVarAA) / (df$AvgLength / 3)
-
-    df$RatioCount <- df$CountAA  /  df$CountNuc
-    df$RatioVS    <- df$VSitesAA /  df$VSitesNuc
-    
-    # df.all <- df # make back-up
-    # cutoff <- (9/10) * nrow(df.all) # excluding anything tagged in less than 10% of isolate records
-    # df <- df[df$Missing < cutoff,]
-    # removed <- length(df.all[df.all$Missing > cutoff,1])
-    # print ( paste ("Number of loci excluded due to being tagged in less than 10% of isolates:", removed) )
-    
-    
-    
-    return( df )
   })
   
+  # subselecting the data frame depending on level of exclusion 
   df <- reactive({
     df.all <- df.all()
     
@@ -48,42 +28,27 @@ shinyServer(function(input, output) {
     return ( df )
   })
 
-  df.cat <- reactive({
-    inFile2 <- input$categorytable
-
-    if (is.null(inFile2)) # until have a file,
-    { return(NULL) }
-    else {
-      df.cat <- read.table(inFile2$datapath,
-                           header = TRUE,
-                           sep = "\t")
-
-      names(df.cat)[1] <- "Locus"
-      names(df.cat)[2] <- "Category"
-      
-      return(df.cat)
-    }
+  output$exclusions <- renderText({
+    
+    total.isolates   <- nrow(df.all())
+    removed.isolates <- nrow(df.all()) - nrow(df())
+    remain.isolates <- (total.isolates - removed.isolates)
+    
+    paste(remain.isolates, 'loci;', removed.isolates, 'excluded out of', total.isolates) 
   })
-
+  
+  # need to change this for if there is a Category column in df
   # So that the "Use categories" checkbox only appears if a file is uploaded
-  output$catfileUp <- reactive({
-    return(!is.null(input$categorytable))
+  output$catinc <- reactive({
+    return("Category" %in% colnames(df()))
   })
-  outputOptions(output, 'catfileUp', suspendWhenHidden=FALSE)
+  outputOptions(output, 'catinc', suspendWhenHidden=FALSE)
+  
 
   df.sel <- reactive ({
     # making visible copies of the relevant large data table
     df <- df()
-    # and likewise for the category table if it exists, and then also merge it into the main
-    if (!is.null(input$categorytable)) { # until have a file,
-      df.cat <- df.cat()
-      df <- merge( df, df.cat, by = "Locus")
-    }
-    
-    # don't complain yet if nothing to compare to... 
-    # if  (is.null(input$categorytable))
-    # { return (NULL) }
-    
+
     # make the x-variable into either the category or a random number between 0 and 1 for visibility
     if ( input$categ == TRUE ) {
       x1 <- df$Category }
@@ -122,23 +87,25 @@ shinyServer(function(input, output) {
     
     # copy the Locus column to a vector for merging into the selected data frame
     Locus <- df$Locus
-    
+
     # make the selected data frame
-    df.sel <- data.frame( Locus, x1, y1 )
+    df.sel <- data.frame( Locus, x1, y1 ) 
     colnames(df.sel) <- c( "Locus", "xsel", "ysel" )
 
+    if ( input$categ == TRUE ) { df.sel$Category <- df$Category }
+    
     return ( df.sel )
   })
   
   # if you want to check that the selected table looks like instead of the plot
-  output$data.table <- renderTable({ df() })
+  output$data.table <- renderDataTable({ df() })
   
   output$distplot <- renderPlot({
     
     # make a copy of the table that will be used
     df <- df.all()
     
-    ggplot( df, aes(x=Missing) ) +
+    p <- ggplot( df, aes(x=Missing) ) +
       geom_histogram( binwidth=(nrow(df)/30) ) +
       geom_vline( xintercept=((100-input$percexc)/100)*nrow(df),
                   size=1, colour="red", linetype="dashed") +
@@ -152,8 +119,9 @@ shinyServer(function(input, output) {
              axis.title.x=element_text(vjust=-.5, size=14)) +
       ggtitle("Distribution of loci by percentage of isolates where they have a known sequence") +
       ylab("") +
-      xlab("Percentage of isolates in which locus is known")
-  
+      xlab("Distribution of number of isolates for which alocus has no known sequence")
+
+    return ( p )
   })
   
   output$corrplot <- renderPlot({
@@ -161,31 +129,27 @@ shinyServer(function(input, output) {
     # make a copy of the table that will be used
     df <- df()
     
-    qplot (Missing, paste(input$yVar), data = df)
+    qplot (Missing, AllelicDiv, data = df)
     
   })
   
-  # what actually does the plot
-  output$mainplot <- renderPlot({
-  
+  scatterPlot <- reactive({
+    
     # make a copy of the table that will be used
     df.sel <- df.sel()
 
-    # ifelse(input$categ,factor(xsel),
-
-    ggplot(df.sel) +
+    p <- ggplot(df.sel) +
       geom_point( data=df.sel,
                   aes( x=xsel,
                        y=ysel
                        #colour = ifelse(use.cat,factor(xsel),"coral2")
-                       ),
+                  ),
                   size=5, alpha=.5,
                   position = position_jitter(w=.5) ) +
       geom_hline( yintercept = mean(df.sel$ysel),
                   size=1, colour="blue", linetype="dashed" ) +
       ggtitle("Genetic diversity of loci") +
       xlab("") +
-      ylab("Alleles per nucleotide") +
       coord_flip() +
       theme_minimal() +
       theme( axis.text.y = element_text(size=ifelse(input$categ,14,0)),
@@ -198,10 +162,54 @@ shinyServer(function(input, output) {
     #                                 y1 > tail(sort(y1),lbl)[1],
     #                               as.character(Locus),'') ),
     #            size=4, alpha=.8, vjust=-.5, angle = 30) +
-
-
+    
+    if ( input$yVar == "AllelicDiv" ) 
+      { p <- p + ylab("Alleles per nucleotide") }
+    
+    if ( input$yVar == "ADivNM" ) 
+      { p <- p + ylab("Difference in alleles per length in nucleotides from genome average") }
+    
+    if ( input$yVar == "VSitesNuc" ) 
+      { p <- p + ylab("Proportion of sites in nucleotide alignment which show any variation") }
+    
+    if ( input$yVar == "VSitesAA" ) 
+    { p <- p + ylab("Proportion of sites in nucleotide alignment which show any variation") }
+    
+    if ( input$yVar == "RatioCount" )
+      { p <- p + ylab("Ratio of unique nucleotide to unique amino acid sequences per locus") }
+    
+    if ( input$yVar == "RatioVS" ) 
+      { p <- p + ylab("Ratio of variable sites in nucleotide to amino acid format per locus") }
+    
+    return ( p )
   })
   
-   
+  
+  # what actually does the plot
+  output$mainplot <- renderPlot({
+    ggsave( "plot.pdf", scatterPlot() )
+    return ( scatterPlot() )
+  })
+  
+  output$info <- renderText({
+    xy_range_str <- function(e) {
+      if(is.null(e)) return("NULL\n")
+      paste0("xmin=", round(e$xmin, 1), " xmax=", round(e$xmax, 1), 
+             " ymin=", round(e$ymin, 1), " ymax=", round(e$ymax, 1))
+    }
+    
+    paste0(
+      "brush: ", xy_range_str(input$plot_brush)
+    )
+  })
+  
+  output$downloadPlot <- downloadHandler(
+    filename = function() {
+      "plot.pdf"
+    },
+    content = function(file) {
+      file.copy("plot.pdf", file, overwrite=TRUE)
+    }
+  )
 })
 
