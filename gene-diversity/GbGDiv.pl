@@ -581,10 +581,7 @@ else
 my $Rscript = $0; # starting from where .pl is
 $Rscript =~ s/\.[^.]+$/-R\.R/; # works if gene-diversity.pl was loaded and gene-diversity.R in the same folder is where R script is
 
-my $zscore = "FALSE"; # may add options to change these
-my $labels = 6;
-
-my $command = "R --slave --args $dOut $zscore $locuscat $labels < $Rscript"; #making the full thing, adding --slave for silence
+my $command = "R --slave --args $dOut $locuscat < $Rscript"; #making the full thing, adding --slave for silence
 
 print "Running R script... \n\n";
 
