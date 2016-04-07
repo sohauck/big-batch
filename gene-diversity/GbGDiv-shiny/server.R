@@ -21,10 +21,6 @@ shinyServer(function(input, output) {
     cutoff <- ((100-input$percexc)/100)*nrow(df.all)
     df <- df.all[df.all$Missing < cutoff,]
 
-    total.isolates <<- nrow(df.all)
-    removed.isolates <<- nrow(df.all) - nrow(df)
-    remain.isolates <<- total.isolates - removed.isolates
-    
     return ( df )
   })
 
@@ -32,7 +28,7 @@ shinyServer(function(input, output) {
     
     total.isolates   <- nrow(df.all())
     removed.isolates <- nrow(df.all()) - nrow(df())
-    remain.isolates <- (total.isolates - removed.isolates)
+    remain.isolates  <- (total.isolates - removed.isolates)
     
     paste(remain.isolates, 'loci;', removed.isolates, 'excluded out of', total.isolates) 
   })
@@ -97,7 +93,7 @@ shinyServer(function(input, output) {
     return ( df.sel )
   })
   
-  # if you want to check that the selected table looks like instead of the plot
+  # output of the whole data table, before
   output$data.table <- renderDataTable({ df() })
   
   output$distplot <- renderPlot({
@@ -191,18 +187,10 @@ shinyServer(function(input, output) {
     return ( scatterPlot() )
   })
   
-  output$info <- renderText({
-    xy_range_str <- function(e) {
-      if(is.null(e)) return("NULL\n")
-      paste0("xmin=", round(e$xmin, 1), " xmax=", round(e$xmax, 1), 
-             " ymin=", round(e$ymin, 1), " ymax=", round(e$ymax, 1))
-    }
-    
-    paste0(
-      "brush: ", xy_range_str(input$plot_brush)
-    )
+  output$info <- renderPrint({
+    nearPoints(df.sel(), input$plot_click, addDist = TRUE)
   })
-  
+
   output$downloadPlot <- downloadHandler(
     filename = function() {
       "plot.pdf"

@@ -41,10 +41,16 @@ shinyUI(fluidPage(
       
       tags$hr(),
       
+      #  && 
+      #output.fileUp == true
+      
       # download from Scatter Plot
-      conditionalPanel(condition = "input.conditionaltab == 1 && output.fileUp == true",
-                       h4("Download images"),
-                       downloadButton('downloadPlot', 'Download Plot'))
+      conditionalPanel(condition = "input.conditionaltab == 1",
+                       downloadButton('downloadPlot', 'Download Plot'),
+                       actionButton("exclude_toggle", "Toggle points"),
+                       tags$br(),
+                       actionButton("exclude_reset", "Reset")
+      )
 
       
     ), # closes sidebar
@@ -53,12 +59,10 @@ shinyUI(fluidPage(
       tabsetPanel(id = "conditionaltab", type = "tabs", 
         tabPanel("Scatter Plot", value = "1", 
                  plotOutput(outputId = "mainplot", 
-                            height = 800,
-                            click = "plot_click",
+                            click = "plot1_click",
                             brush = brushOpts(
-                             id = "plot_brush")
-                            ),
-                 textOutput(outputId = "info")
+                              id = "plot1_brush")),
+                 verbatimTextOutput(outputId = "info")
                  ), 
         tabPanel("Distribution Plot", value = "2", 
                  plotOutput(outputId = "distplot", height = 250), 
