@@ -18,29 +18,38 @@ shinyServer(function(input, output) {
   df <- reactive({
     df.all <- df.all()
     
-    cutoff <- ((100-input$percexc)/100)*nrow(df.all)
-    df <- df.all[df.all$Missing < cutoff,]
-
-    return ( df )
+    excount$total <- nrow(df.all)
+    
+    # given percentage of loci starting from least often known isolate of total percentage to exclude
+    cutoff.perc <- (input$percexc/100)*nrow(df.all) # calculate how many loci down the list
+    # get the value that loci's Missing value to exclude all worse
+    excount$cutoff <- tail(sort(df.all$Missing),round( (input$percexc/100)*nrow(df.all)))[1] 
+    
+    # excluse from data frame all those which are worse off that the cutoff value
+    df.all[df.all$Missing < excount$cutoff,]
   })
 
+  # text output that describes total number of loci in data table and number excluded / remaining
+  
+  excount <- reactiveValues( total = 0, removed = 0, remain = 0, cutoff = 0)
+  
   output$exclusions <- renderText({
     
-    total.isolates   <- nrow(df.all())
-    removed.isolates <- nrow(df.all()) - nrow(df())
-    remain.isolates  <- (total.isolates - removed.isolates)
-    
-    paste(remain.isolates, 'loci;', removed.isolates, 'excluded out of', total.isolates) 
+    excount$removed <- excount$total - nrow(df())
+    excount$remain  <- excount$total - excount$removed
+
+    paste(excount$remain, 'loci;', 
+          excount$removed, 'excluded out of', excount$total, 
+          'due to missing allele designation in at least', excount$cutoff, 'isolates.') 
   })
   
-  # need to change this for if there is a Category column in df
-  # So that the "Use categories" checkbox only appears if a file is uploaded
+  # checks if Category column exists in table and creates "Use categories" checkbox if is so
   output$catinc <- reactive({
     return("Category" %in% colnames(df()))
   })
   outputOptions(output, 'catinc', suspendWhenHidden=FALSE)
-  
 
+  # makes little data table that will be used for the graph, taking into account categ, yVar and zscore
   df.sel <- reactive ({
     # making visible copies of the relevant large data table
     df <- df()
@@ -48,7 +57,7 @@ shinyServer(function(input, output) {
     # make the x-variable into either the category or a random number between 0 and 1 for visibility
     if ( input$categ == TRUE ) {
       x1 <- df$Category }
-    else { x1 <- sample(seq(from=0, to=1, by=.01), size = nrow(df), replace = TRUE) }
+    else { x1 <- sample(seq(from=0, to=1, by=.001), size = nrow(df), replace = TRUE) }
     
     # make the y-variable whatever the selected variable is, with z-score scaling if necessary 
       if ( input$yVar == "AllelicDiv" ) {
@@ -93,72 +102,126 @@ shinyServer(function(input, output) {
     return ( df.sel )
   })
   
-  # output of the whole data table, before
-  output$data.table <- renderDataTable({ df() })
+  # output of the data table, with exclusions already removed, and labelled points on column
+  output$data.table <- renderDataTable({ 
+    df <- df()
+    df$Label<- "No"
+    df$Label[df$Locus %in% labeltag$list] <- "Yes"
+    return ( df )
+    })
   
+  # plots distribution of Missing values across entire dataset 
   output$distplot <- renderPlot({
     
     # make a copy of the table that will be used
     df <- df.all()
     
     p <- ggplot( df, aes(x=Missing) ) +
-      geom_histogram( binwidth=(nrow(df)/30) ) +
-      geom_vline( xintercept=((100-input$percexc)/100)*nrow(df),
+      geom_histogram( binwidth=(nrow(df)/30) ) + # so that there are always 30 bins
+      geom_vline( xintercept=excount$cutoff,
                   size=1, colour="red", linetype="dashed") +
-      theme_minimal() +
-      scale_x_continuous( limits=c( 0, nrow(df) ),
-                          breaks=c( (1:4*(1/4) )*nrow(df) ),
-                          labels=c("75%","50%","25%","00%")) +
-      theme( axis.text.y=element_text(size=14),
-             axis.text.x=element_text(size=14),
-             plot.title = element_text(face="bold"),
-             axis.title.x=element_text(vjust=-.5, size=14)) +
-      ggtitle("Distribution of loci by percentage of isolates where they have a known sequence") +
-      ylab("") +
-      xlab("Distribution of number of isolates for which alocus has no known sequence")
-
+      theme_minimal() + 
+      ggtitle("Distribution of loci by number of isolates for which there was has no known sequence")
+    
     return ( p )
   })
   
+  # plots Missing vs Allelic Div 
   output$corrplot <- renderPlot({
-    
-    # make a copy of the table that will be used
     df <- df()
     
-    qplot (Missing, AllelicDiv, data = df)
-    
+    ggplot( df, aes (x = Missing, y = AllelicDiv) )+
+      geom_point() +
+      geom_smooth( span = .01*excount$remain ) # so that span scales with n 
   })
   
+  brange <- reactiveValues( xmin = NULL, ymin = NULL, xmax = NULL, ymax = NULL )
+  labeltag <- reactiveValues ( list = NULL, use = FALSE )
+  
+  observeEvent(input$resetlabel, {
+    labeltag$list <- NULL
+    labeltag$use <- FALSE 
+  })
+  
+  # if a double click happens, add the brushed points' Locus ID to labeltag$list
+  observeEvent( { input$mp_dblclick }, {
+    
+    brush <- input$mp_brush
+    
+    if (!is.null(brush)) {
+      brange$xmin <- brush$xmin
+      brange$ymin <- brush$ymin
+      brange$xmax <- brush$xmax
+      brange$ymax <- brush$ymax
+    } else {
+      brange$xmin <- NULL
+      brange$ymin <- NULL
+      brange$xmax <- NULL
+      brange$ymax <- NULL
+    }
+    
+    df.sel <- df.sel()
+    
+    # revise the labeltag list into non-duplicated of appended
+    if (!input$categ) {
+      templist <- append ( labeltag$list, as.character( subset (df.sel,
+                                                                 ysel  >  brange$xmin &
+                                                                 ysel  <  brange$xmax &
+                                                                 xsel  >  brange$ymin &
+                                                                 xsel  <  brange$ymax)[,"Locus"]))
+    }
+    else {
+      templist <- append ( labeltag$list, as.character( subset ( df.sel, 
+                                Category %in% levels(df.sel$Category)[round(brange$ymin):round(brange$ymax)] &
+                                                                 ysel  >  brange$xmin &
+                                                                 ysel  <  brange$xmax )[,"Locus"]))
+    }
+    labeltag$list <- templist[!duplicated(templist)]
+    templist <- NULL
+    
+    # turn on the added label layer only if there are points to label, avoids error messages
+    if (!is.null(labeltag$list))
+    { labeltag$use <- TRUE }
+  })
+  
+  # the main plot of the whole thing 
   scatterPlot <- reactive({
     
     # make a copy of the table that will be used
     df.sel <- df.sel()
 
+    # ifelse(input$categ),0.5/nlevels(Category),0
+    
     p <- ggplot(df.sel) +
       geom_point( data=df.sel,
-                  aes( x=xsel,
-                       y=ysel
-                       #colour = ifelse(use.cat,factor(xsel),"coral2")
-                  ),
-                  size=5, alpha=.5,
-                  position = position_jitter(w=.5) ) +
+                  aes( x=xsel, y=ysel),
+                  position = position_jitter(width = ifelse(input$categ,0.3,0)),
+                  size=5, alpha=.5 ) +
       geom_hline( yintercept = mean(df.sel$ysel),
                   size=1, colour="blue", linetype="dashed" ) +
       ggtitle("Genetic diversity of loci") +
       xlab("") +
       coord_flip() +
-      theme_minimal() +
+      theme_minimal() + guides(colour=FALSE, size = FALSE, alpha = FALSE ) +
       theme( axis.text.y = element_text(size=ifelse(input$categ,14,0)),
              axis.ticks  = element_line(size=ifelse(input$categ,0.5,0)),
              plot.title = element_text(face="bold"),
              axis.title.x = element_text(vjust=-.5, size=14) )
-    # geom_text( aes( x=x1,
-    #                 y=y1,
-    #                 label=ifelse( y1 < head(sort(y1),lbl)[lbl] |
-    #                                 y1 > tail(sort(y1),lbl)[1],
-    #                               as.character(Locus),'') ),
-    #            size=4, alpha=.8, vjust=-.5, angle = 30) +
+
+    # adding labels for tagged points 
+    if ( labeltag$use )
+    {
+      p <- p +
+      geom_point( data = subset (df.sel, Locus %in% labeltag$list),
+                  aes(x = xsel, y = ysel, colour = "coral2", size = 10, alpha = 0.2) ) +
+      geom_text(  data = subset (df.sel, Locus %in% labeltag$list),
+                  size=4, alpha=.8, vjust=-.5, angle = 30,
+                  aes( x = xsel, y = ysel,
+                        label= as.character(Locus) ) )
+    }
     
+    
+    # putting in correct yVar label depending on variable chosen 
     if ( input$yVar == "AllelicDiv" ) 
       { p <- p + ylab("Alleles per nucleotide") }
     
@@ -181,23 +244,18 @@ shinyServer(function(input, output) {
   })
   
   
-  # what actually does the plot
+  # what actually does the plot, which also saves a PDF of it in case download is needed 
   output$mainplot <- renderPlot({
     ggsave( "plot.pdf", scatterPlot() )
     return ( scatterPlot() )
   })
   
-  output$info <- renderPrint({
-    nearPoints(df.sel(), input$plot_click, addDist = TRUE)
-  })
-
+  # prints the download button and knows what file to make available 
   output$downloadPlot <- downloadHandler(
-    filename = function() {
-      "plot.pdf"
-    },
-    content = function(file) {
-      file.copy("plot.pdf", file, overwrite=TRUE)
-    }
+    filename = function() 
+      { "plot.pdf" },
+    content = function(file) 
+      { file.copy("plot.pdf", file, overwrite=TRUE) }
   )
+  
 })
-
