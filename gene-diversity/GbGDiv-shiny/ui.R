@@ -39,7 +39,7 @@ shinyUI(fluidPage(
                                      label = "Use categories",
                                      value = FALSE)),
       
-      helpText("You can label any points by dragging over it and double clicking."),
+      helpText("You can label any points by dragging over them and double clicking."),
       actionButton('resetlabel', 'Reset labelled points'),
       
       tags$hr(),
@@ -61,7 +61,7 @@ shinyUI(fluidPage(
                               id = "mp_brush"))
                  #verbatimTextOutput("brushinfo")
                  ), 
-        tabPanel("Distribution Plot", value = "2",
+        tabPanel("Excluding points", value = "2",
                  helpText("Choose what percentage of loci to exclude due to high counts of isolates",
                           "where the locus was marked 'missing' due to no allele designation.",
                           "Use the slider on the left to choose a cutoff that excludes loci that have been",
