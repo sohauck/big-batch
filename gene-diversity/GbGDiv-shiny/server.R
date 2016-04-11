@@ -164,18 +164,20 @@ shinyServer(function(input, output) {
     
     # revise the labeltag list into non-duplicated of appended
     if (!input$categ) {
-      templist <- append ( labeltag$list, as.character( subset (df.sel,
-                                                                 ysel  >  brange$xmin &
-                                                                 ysel  <  brange$xmax &
-                                                                 xsel  >  brange$ymin &
-                                                                 xsel  <  brange$ymax)[,"Locus"]))
-    }
+      templist <- append ( labeltag$list, 
+                           as.character( subset (df.sel,
+                                                 ysel  >  brange$xmin &
+                                                 ysel  <  brange$xmax &
+                                                 xsel  >  brange$ymin &
+                                                 xsel  <  brange$ymax)[,"Locus"])) }
+    
     else {
-      templist <- append ( labeltag$list, as.character( subset ( df.sel, 
+      templist <- append ( labeltag$list, 
+                           as.character( subset ( df.sel, 
                                 Category %in% levels(df.sel$Category)[round(brange$ymin):round(brange$ymax)] &
-                                                                 ysel  >  brange$xmin &
-                                                                 ysel  <  brange$xmax )[,"Locus"]))
-    }
+                                                  ysel  >  brange$xmin &
+                                                  ysel  <  brange$xmax )[,"Locus"])) }
+    
     labeltag$list <- templist[!duplicated(templist)]
     templist <- NULL
     
@@ -194,7 +196,7 @@ shinyServer(function(input, output) {
     
     p <- ggplot(df.sel) +
       geom_point( data=df.sel,
-                  aes( x=xsel, y=ysel),
+                  aes( x=xsel, y=ysel, colour = (Locus %in% labeltag$list) ),
                   position = position_jitter(width = ifelse(input$categ,0.3,0)),
                   size=5, alpha=.5 ) +
       geom_hline( yintercept = mean(df.sel$ysel),
@@ -212,8 +214,6 @@ shinyServer(function(input, output) {
     if ( labeltag$use )
     {
       p <- p +
-      geom_point( data = subset (df.sel, Locus %in% labeltag$list),
-                  aes(x = xsel, y = ysel, colour = "coral2", size = 10, alpha = 0.2) ) +
       geom_text(  data = subset (df.sel, Locus %in% labeltag$list),
                   size=4, alpha=.8, vjust=-.5, angle = 30,
                   aes( x = xsel, y = ysel,
