@@ -20,13 +20,17 @@ shinyServer(function(input, output) {
     
     excount$total <- nrow(df.all)
     
-    # given percentage of loci starting from least often known isolate of total percentage to exclude
-    cutoff.perc <- (input$percexc/100)*nrow(df.all) # calculate how many loci down the list
-    # get the value that loci's Missing value to exclude all worse
-    excount$cutoff <- tail(sort(df.all$Missing),round( (input$percexc/100)*nrow(df.all)))[1] 
-    
-    # excluse from data frame all those which are worse off that the cutoff value
-    df.all[df.all$Missing < excount$cutoff,]
+    if ( input$percexc == 0 )
+    { return ( df.all ) }
+    else {
+      # given percentage of loci starting from least often known isolate of total percentage to exclude
+      cutoff.perc <- (input$percexc/100)*nrow(df.all) # calculate how many loci down the list
+      # get the value that loci's Missing value to exclude all worse
+      excount$cutoff <- tail(sort(df.all$Missing),round( (input$percexc/100)*nrow(df.all)))[1] 
+      
+      # excluse from data frame all those which are worse off that the cutoff value
+      df.all[df.all$Missing < excount$cutoff,]
+    }
   })
 
   # text output that describes total number of loci in data table and number excluded / remaining
@@ -34,13 +38,19 @@ shinyServer(function(input, output) {
   excount <- reactiveValues( total = 0, removed = 0, remain = 0, cutoff = 0)
   
   output$exclusions <- renderText({
-    
-    excount$removed <- excount$total - nrow(df())
-    excount$remain  <- excount$total - excount$removed
-
-    paste(excount$remain, 'loci;', 
-          excount$removed, 'excluded out of', excount$total, 
-          'due to missing allele designation in at least', excount$cutoff, 'isolates.') 
+    if ( input$percexc == 0 )
+    {
+      paste('All', excount$total, 'loci included.') 
+    }
+    else
+    {
+      excount$removed <- excount$total - nrow(df())
+      excount$remain  <- excount$total - excount$removed
+      
+      paste(excount$remain, 'loci;', 
+            excount$removed, 'excluded out of', excount$total, 
+            'due to missing allele designation in at least', excount$cutoff, 'isolates.') 
+    }
   })
   
   # checks if Category column exists in table and creates "Use categories" checkbox if is so
@@ -118,7 +128,7 @@ shinyServer(function(input, output) {
     
     p <- ggplot( df, aes(x=Missing) ) +
       geom_histogram( binwidth=(nrow(df)/30) ) + # so that there are always 30 bins
-      geom_vline( xintercept=excount$cutoff,
+      geom_vline( xintercept=ifelse(input$percexc,max(df$Missing),excount$cutoff),
                   size=1, colour="red", linetype="dashed") +
       theme_minimal() + 
       ggtitle("Distribution of loci by number of isolates for which there was has no known sequence")
@@ -131,8 +141,8 @@ shinyServer(function(input, output) {
     df <- df()
     
     ggplot( df, aes (x = Missing, y = AllelicDiv) )+
-      geom_point() +
-      geom_smooth( span = .01*excount$remain ) # so that span scales with n 
+      geom_point() + 
+      geom_smooth( span = .01*excount$total ) # so that span scales with n 
   })
   
   brange <- reactiveValues( xmin = NULL, ymin = NULL, xmax = NULL, ymax = NULL )
