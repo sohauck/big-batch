@@ -15,7 +15,7 @@ shinyUI(fluidPage(
                          '.csv')),
       
       sliderInput("percexc", "Percent of loci excluded due to high number of missing sequence tags:", 
-                  min = 0.1, max = 50, value = 5, step = .1),
+                  min = 0, max = 50, value = 5, step = .1),
 
       textOutput("exclusions"), 
       
