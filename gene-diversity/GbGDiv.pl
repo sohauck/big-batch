@@ -144,14 +144,12 @@ elsif ( defined $dbname ) # had defined a BIGSdb database name in the command li
 	}	
 }
 
+my @tableaddress = split ("/", $fTable); #so that @tableaddress is usable later too
+	$tableaddress[-1] =~ s/\.[^.]+$//; # remove extension from file name of input table
 
 # a directory where results can go
 if(! defined $dOut)  
-{ 
-	my @tableaddress = split ("/", $fTable);
-	$tableaddress[-1] =~ s/\.[^.]+$//; # remove extension from name of the last thing in the address, the table
-	$tableaddress[-1] = "GbGDiv-" . $tableaddress[-1];
-	
+{ 	
 	print 	"\n\nName the directory where you'd like the results to go.\n".
 			"If you can't decide, leave this blank and a new folder, in the same place as your ".
 			"table is held will be created, named '$tableaddress[-1]'\n";
@@ -219,7 +217,12 @@ if ( $FASTAoption =~ /^2/ )
 
 
 open ( RESULTS, '>', $dOut."/ResultsTable.txt" ) or die "$dOut /ResultsTable.txt"; # then also open where the reduced one will go
-	print RESULTS join ("\t", ("Locus","Missing","Paralogous","CountNuc","CountAA","MinLength","MaxLength","AvgLength","NonVarNuc","NonVarAA") ) . "\n" ;
+	print RESULTS " GbGDiv results table from ". $tableaddress[-1] ." records table.\n" . 
+    "$hour:$min, $days[$wday] $mday $months[$mon] ". (1900 + $year) . "\n" . 
+    "Isolates included: ". $isolatecount . "\n".
+    "Version: " . $version . "\n\n" . 
+
+	join ("\t", ("Locus","Missing","Paralogous","CountNuc","CountAA","MinLength","MaxLength","AvgLength","NonVarNuc","NonVarAA") ) . "\n" ;
 
 
 

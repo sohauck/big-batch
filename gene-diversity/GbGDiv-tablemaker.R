@@ -29,4 +29,4 @@ if ( cat == TRUE ) {
 
 
 # Writing fuller table back onto results directory
-write.table (df, "ResultsTable.txt", sep = "\t", row.names = FALSE)
+write.table (df, "ResultsTable-postR.txt", sep = "\t", row.names = FALSE)
