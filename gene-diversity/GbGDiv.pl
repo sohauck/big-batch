@@ -11,11 +11,18 @@ use warnings;
 use LWP::Simple; # for downloading API pages 
 use List::Util qw( min max sum ); # for measuring lengths
 
-$| = 1; # for dynamic output
-
+#$| = 1; # for dynamic output
+my $version = "0.9";
 
 # Declares subroutines
 sub Usage( ; $ );
+
+
+# Get current time in a nice format
+my @months = qw( Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec );
+my @days = qw(Sun Mon Tue Wed Thu Fri Sat Sun);
+
+my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime();
 
 
 # Get Command line options, exits if conditions don't look right
@@ -216,13 +223,6 @@ if ( $FASTAoption =~ /^2/ )
 
 
 
-open ( RESULTS, '>', $dOut."/ResultsTable.txt" ) or die "$dOut /ResultsTable.txt"; # then also open where the reduced one will go
-	print RESULTS " GbGDiv results table from ". $tableaddress[-1] ." records table.\n" . 
-    "$hour:$min, $days[$wday] $mday $months[$mon] ". (1900 + $year) . "\n" . 
-    "Isolates included: ". $isolatecount . "\n".
-    "Version: " . $version . "\n\n" . 
-
-	join ("\t", ("Locus","Missing","Paralogous","CountNuc","CountAA","MinLength","MaxLength","AvgLength","NonVarNuc","NonVarAA") ) . "\n" ;
 
 
 
@@ -240,6 +240,20 @@ if ( $transpose =~ /^[Yy]/ ) # transposes the table and puts it back in aoaTable
 	@aoaTable = @$tableref;
 	print " and done.\n";
 }
+
+my $headerrow = @aoaTable[0];
+my $isolatecount = scalar (@$headerrow) - 1; # since the first column is the header
+
+# Printing the header of the results file
+open ( RESULTS, '>', $dOut."/ResultsTable.txt" ) or die "$dOut /ResultsTable.txt"; # then also open where the reduced one will go
+
+	print RESULTS	"GbGDiv results table from '". $tableaddress[-1] ."' records table.\n" . 
+    				"Created at ".sprintf("%02d", $hour).":$min, on $days[$wday] $mday $months[$mon], ". (1900 + $year) . "\n" . 
+    				"Software version: " . $version . "\n" . 
+    				"Isolate records read from table: ". $isolatecount . "\n\n".
+
+		join ("\t", ("Locus","Missing","Paralogous","CountNuc","CountAA","MinLength","MaxLength","AvgLength","NonVarNuc","NonVarAA") ) . "\n" ;
+
 
 
 # Going through table and keeping the observed alleles, plus counting missing and unique nucleotide sequences 
@@ -347,7 +361,7 @@ foreach my $locusrow (@aoaTable) # loop per locus
 		
 			else # if there are more alleles than just "0" which isn't even an allele, give some examples
 			{
-				print "$locusname did not exist as a FASTA file. Alleles in table were..."; 
+				print "'$locusname' did not exist as a FASTA file. Alleles in table were..."; 
 			
 				my $sampleallele = 0; 
 				foreach my $key ( @seenalleles ) 
@@ -407,10 +421,11 @@ foreach my $locusrow (@aoaTable) # loop per locus
 					print REDFASTA ">" . $allele_id . "\n" . $sequence . "\n";
 					$countnuc ++; 
 				}
+
+ 			} # closes foreach allele loop
  			
  			print RESULTS join ("\t", ($locusname, $missing, $paralogous, $countnuc) ), "\t\n";	
- 			
- 			} # closes foreach allele loop
+
  		} # closes not 404 else
 	} # closes opt 3 loop
 	
@@ -541,8 +556,7 @@ foreach my $file (@files)
 	my ($locusname, $extension) = split (/\./, $file);
 
 	$results{$locusname} = $results{$locusname} . join ("\t", ($varsitesNuc, $varsitesAA) ) ;
-
-
+	
  	# So you have something to watch while it runs... 
  	print "\r$file";
 } # closes per-locus loop
@@ -554,24 +568,32 @@ print "\nAlignments complete.\n";
 # Then put remaining results back into that table
 
 open ( RESULTSIN,  '<', $dOut."/ResultsTable.txt" ) or die "$dOut /ResultsTable.txt";
-open ( RESULTSOUT, '>', $dOut."/ResultsTable-tmp.txt" ) or die "$dOut /ResultsTable.txt";
-
-	my $header = <RESULTSIN>;
-	print RESULTSOUT $header;
+open ( RESULTSOUT, '>', $dOut."/ResultsTable-tmp.txt" ) or die "$dOut /ResultsTable.txt";	
 	
+	my $linecount = 1; 
 	while ( my $line = <RESULTSIN> )
 	{
-		chomp $line; 
+		if ( $linecount <= 6 )
+		{
+				print RESULTSOUT $line;
+				$linecount ++ ;
+		}
 		
-		$line =~ /^(\S+)/; 
-		my $locusname = $1;
+		else 
+		{
+			chomp $line; 
 		
-		print RESULTSOUT $line . $results{$locusname} . "\n";
+			$line =~ /^(\S+)/; 
+			my $locusname = $1;
+		
+			print RESULTSOUT $line . $results{$locusname} . "\n";
+		}
 	}
 	
 close RESULTSIN;
 close RESULTSOUT; 
 
+# after making changes by adding in more info, replace the original with the improved temporary file
 rename ( $dOut."/ResultsTable-tmp.txt" , $dOut."/ResultsTable.txt" ) or die "Cannot rename temporary results over older.";
 
 
