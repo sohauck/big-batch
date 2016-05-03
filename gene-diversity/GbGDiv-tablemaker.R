@@ -4,8 +4,17 @@ Args <- commandArgs(TRUE);      # retrieve args
 setwd(Args[1]) # Going to directory with results
 cat <- ifelse(Args[2]=="notdef",FALSE,TRUE) # TRUE if plotting by category
 
-# Reading in table with output from Perl runs
-df <- read.table("ResultsTable.txt", header = TRUE, sep = "\t")
+
+# Reading in the header and then the table
+txttop <- scan("ResultsTable.txt", what = "complex", sep = "\n", n = 5)
+
+df <- read.table("ResultsTable.txt", header = TRUE, sep = "\t", skip = 5)
+txttop[5]<-"" # so that it prints a blank line before the table
+
+# Writing the header back in (appending table later)
+
+write ( txttop, file="ResultsTable.txt", sep = "\n" )
+
 
 
 # Setting up new variables 
@@ -29,4 +38,4 @@ if ( cat == TRUE ) {
 
 
 # Writing fuller table back onto results directory
-write.table (df, "ResultsTable-postR.txt", sep = "\t", row.names = FALSE)
+write.table (df, "ResultsTable.txt", sep = "\t", row.names = FALSE, append = TRUE)
