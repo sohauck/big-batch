@@ -9,16 +9,20 @@ shinyServer(function(input, output) {
     
     validate( need(input$resultstable != "", "Please upload a table on the left") )
     
+    headtext <- scan(inFile$datapath, what = "complex", sep = "\n", n = 5)
+    
+    isocount$total = as.numeric( strsplit(headtext[4], " ")[[1]][length(strsplit(headtext[4], " ")[[1]])] )
+    
     read.table(inFile$datapath, # open the file once it's in
                      header=TRUE, sep="\t", # tab-separated with a header
-                     quote='"')
+                     quote='"', skip = 5)
   })
   
   # subselecting the data frame depending on level of exclusion 
   df <- reactive({
     df.all <- df.all()
     
-    excount$total <- nrow(df.all)
+    locount$total <- nrow(df.all)
     
     if ( input$percexc == 0 )
     { return ( df.all ) }
@@ -26,30 +30,31 @@ shinyServer(function(input, output) {
       # given percentage of loci starting from least often known isolate of total percentage to exclude
       cutoff.perc <- (input$percexc/100)*nrow(df.all) # calculate how many loci down the list
       # get the value that loci's Missing value to exclude all worse
-      excount$cutoff <- tail(sort(df.all$Missing),round( (input$percexc/100)*nrow(df.all)))[1] 
+      locount$cutoff <- tail(sort(df.all$Missing),round( (input$percexc/100)*nrow(df.all)))[1] 
       
       # excluse from data frame all those which are worse off that the cutoff value
-      df.all[df.all$Missing < excount$cutoff,]
+      df.all[df.all$Missing < locount$cutoff,]
     }
   })
 
   # text output that describes total number of loci in data table and number excluded / remaining
   
-  excount <- reactiveValues( total = 0, removed = 0, remain = 0, cutoff = 0)
+  locount <- reactiveValues( total = 0, removed = 0, remain = 0, cutoff = 0)
+  isocount <- reactiveValues( total = 0 )
   
   output$exclusions <- renderText({
     if ( input$percexc == 0 )
     {
-      paste('All', excount$total, 'loci included.') 
+      paste('All', locount$total, 'loci included.') 
     }
     else
     {
-      excount$removed <- excount$total - nrow(df())
-      excount$remain  <- excount$total - excount$removed
+      locount$removed <- locount$total - nrow(df())
+      locount$remain  <- locount$total - locount$removed
       
-      paste(excount$remain, 'loci;', 
-            excount$removed, 'excluded out of', excount$total, 
-            'due to missing allele designation in at least', excount$cutoff, 'isolates.') 
+      paste(isocount$total, ' isolates reviewed. ', locount$remain, 'loci;', 
+            locount$removed, 'excluded out of', locount$total, 
+            'due to missing allele designation in at least', locount$cutoff, 'isolates.') 
     }
   })
   
@@ -128,7 +133,7 @@ shinyServer(function(input, output) {
     
     p <- ggplot( df, aes(x=Missing) ) +
       geom_histogram( binwidth=(nrow(df)/30) ) + # so that there are always 30 bins
-      geom_vline( xintercept=ifelse(input$percexc,max(df$Missing),excount$cutoff),
+      geom_vline( xintercept=ifelse(input$percexc,max(df$Missing),locount$cutoff),
                   size=1, colour="red", linetype="dashed") +
       theme_minimal() + 
       ggtitle("Distribution of loci by number of isolates for which there was has no known sequence")
@@ -142,7 +147,7 @@ shinyServer(function(input, output) {
     
     ggplot( df, aes (x = Missing, y = AllelicDiv) )+
       geom_point() + 
-      geom_smooth( span = .01*excount$total ) # so that span scales with n 
+      geom_smooth( span = .01*locount$total ) # so that span scales with n 
   })
   
   brange <- reactiveValues( xmin = NULL, ymin = NULL, xmax = NULL, ymax = NULL )
