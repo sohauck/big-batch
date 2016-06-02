@@ -293,6 +293,8 @@ foreach my $locusrow (@aoaTable) # loop per locus
 	if ( exists($unique_alleles{"0"}) ) # move count away from empty if any missing alleles were seen
 	{	$missing = $unique_alleles{"0"}	} # gives the value in the frequency hash when the key is allele "0", the missing allele		
 
+	if ( $missing == $isolatecount )
+	{ print "$locusname is being removed because it only appeared on the table as missing.\n"; next; }
 
 	# find the file where the original FASTA sequences are	
 	
@@ -350,33 +352,29 @@ foreach my $locusrow (@aoaTable) # loop per locus
 			}
 			
 			print RESULTS join ("\t", ($locusname, $missing, $paralogous, $countnuc) ), "\t\n";	
+			
+			close(FULLFASTA);
 		}
 		
 		else # if couldn't open the file
 		{ 
 			my @seenalleles = sort keys %unique_alleles;
 
-			if ( scalar(@seenalleles) == 1 && $seenalleles[0] eq "0" )
-			{ print "$locusname is being removed because it only appeared on the table as missing.\n"; }
+			print "'$locusname' did not exist as a FASTA file. Alleles in table were..."; 
 		
-			else # if there are more alleles than just "0" which isn't even an allele, give some examples
-			{
-				print "'$locusname' did not exist as a FASTA file. Alleles in table were..."; 
-			
-				my $sampleallele = 0; 
-				foreach my $key ( @seenalleles ) 
-				{ 
-					if ( $sampleallele < 5 )
-					{ print " $key"; $sampleallele++; }
-					else # if already printed 5 allele numbers, just leave it
-					{ print " etc."; last; }
-				 } print "\n"; 
-			}
+			my $sampleallele = 0; 
+			foreach my $key ( @seenalleles ) 
+			{ 
+				if ( $sampleallele < 5 )
+				{ print " $key"; $sampleallele++; }
+				else # if already printed 5 allele numbers, just leave it
+				{ print " etc."; last; }
+			 } print "\n"; 
 			
 			next; # since don't need to include results for a non-locus
 		} 
 		
-		close(FULLFASTA);
+		
 	}
 	
 	elsif ( $FASTAoption =~ /^3/ )
