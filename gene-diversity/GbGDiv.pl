@@ -241,7 +241,7 @@ if ( $transpose =~ /^[Yy]/ ) # transposes the table and puts it back in aoaTable
 	print " and done.\n";
 }
 
-my $headerrow = @aoaTable[0];
+my $headerrow = $aoaTable[0];
 my $isolatecount = scalar (@$headerrow) - 1; # since the first column is the header
 
 # Printing the header of the results file
@@ -305,10 +305,10 @@ foreach my $locusrow (@aoaTable) # loop per locus
 			GetFASTASeqs ( $dbname, $locusname ) ; # the bit where the file is copied from BIGSdb
 			$fullFAS = $dOut."/BIGSdb-FASTA/".$locusname.".FAS";
 		}
-		elsif ( $FASTAoption =~ /^1/ ) # directory already exists
+		elsif ( $FASTAoption =~ /^1/ ) # if directory already exists and we were pointed to it
 		{	$fullFAS = $dFAS."/".$locusname.".FAS"; }
 		
-		if ( open(FULLFASTA, $fullFAS) )# if can open file in directory 
+		if ( open(FULLFASTA, $fullFAS) ) # if can open file in directory 
 		{
 			my $save = 1; # whether to copy the sequence following a >identifier line
 		
@@ -426,8 +426,8 @@ foreach my $locusrow (@aoaTable) # loop per locus
  			
  			print RESULTS join ("\t", ($locusname, $missing, $paralogous, $countnuc) ), "\t\n";	
 
- 		} # closes not 404 else
-	} # closes opt 3 loop
+ 		} # closes found JSON else
+	} # closes opt 3 elsif
 	
 	close(REDFASTA);
 		
@@ -906,7 +906,7 @@ Usage:
 GbGDiv.pl
 
 Command line options:
--tin: Table as tab-separated, with loci and isolates as rows and columns, or reverse if "transpose" option used.
+-table: Table as tab-separated, with loci and isolates as rows and columns, or reverse if "transpose" option used.
 -transpose: "Yes" if the table has loci as columns and isolates as rows, "No" otherwise. 
 -FASTA: Directory with FASTA files where "locusname.FAS" is the file name, like BACT000001.FAS
 -dbname: If grabbing FASTA sequences from BIGSdb, the name of the database. 
