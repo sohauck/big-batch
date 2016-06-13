@@ -64,10 +64,13 @@ open(INGROUPS, $fGroup) or die "Cannot open $fGroup\n";
 	while ( my $line = <INGROUPS> )
 	{
 		chomp($line); $line =~ s/\r\n?|\n//g; # clean up line breaks
-		my @row = split ('\t', $line); # split row by tabs into array of cells
+		if ( my @row = split ('\t', $line) ) # split row by tabs into array of cells
+		{
+			# first column is isolate unique ID, second column is whatever group, ignore the rest
+			$groups{$row[0]} = $row[1]; 
+		}
+		else { next; } # if line is blank or doesn't have at least two elements, skip 
 		
-		# first column is isolate unique ID, second column is whatever group, ignore the rest
-		$groups{$row[0]} = $row[1]; 
 	}
 close(INGROUPS);
 
