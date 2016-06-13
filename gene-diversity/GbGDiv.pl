@@ -55,7 +55,7 @@ for ($i=0; $i<=$#ARGV; $i++)
 
 # Hello!
 print 	"\n=========================================================\n\n" . 
-		"Welcome to the 'Gene-by-Gene Diversity script!\n" .
+		"Welcome to the 'Gene-by-Gene Diversity' (aka GbGDiv) script!\n" .
 		"\n=========================================================\n\n" ;
 
 
@@ -595,25 +595,8 @@ close RESULTSOUT;
 rename ( $dOut."/ResultsTable-tmp.txt" , $dOut."/ResultsTable.txt" ) or die "Cannot rename temporary results over older.";
 
 
-# Making table in R
 
-my $Rtm = $0; # starting from where .pl is
-$Rtm =~ s/\.[^.]+$/-tablemaker\.R/; # works if gene-diversity.pl was loaded and gene-diversity.R in the same folder is where R script is
-
-my $command = "R --slave --args $dOut $locuscat < $Rtm"; #making the full thing, adding --slave for silence
-
-print "Running R script to create table of results... \n\n";
-
-system ( $command ); 
-
-# print "\nFinished creating the full table!\n\nNow opening the Shiny application in your browser...";
-# 
-# my $Rshiny = $0; 
-# $Rshiny =~ s/\.[^.]+$/-shiny\//; 
-# 
-# system ( "Rscript --slave -e \"shiny::runApp('" . $Rshiny . "')\"" ); 
-
-print "Gene diversity scripts all complete!\n";
+print "\n\nGbGDiv all complete!\n";
 
 #---------------------------------------------------------------
 # Subroutines

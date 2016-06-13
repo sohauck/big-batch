@@ -2,9 +2,9 @@ name: GbGDiv-shiny
 account: shauck-zoo
 server: shinyapps.io
 appId: 93056
-bundleId: 415805
+bundleId: 450043
 url: https://shauck-zoo.shinyapps.io/GbGDiv-shiny/
-when: 1460371083.14875
+when: 1463145522.70561
 asMultiple: FALSE
 asStatic: FALSE
 ignoredFiles: plot.pdf
