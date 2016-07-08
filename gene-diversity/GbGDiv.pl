@@ -519,18 +519,20 @@ print "\nTranslation complete.\n";
 
 
 #Alignments!
-mkdir $dOut."/AlignedNuc-FASTA/" or die "Cannot create /AlignedNuc-FASTA/ folder";
-mkdir $dOut."/AlignedAA-FASTA/"  or die "Cannot create /AlignedAA-FASTA/ folder";
+mkdir $dOut."/AlignedNuc-Clustal/" or die "Cannot create /AlignedNuc-Clustal/ folder";
+mkdir $dOut."/AlignedAA-Clustal/"  or die "Cannot create /AlignedAA-Clustal/ folder";
 
 print "\nCurrently aligning...\n";
 
 foreach my $file (@files)
 {
+ 	my ($locusname, $extension) = split (/\./, $file);
+
  	# where all my files at
  	my $inNuc	=	$dOut."/Observed-FASTA/"	. $file; 
  	my $inAA	=	$dOut."/Translated-FASTA/"	. $file;
- 	my $outNuc	=	$dOut."/AlignedNuc-FASTA/"	. $file; 
- 	my $outAA	=	$dOut."/AlignedAA-FASTA/"	. $file; 
+ 	my $outNuc	=	$dOut."/AlignedNuc-Clustal/". $locusname . ".aln"; 
+ 	my $outAA	=	$dOut."/AlignedAA-Clustal/"	. $locusname . ".aln"; 
 
 	# runs MAFFT commands 
  	system ( "mafft " . join (" ", @mafftarg) . " " . $inNuc . " > " . $outNuc  ); 
@@ -540,18 +542,17 @@ foreach my $file (@files)
 	my $varsitesNuc = 0;
 	my $varsitesAA = 0;
 	
-	open (ALIGNEDNUC , $dOut."/AlignedNuc-FASTA/".$file) or die "Cannot open /AlignedNuc-FASTA/$file";
+	open (ALIGNEDNUC , $dOut."/AlignedNuc-Clustal/".$file) or die "Cannot open /AlignedNuc-Clustal/$file";
 		while (my $line = <ALIGNEDNUC>)
 		{	$varsitesNuc = $varsitesNuc + ($line =~ tr/\*//)	}
 	close ALIGNEDNUC;
 
-	open (ALIGNEDAA , $dOut."/AlignedAA-FASTA/".$file) or die "Cannot open /AlignedAA-FASTA/$file";
+	open (ALIGNEDAA , $dOut."/AlignedAA-Clustal/".$file) or die "Cannot open /AlignedAA-Clustal/$file";
 		while (my $line = <ALIGNEDAA>)
 		{	$varsitesAA = $varsitesAA + ($line =~ tr/\*//)	}
 	close ALIGNEDAA;
 	
 	
-	my ($locusname, $extension) = split (/\./, $file);
 
 	$results{$locusname} = $results{$locusname} . join ("\t", ($varsitesNuc, $varsitesAA) ) ;
 	
