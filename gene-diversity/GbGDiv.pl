@@ -542,12 +542,12 @@ foreach my $file (@files)
 	my $varsitesNuc = 0;
 	my $varsitesAA = 0;
 	
-	open (ALIGNEDNUC , $dOut."/AlignedNuc-Clustal/".$file) or die "Cannot open /AlignedNuc-Clustal/$file";
+	open (ALIGNEDNUC , $dOut."/AlignedNuc-Clustal/".$locusname.".aln") or die "Cannot open /AlignedNuc-Clustal/$file";
 		while (my $line = <ALIGNEDNUC>)
 		{	$varsitesNuc = $varsitesNuc + ($line =~ tr/\*//)	}
 	close ALIGNEDNUC;
 
-	open (ALIGNEDAA , $dOut."/AlignedAA-Clustal/".$file) or die "Cannot open /AlignedAA-Clustal/$file";
+	open (ALIGNEDAA , $dOut."/AlignedAA-Clustal/" .$locusname.".aln") or die "Cannot open /AlignedAA-Clustal/$file";
 		while (my $line = <ALIGNEDAA>)
 		{	$varsitesAA = $varsitesAA + ($line =~ tr/\*//)	}
 	close ALIGNEDAA;
