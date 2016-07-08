@@ -102,7 +102,7 @@ for ( my $section = 1; $section <= $seccount; $section++ ) # loop by the number 
 	my $sectionfile = $dOut . "/" . $method . "-" . $section . ".txt";
 			
 	open (SECTION, '>', $sectionfile) or die "Cannot open $sectionfile\n"; # then also open where the reduced one will go
-	print SECTION $headerrow; 
+	print SECTION $headerrow . "\n"; 
 	
 	# if on accumulation method, put all the rows so far in there to begin with
 	if ( $method eq "accumulate" ) 
@@ -157,6 +157,8 @@ Command line options:
 -transpose: "Yes" if the table has loci as columns and isolates as rows, "No" otherwise. 
 -partition: followed by number, how many (roughly) pieces to break apart into
 -accumulate: follow by number, how many incremental pieces to break apart into
+-dout: output directory
+
 EOU
 
 print "\n\nQuit because: $message\n\n";
