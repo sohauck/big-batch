@@ -3,7 +3,7 @@ df <- read.table(file.choose(), header=TRUE, sep="\t", quote='"', skip = 5)
 df <- df[df$AllelicDiv < 0.2, ]
 
 df.lm <- lm(AllelicDiv ~ Missing, data=df) 
-df.lm.value <- summary(df.lm )$r.squared 
+df.lm.value <- summary(df.lm)$r.squared 
 
 cutoff <- 8000
 

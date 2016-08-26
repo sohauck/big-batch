@@ -70,7 +70,6 @@ open(INGROUPS, $fGroup) or die "Cannot open $fGroup\n";
 			$groups{$row[0]} = $row[1]; 
 		}
 		else { next; } # if line is blank or doesn't have at least two elements, skip 
-		
 	}
 close(INGROUPS);
 
