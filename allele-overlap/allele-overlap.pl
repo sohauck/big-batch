@@ -26,7 +26,7 @@ sub Usage( ; $ );
 my $fTable;
 my $fGroup;
 my $fOut;
-my $skipSym = 1; my @symbols = ( "X", "I", "0" ); # will eventually add an option to change symbols
+my $keepSym = "Yes"; my @symbols = ( "X", "I", "0" ); # will eventually add an option to change symbols
 my $transpose = "check needed"; # unless manually specified, will take a guess
 
 # Get Command line options, exits if conditions don't look right
@@ -38,8 +38,9 @@ for ($i=0; $i<=$#ARGV; $i++)
 	if($ARGV[$i] eq "-h")			{ Usage("You asked for help"); exit; }
 	if($ARGV[$i] eq "-table")		{ $fTable = $ARGV[$i+1] || ''; $arg_cnt++; }
 	if($ARGV[$i] eq "-group")		{ $fGroup = $ARGV[$i+1] || ''; $arg_cnt++; }
+	if($ARGV[$i] eq "-groups")		{ $fGroup = $ARGV[$i+1] || ''; $arg_cnt++; }
 	if($ARGV[$i] eq "-out")			{ $fOut = $ARGV[$i+1] || ''; $arg_cnt++; }
-	if($ARGV[$i] eq "-keepsymbols")	{ $skipSym = 0 || ''; $arg_cnt++; }
+	if($ARGV[$i] eq "-keepsymbols")	{ $keepSym = "No" || ''; $arg_cnt++; }
 	if($ARGV[$i] eq "-transpose")	{ $transpose = $ARGV[$i+1] || ''; $arg_cnt++; }
 }
 
@@ -53,6 +54,10 @@ if(! -e $fTable)	{ Usage("Input file does not exist: $fTable"); exit; }
 if(! -e $fGroup)	{ Usage("Input file does not exist: $fGroup"); exit; }
 if(  -e $fOut )		{ Usage("Output file already exists: $fOut"); exit; }
 
+# Print out options just in case
+print	"\n\nThese are your input options:\n" .
+		" Table? $fTable \n Groups? $fGroup \n" .
+		" Keeping symbols? $keepSym \n Transposing? $transpose \n\n";
 
 
 # Read in the "groups" file
@@ -188,7 +193,7 @@ for (my $i = 1; $i <= $#aoaTable; $i++) # going through each locus (one per line
 	{
 		my @alleles = split (/,|;/, @$lineref[$i]); # in case of paralogous loci
 	
-		if ( $skipSym == 1 )
+		if ( $keepSym =~ /^[Nn]/ )
 		{
 			my %symbols; @symbols{@symbols} = ();
 			@alleles = grep !exists $symbols{$_}, @alleles;
@@ -255,6 +260,8 @@ for (my $i = 1; $i <= $#aoaTable; $i++) # going through each locus (one per line
 
 close(OUTFILE); 
 
+print "\nComplete! Check your results out at $fOut\n\n";
+
 
 #---------------------------------------------------------------
 # Subroutines
@@ -314,7 +321,7 @@ sub TransposeTable
 
 sub Usage( ; $ )
 {
-	my $message = $ARGV[0] || '';
+	my $message = $_[0] || '';
 
 	print << 'EOU';
 
@@ -351,10 +358,10 @@ Example Output Format:
 Usage:
 Program.pl [ options ]
 
--table        <FILE> - input filename
--group        <FILE> - input filename
--out       <FILE> - output filename
--h    	 - print usage instructions
+-table		<FILE> - input filename
+-group		<FILE> - input filename
+-out		<FILE> - output filename
+-h			- print usage instructions
 
 EOU
 
