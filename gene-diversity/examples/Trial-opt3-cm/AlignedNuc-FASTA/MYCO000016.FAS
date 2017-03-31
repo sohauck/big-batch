@@ -1,0 +1,177 @@
+CLUSTAL format alignment by MAFFT FFT-NS-2 (v7.221)
+
+
+1               atgaacgcctctctgcgccgaatatcggtgaccgtgatggcgttgatcgtgttgctactg
+49              atgaacgcctctctgcgccgaatctcggtgaccgtgatggcgttgatcgtgctactactg
+54              atgaacacctcactgcgccgcatctccgtcatgatcatggctctggtcgtggtgttgctg
+55              atgaacgcctccctgcgccggatctcggtgaccgtgatggcgttgatcgtgctgctgctg
+56              atgaacgcctccctgcgccggatctcggtgaccgtgatggcgttgatcgtgctgctgctg
+                ******.**** ******** ** ** ** *. .* ***** .**.***** *..*.***
+
+1               ctcaacgcgaccatgacgcaggtcttcaccgccgacgggctgcgtgccgatccccgcaac
+49              ctcaacgccacgatgaccccggtcttcaccgccgacgggttacgagccgatccccgcaac
+54              gccaacgccaccctgacgcaggtgttcaccgccgacggtctgcgctccgacccacgcaac
+55              ctcaacgccacgatgacgcaggtcttcgcggccgactcgctgcgcgccgacccgcgcaac
+56              ctcaacgccacgatgacgcaggtcttcgcggccgactcgctgcgcgccgacccgcgcaac
+                 .****** **  **** * *** ***.* ******   .*.**  ****.** ******
+
+1               cagcgagtgttgctcgacgagtattcacggcagcgcggccagatcaccgctggtggccaa
+49              cagcgggtgctcctcgacgagtactcccgccagcgcggccagatcaccgccggcggccag
+54              caacgggtgttgctcgacgaatactcccgtcagcgcggccagatctcggccggcggacag
+55              cagcgggtgctgctcgacgagtactcccgccagcgcggccagatcgtggccggcggccag
+56              cagcgggtgctgctcgacgagtactcccgccagcgcggccagatcgtggccggcggccag
+                **.**.***.* ********.**.** ** *************** . **.**.** **.
+
+1               ctgctggcgtactcggtagccaccgacggccgctttcgtttcctgcgggtctatcccaat
+49              ctgctggcctactcggtggccaccgacggccggttccgtttcctgcgggtttatcccaac
+54              cttctcgcctactcggtctcgactcagggccggttccggttcctgcgggtgtatcccgac
+55              ctgctggcctactcggtcgccaccgacaaccggttccgcttcctgcgggtctaccccaac
+56              ctgctggcctattcggtcgccaccgacaaccggttccgcttcctgcgggtctaccccaac
+                ** ** ** **.*****  * **. * ..*** **.** *********** **.***.*.
+
+1               cctgaggtgtacgcgccggttaccggcttctactccctgcgctattccagcaccgcccta
+49              ccagaggtgtacgcgccggtgacgggcttctactcgctgcgctattccagcaccggcctg
+54              ccgatgatctacgcaccggtcacgggtttctactcgctgagctattcgagcaccggactc
+55              cccgcccagtacgcgccggtgaccgggttctactcgctgcgctactcgagcaccgggttg
+56              cccgcccagtacgcgccggtgaccgggttctactcgctgcgctactcgagcaccgggctg
+                ** .     *****.***** ** ** ******** *** ****.** *******  .* 
+
+1               gaacgagccgaggacccgatattgaacgggtccgaccgccgtctgttcggccgccggctg
+49              gagcgcgccgaggatccgctcctcaacggatcggaccagcgcctgttcggtcgccggctg
+54              gaacgcgcggaggacaccatcctcaacggctccgacgaacggctgttcgggcgcaggctc
+55              gaacgcgccgaggacccgctgctgaacggctccgacgagcggctgttcgggcgccggctg
+56              gaacgcgccgaggacccgctgctgaacggctccgacgagcggctgttcgggcgccggctg
+                **.** ** *****. *  * .* ***** ** *** . ** ******** *** **** 
+
+1               gccgacttcttcaccggtcgcgacccacgcggcggtaatgtcgataccacgatcaacccg
+49              gccgacttcttcaccggccgcgacccgcgtggcggcaacgtcgacaccgcgatcaacccg
+54              gccgacttcttcaccggccgcgatccccgcggcggcaccgtcgccaccaccatcaacccg
+55              gccgacttcttcaccggccgcgacccgcgcggcgccaacgtcgacaccaccatcaggccg
+56              gccgacttcttcaccggccgcgacccgcgcggcgccaacgtcgacaccaccatcaggccg
+                *****************.*****.** **.**** .* .**** .***.* ****. ***
+
+1               cgcattcagcaagccggctgggacgcgatgcagcaaggctgctacgg---gccctgtaag
+49              cgcatccagcaggccgggtgggacgccatgcagcagggctgcggcgg---gccctgcaag
+54              caggttcagcgggcggcgtgggacgccatggagaagggctgcgacgg---accgtgcacg
+55              cgggtccagcaggcggcgtgggacggcatgcagcagggctgcggcggcccgccgtgcaag
+56              cgggtccagcaggcggcctgggacggcatgcagcagggctgcggcggcccgccgtgcaag
+                *. .*.****..** *  *******  *** ** *.****** .***   .** **.* *
+
+1               ggagcggtggtcgcccttgagccatcaaccggcaagattttggcgttggtgtcttctccg
+49              ggcgccgtcgtcgcgctggaaccgtcgaccggcaagatcttggcgctggtctcttcgccg
+54              ggctcggtcgtcgccctggaaccgtcgacaggcaagatcctggccctggtgtccgccccg
+55              ggcgcggtggtcgccctcgagccgtccaccggcaagatcctggccatggtgtcgtcgccg
+56              ggcgcggtggtcgccctcgagccgtccaccggcaagatcctggccatggtgtcgtcgccg
+                **  * ** ***** ** **.**.** ** ********..****  **** **  * ***
+
+1               tcctacgaccccaacctgctggcgtcgcataaccccgaggtgcaggcgcaagcctggcag
+49              tcgtatgaccccaacctgctggcgtcgcacgatccggaggcacaggccgaagcctggaag
+54              tcgtacgacccgaacctgctggccacccatgacgtggccgagcaggcggaagcctggcag
+55              tcctacgaccccaacctgctgtcctcgcacgaccccgaggtgcaggcgcaggcgtggcag
+56              tcctacgaccccaacctgctgtcctcgcacgaccccgaggtgcaggcgcaggcgtggcag
+                ** **.***** ********* *  * **..*. . *  * .*****  *.** *** **
+
+1               cggcttggcgacaatcccgcctctccactgaccaaccgtgccatctctgagacgtatcca
+49              gatttgcgcgacgatcccagctccgcgctgaccaatcgggcaatttcggaaacgtatccg
+54              cgtcttcgcgacgaccccggctccccgctgctcaaccgcgcgatctccgaggcgtacccg
+55              cggctgcgcgacgatcccgacaacccgatgaccaaccgggccatctccgagacctacccg
+56              cggctgcgcgacgatcccgacaacccgatgaccaaccgggccatctccgagacctacccg
+                 . .*  *****.*.***. *  . *. ** .***.** ** **.** **..* **.**.
+
+1               ccgggttcgactttcaaagtgatcaccactgcggccgcgctggccgccggggccaccgag
+49              cccggctcgaccttcaaggtgatcaccaccgccgccgcattgcaggccggggccaccgag
+54              ccgggatccacgttcaaggtcatcaccaccgcggcggcactgcaggcgggagccacgccg
+55              cccggctcgacgttcaaggtgatcaccacggcggccgcgctgcaggccggcgccagcgac
+56              cccggctcgacgttcaaggtgatcaccacggcggccgcgctgcaggccggcgccagcgac
+                ** ** ** ** *****.** ******** ** ** **..**   ** ** ****     
+
+1               accgaacagctgactgcggcgcccacaattccgttgccaggcagcaccgcccagctagag
+49              aacgaccagctgaccgccgccgccaacattccgctgcccgacagcacggcgaccctggag
+54              gacacccagctgaccgccgcgccgcagatcgcgctgcccgacagcacggccaccctgcag
+55              accgagcagctgaccgccgcgccgtcgataccgctgcccaacagcaccgcgacgctggag
+56              accgagcagctgaccgccgcgccgtcaataccgctgcccaacagcaccgcgacgctggag
+                . *.  ********.** **  *    **  **.**** ..****** **    **. **
+
+1               aactacggcggtgcgccgtgcggggacgaacccaccgtgtcgctgcgtgaggcattcgtc
+49              aactacggcggtgccccgtgtggcagtgggcagaccgtgtcgcttcgcgaggcgttcgcc
+54              aacttcggcggtgtgtcatgcggtgccggccccaccacgtcgcttcgcaacgcgttcgcc
+55              aactacggtgggcaggcgtgcggcaacgacccgaccgtgtcgttgcagcaggccttcgcc
+56              aactacggtgggcaggcgtgcggcaacgacccgaccgtgtcgttgcagcaggccttcgcc
+                **** ***.**     *.**.** . .*. *  ***..****.* *.  * ** ****.*
+
+1               aaatcatgcaacaccgcattcgtccagctgggcatccgcaccggcgccgacgccctgcgc
+49              aagtcctgcaacaccgcgtttgtgcagttgggcatctcgaccggcgcggcggctctgcgc
+54              cattcctgcaacaccgcgttcgtccagctgggcatcgacaccggcgcagacccgctgcgc
+55              ctgtcctgcaacaccgcgttcgtccagctcggcatcctcaccggcgcggacgcgttgcgc
+56              ctgtcctgcaacaccgcgttcgtccagctcggcatcctcaccggcgcggacgcgttgcgc
+                   ** ***********.**.** ***.* ******   ******** *   * .*****
+
+1               agcatggcgcgcgcgttcggtctcgatagcccaccgcgcccaactccgctgcaagtggcg
+49              agcatggcacatgccttcgggctggacaccccaccgagcgcgatacccctgcaggtggcc
+54              agcaccgccggtgacttcggggtgggcgcggttccaccggccataccgctgcaggtcgcc
+55              agcatggcgcgctcgttcggcctggacagcacgcccagcgtcatcccgctgcaggtggcc
+56              agcatggcgcgctcgttcggcctggacagcacgcccagcgtcatcccgctgcaggtggcc
+                ****. **  ..   *****  * *...   . **     . *. ** *****.** ** 
+
+1               gaatcaaccgtcgggcctatcccggacagcgccgcactagggatgaccagtatcggccaa
+49              gagtccacggtcggacccatcccggacgccgccgcactgggcatgtcgagcatcggacaa
+54              gagtccaccgtcgggcccatcgccgacgacgcggcactggggatgtccagcatcgggcag
+55              gaatcgaccatcggcatcatcccggacgccgcggcgctgggcatgtcgagcatcggtcag
+56              gaatcgaccatcggcatcatcccggacgccgcggcgctgggcatgtcgagcatcggtcag
+                **.** ** .****  ..*** * ***. *** **.**.** *** * **.***** **.
+
+1               aaggacgttgcgctgaccccgctagcgaacgcagaaatagccgcgaccatcgcaaacggc
+49              aaggacgtcgcgctcacaccgctgcaaaacgcgcagattgccgcgaccatcgccaacggc
+54              cgagacgtcgcgctgaccccgttgcagaacgccatgatcgcggccgcggtcgcgaacaag
+55              aaggatgtcgcgctgaccccgttgcagaacgccgagatcgcagcgaccatcgccaacggc
+56              aaggatgtcgcgctgaccccgttgcagaacgccgagatcgccgcgaccatcgccaacggc
+                 ..**.**.***** ** ***.*.  .*****   .** ** ** .* .**** ***.. 
+
+1               ggcattacgatgaggccttatctagtcggcagcctcaagggaccggacctagccaatatc
+49              ggcgtcgtgatgcggccctacctggtcgacggcctcaaagggcccgacctggccaatatc
+54              ggcgtcatgatgcgcccgtacctggttgaaagcctcaagggtccggacctggcgaacatc
+55              ggggtgaccatgcagccctatctggtcgacagcctcaagggccccgacctgaccacgatc
+56              ggggtgaccatgcagccctatctggtcgacagcctcaagggccccgacctgaccacgatc
+                ** .* .. *** . ** **.**.**.*. .*******.** ** *****..* *  ***
+
+1               tcaaccaccgtcggataccagcagcgccgcgcggtgtcaccgcaggtcgccgctaagcta
+49              agcaccaccgcaccacatcagcagcgccgcgcggtgtcaccgcaggtcgccgctaagcta
+54              gccaccaccgctcccaccgaagagcggcgagcagtcaccgagcaggtcgcagatacactt
+55              agcaccaccaccccttatgagcagcggcgcgcggtgtcgccgcaggtcgccgctaagcta
+56              agcaccaccaccccttatgagcagcggcgcgcggtgtcgccgcaggtcgccgctaagcta
+                   ******..      . *. **** ** **.**  *   ********* * ** .** 
+
+1               acagagctgatggtcggcgccgagaaagtcgcacagcagaaaggggcaatccccggcgtg
+49              acagagctgatggtcggcgccgagcaagtcgcacagcagaaaggggccatccccggcgtg
+54              acggacttgatggtcgccgccgagcaggtgactcagcagaagggagccatcgccggcgtg
+55              acagagctgatggtcggcgccgagaaggtcgcacagcagaaaggggccattcccggcgtg
+56              acagagctgatggtcggcgccgagaaggtcgcacagcagaaaggggccattcccggcgtg
+                **.** .********* ******* *.** .* ********.**.** **. ********
+
+1               cagatcgcatccaagacgggcaccgccgaacatggcaccgaccctcgtcacactccaccg
+49              cagatcgcatccaagacgggtaccgcagagcacggcaccgatccccgtcataccccacct
+54              cagatcgcatccaagaccggcactgcggagcacggcacggatccgcgcaacacgccgccg
+55              cagatcgcatccaagacgggtaccgcagagcatggcagcgatccgcggcacacaccgccg
+56              cagatcgcatccaagacgggtaccgcagagcatggcagcgatccgcggcacacaccgccg
+                ***************** **.**.** **.**.****  **.** **  *.** **.** 
+
+1               cacgcttggtacatcgcctttgcgcccgcacaagcgcccaaggtggctgttgccgtgctg
+49              cacgcgtggtatatcgcgtttgcccccgcacaggctcccaaagttgctgtcgcggtgctg
+54              catgcctggtacatcgccttcgcgcctgctcaggcacccaaagtcgcggtcgcggtgctt
+55              catgcgtggtacatcgctttcgcgcccgcacagacccccaaggtcgccgtggcggtgttg
+56              catgcgtggtacatcgctttcgcgcccgcacagaccccaaaggtcgccgtggcggtgttg
+                **.** *****.***** **.** **.** **..* ** **.** ** ** ** ***.* 
+
+1               gtggagaacggggctgatcggctgtccgccaccggaggtgccctcgcggcaccgatcggg
+49              gtggaaaatggggccgatcgcctttctgcgaccggcggcgcgctcgcggccccgatcggg
+54              gtcgagaacgggggaaaccggttgtcggcgacgggcggggcccttgcggcgcccatcgga
+55              gtggagaatggcgccgaccgcctgtccgcgacggggggtgcactcgccgcgccgatcgga
+56              gtggagaatggcgccgaccgcctgtccgcgacggggggtgcactcgccgcgccgatcgga
+                ** **.**.** *  .*.** .* ** ** ** ** ** ** **.** ** ** *****.
+
+1               cgggcggtgatcgaagccgcactgcagggggaaccatga
+49              caggccgtgatcgaggccgcgcttcagggggaaccatga
+54              cgcgcgacgatcgccgcggcgctgcgggaggcatcatga
+55              cgggctgtgatcgaggccgcgctacagggaggaccatga
+56              cgggctgtgatcgaggccgcgctacagggaggaccatga
+                *. ** ..*****  ** **.** *.**..* *.*****

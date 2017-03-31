@@ -37,7 +37,16 @@ for ($i=0; $i<=$#ARGV; $i++)
 # Do we have everything we need to start?
 
 # a table of loci and isolates 
+<<<<<<< Updated upstream
 if(! defined $dTable)	{ Usage("Input table directory not defined"); exit; }
+=======
+if(! defined $dTable) 
+{ 
+	print "Where is the directory with tab-separated tables of isolates and loci?\n"; 
+	$dTable = <STDIN>; 
+	chomp $dTable; $dTable =~ s/\s+$//; # removes white spaces and line breaks
+}
+>>>>>>> Stashed changes
 if(! -e $dTable)  { Usage("Input table directory does not exist: $dTable"); exit; }
 
 
@@ -62,8 +71,21 @@ if (! defined $transpose )
 
 
 # a directory where results can go
+<<<<<<< Updated upstream
 if(! defined $dOut)  { Usage("Output directory not defined"); exit;	}
 if(  -e $dOut)  { Usage("Output directory already exists: $dOut"); exit; } 
+=======
+if(! defined $dOut)  
+{ 	
+	print 	"\n\nName the directory where you'd like the results to go.\n";
+
+	$dOut = <STDIN>; 
+	chomp $dOut; $dOut =~ s/\s+$//;
+
+	if(  -e $dOut)  { Usage("Output directory already exists: $dOut"); exit; } 
+}
+
+>>>>>>> Stashed changes
 
 
 # Now that we've asked for everything, let's check that it's all what we expect... 
@@ -113,6 +135,7 @@ foreach my $tabfile ( @tabfiles )
 	}
 
 	my $headerrow = $aoaTable[0];
+<<<<<<< Updated upstream
 	print @$headerrow;
 	
 	my $isolatecount = scalar (@$headerrow) - 1; # since the first column is the header
@@ -123,6 +146,16 @@ foreach my $tabfile ( @tabfiles )
 		print COUNTNUC	"GbGDiv simplified results table from '". $tabfile ."' records table.\n" . 
 						"Isolate records read from table: ". $isolatecount . "\n\n".
 						join ("\t", ("Locus","Missing","Paralogous","CountNuc") ) . "\n";
+=======
+	my $isolatecount = scalar (@$headerrow) - 1; # since the first column is the header
+
+	# Printing the header of the results file
+	open ( COUNTNUC, '>', $dOut."/Res-CountNuc-".$tabfile.".txt" ) or die "$dOut /ResultsTable.txt"; # then also open where the reduced one will go
+
+		print COUNTNUC	"GbGDiv simplified results table from '". $tabfile ."' records table.\n" . 
+						"Isolate records read from table: ". $isolatecount . "\n\n".
+						join ("\t", ("Locus","Missing","Paralogous","CountNuc") ) . "\n" ;
+>>>>>>> Stashed changes
 
 
 	# Going through table and keeping the observed alleles, plus counting missing and unique nucleotide sequences 
@@ -167,7 +200,11 @@ foreach my $tabfile ( @tabfiles )
 
 		# find the file where the original FASTA sequences are	
 	
+<<<<<<< Updated upstream
 		print COUNTNUC join ( "\t", ($locusname, $missing, $paralogous, $countnuc )), "\n";	
+=======
+		print COUNTNUC join ("\t", ($locusname, $missing, $paralogous, $countnuc) ), "\t\n";	
+>>>>>>> Stashed changes
 					
 	} # close per locus loop
 

@@ -3,7 +3,11 @@ df <- read.table(file.choose(), header=TRUE, sep="\t", quote='"', skip = 5)
 df <- df[df$AllelicDiv < 0.2, ]
 
 df.lm <- lm(AllelicDiv ~ Missing, data=df) 
+<<<<<<< Updated upstream
 df.lm.value <- summary(df.lm)$r.squared 
+=======
+df.lm.value <- summary(df.lm )$r.squared 
+>>>>>>> Stashed changes
 
 cutoff <- 8000
 
