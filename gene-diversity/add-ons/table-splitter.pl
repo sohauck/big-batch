@@ -102,11 +102,9 @@ for ( my $section = 1; $section <= $seccount; $section++ ) # loop by the number 
 	my $sectionfile = $dOut . "/" . $method . "-" . $section . ".txt";
 			
 	open (SECTION, '>', $sectionfile) or die "Cannot open $sectionfile\n"; # then also open where the reduced one will go
-<<<<<<< Updated upstream
+
 	print SECTION $headerrow . "\n"; 
-=======
-	print SECTION $headerrow; 
->>>>>>> Stashed changes
+
 	
 	# if on accumulation method, put all the rows so far in there to begin with
 	if ( $method eq "accumulate" ) 
@@ -125,7 +123,7 @@ for ( my $section = 1; $section <= $seccount; $section++ ) # loop by the number 
 		{ push ( @accTable, $row ); }
 	}
 	
-	if ( $section <= $remainder )
+	if ( $section <= $remainder ) # if in one of the rows that takes an extra because of the remainders
 	{
 		my $row = shift @aTable;
 		print SECTION $row . "\n"; 
