@@ -1,0 +1,31 @@
+GbGDiv results table from '25MYCO-table-tY' records table.
+Created at 14:31, on Fri 26 Aug, 2016
+Software version: 0.9
+Isolate records read from table: 11
+
+Locus	Missing	Paralogous	CountNuc	CountAA	MinLength	MaxLength	AvgLength
+/tMYCO000001	5	0	2
+/tMYCO000005	2	0	6
+/tMYCO000006	1	0	8
+/tMYCO000009	0	0	6
+/tMYCO000011	1	0	5
+/tMYCO000013	2	0	6
+/tMYCO000015	5	0	3
+/tMYCO000016	1	0	5
+/tMYCO000017	1	0	5
+/tMYCO000019	0	0	6
+/tMYCO000002	4	0	3
+/tMYCO000003	1	0	7
+/tMYCO000004	5	0	2
+/tMYCO000007	5	0	2
+/tMYCO000008	5	0	2
+/tMYCO000010	6	0	1
+/tMYCO000012	5	0	4
+/tMYCO000014	1	0	6
+/tMYCO000018	5	0	3
+/tMYCO000020	4	0	5
+/tMYCO000021	5	0	2
+/tMYCO000022	5	0	1
+/tMYCO000023	3	0	3
+/tMYCO000024	6	0	1
+/tMYCO000025	6	0	2

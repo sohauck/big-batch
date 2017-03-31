@@ -8,14 +8,22 @@
 
 use strict;
 use warnings;
+use Benchmark; 
 use LWP::Simple; # for downloading API pages 
 use List::Util qw( min max sum ); # for measuring lengths
 
-$| = 1; # for dynamic output
-
+#$| = 1; # for dynamic output
+my $version = "0.9.2";
 
 # Declares subroutines
 sub Usage( ; $ );
+
+
+# Get current time in a nice format
+my @months = qw( Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec );
+my @days = qw(Sun Mon Tue Wed Thu Fri Sat Sun);
+
+my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime();
 
 
 # Get Command line options, exits if conditions don't look right
@@ -24,11 +32,11 @@ my $transpose;		# whether the table needs to be transposed or no
 my $dFAS;			# directory where all the FASTA files for each locus are, if they don't need to be exported
 my $dbname;			# database name if want to export the files
 my $FASTAoption = 0;# 1 = have complete dir, 2 = make complete dir, 3 = take straight to Observed
+my $align;			# whether to complete alignments
 my $dOut;			# directory where the results will go
 my $dup = 1;		# the smallest number of duplicates necessary for locus to be considered "seen", default is 1
+my $locuscat;		# file with categories of loci for graphs
 my @mafftarg = ("--clustalout","--quiet"); # start with at least these, can ask for more, add "-mafft --auto" to keep silent
-my $locuscat; # file with categories of loci for graphs
-
 
 my $i = 0; 
 my $arg_cnt = 0; 
@@ -40,19 +48,22 @@ for ($i=0; $i<=$#ARGV; $i++)
  	if($ARGV[$i] eq "-FASTA")		{ $dFAS 		= $ARGV[$i+1] || ''; $FASTAoption = "1"; $arg_cnt++; }
  	if($ARGV[$i] eq "-dbname")		{ $dbname 		= $ARGV[$i+1] || ''; $arg_cnt++; }
  	if($ARGV[$i] eq "-dboption")	{ $FASTAoption 	= $ARGV[$i+1] || ''; $arg_cnt++; }
+	if($ARGV[$i] eq "-align")		{ $align	 	= $ARGV[$i+1] || ''; $arg_cnt++; }
  	if($ARGV[$i] eq "-out")			{ $dOut  		= $ARGV[$i+1] || ''; $arg_cnt++; }
  	if($ARGV[$i] eq "-dup")			{ $dup  		= $ARGV[$i+1] || ''; $arg_cnt++; }
- 	if($ARGV[$i] eq "-mafft")		{ push (@mafftarg, $ARGV[$i+1]) ; $arg_cnt++; }
  	if($ARGV[$i] eq "-locuscat")	{ $locuscat		= $ARGV[$i+1] || ''; $arg_cnt++; }
+ 	if($ARGV[$i] eq "-mafft")		{ push (@mafftarg, $ARGV[$i+1]) ; $arg_cnt++; }
 }
+
 
 # Hello!
 print 	"\n=========================================================\n\n" . 
-		"Welcome to the 'Gene-by-Gene Diversity script!\n" .
+		"Welcome to the 'Gene-by-Gene Diversity' (aka GbGDiv) script!\n" .
 		"\n=========================================================\n\n" ;
 
-
-# Do we have everything we need to start?
+# =================================
+# Receiving input options
+# =================================
 
 # a table of loci and isolates 
 if(! defined $fTable) 
@@ -64,10 +75,15 @@ if(! defined $fTable)
 if(! -e $fTable)  { Usage("Input table file does not exist: $fTable"); exit; }
 
 # are the loci split into categories?
-if ( defined $locuscat && ! -e $locuscat)
-{  Usage("Input file file does not exist: $locuscat"); exit; }
-elsif ( ! defined )
-{ 	$locuscat = " "	}
+if(! defined $locuscat) 
+{ 
+	print "Do you have a tab-separated file with loci categories? If not, leave blank.\n"; 
+	$locuscat = <STDIN>; 
+	chomp $locuscat; $locuscat =~ s/\s+$//; # removes white spaces and line breaks
+	if(! -e $fTable)  { Usage("Input category file does not exist: $locuscat"); exit; }
+}
+if( $locuscat eq "")
+{ 	$locuscat = "notdef"	}
 
 
 # and whether to transpose that table or no
@@ -144,14 +160,41 @@ elsif ( defined $dbname ) # had defined a BIGSdb database name in the command li
 	}	
 }
 
+my @tableaddress = split ("/", $fTable); #so that @tableaddress is usable later too
+	$tableaddress[-1] =~ s/\.[^.]+$//; # remove extension from file name of input table
+
+
+# and whether to align or not
+if (! defined $align )
+{
+	print "\n\nDo you want to complete alignments? This is a very time-consuming step, but it is needed for measuring" .
+	"\nproportions of variable sites. Enter 'yes' or 'no' below.\n"; 
+	$align = <STDIN>; 
+	if ( $align =~ /^[Yy]/ )
+	{ $align = "Yes" }
+	elsif ( $align =~ /^[Nn]/ )
+	{ $align = "No" }
+	else 
+	{ print "Defaulting to no alignments."; $align = "No"; }
+}
+
+
+# adding any MAFFT arguments?
+if( $align eq "Yes" && scalar(@mafftarg) == 2) 
+{ 
+	print "\n\nDo you have any MAFFT arguments to include?\n" . 
+		"You can just leave this blank if not, and MAFFT will run using its automatic option.\n" .
+		"If you are using a large data set, try '--retree 1 --maxiterate 0' for the fast FFT-NS-1 method.\n"; 
+	my $addtoMAFFT = <STDIN>; 
+	chomp $addtoMAFFT; # removes white spaces and line breaks
+	
+	push ( @mafftarg, $addtoMAFFT );
+}
+
 
 # a directory where results can go
 if(! defined $dOut)  
-{ 
-	my @tableaddress = split ("/", $fTable);
-	$tableaddress[-1] =~ s/\.[^.]+$//; # remove extension from name of the last thing in the address, the table
-	$tableaddress[-1] = "GeneDiv-" . $tableaddress[-1];
-	
+{ 	
 	print 	"\n\nName the directory where you'd like the results to go.\n".
 			"If you can't decide, leave this blank and a new folder, in the same place as your ".
 			"table is held will be created, named '$tableaddress[-1]'\n";
@@ -164,28 +207,18 @@ if(! defined $dOut)
 	{	$dOut = join ("/", @tableaddress); }
 }
 
-# adding any MAFFT arguments?
-if( scalar(@mafftarg) == 2) 
-{ 
-	print "\n\nDo you have any MAFFT arguments to include?\n" . 
-		"You can just leave this blank if not, and MAFFT will run using its automatic option.\n" .
-		"If you are using a large data set, try '--retree 1 --maxiterate 0' for the fast FFT-NS-1 method.\n"; 
-	my $addtoMAFFT = <STDIN>; 
-	chomp $addtoMAFFT; # removes white spaces and line breaks
-	
-	push ( @mafftarg, $addtoMAFFT );
-}
 
+# =================================
+# Check before starting the work
+# =================================
 
-
-# Now that we've asked for everything, let's check that it's all what we expect... 
 print "\n\n\nLet's check if everything is correct before we start...\n\n";
 
+# Transposing
 if ( $transpose =~ /^[Nn]/ )
 { print	"Your table of isolates as columns and loci as rows is held at $fTable.\n"  }
 elsif ( $transpose =~ /^[Yy]/ )
 { print	"Your table of loci as columns and isolates as rows is held at $fTable.\n"  }
-
 
 # and where the FASTA sequences are / will be
 if ( $FASTAoption =~ /^1/ )
@@ -195,9 +228,12 @@ elsif ( $FASTAoption =~ /^2/ )
 elsif ( $FASTAoption =~ /^3/ )
 {	print "There won't be a deposit of FASTA sequences, we'll grab them straight from $dbname. \n";	}
 
-# Other options
-print 	"Arguments that will be passed to MAFFT are: @mafftarg\n" . 
-		"Alleles must be seen at least $dup times in order to be included.\n\n"; 
+# Alignments
+if 		( $align eq "Yes" )	{ print "Alignments will be complete, with MAFFT arguments: @mafftarg\n"; } 
+elsif 	( $align eq "No" )	{ print "You chose not to perform alignments.\n"; } 
+
+# Others
+print "Alleles must be seen at least $dup time(s) in order to be included.\n\n"; 
 
 
 # Give the option to get out if it goes in fact look dodgy
@@ -207,6 +243,11 @@ if ( $confirmation =~ /\w/ )
 { Usage("You chose to exit: $confirmation"); exit;  }
 
 
+# First benchmark point
+my $t0 = Benchmark->new;
+
+
+# Creating directories for use
 if( -e $dOut) { Usage("Output directory already exists: $dOut"); exit; }
 
 if ( mkdir $dOut )
@@ -218,13 +259,41 @@ if ( $FASTAoption =~ /^2/ )
 
 
 
-open ( RESULTS, '>', $dOut."/ResultsTable.txt" ) or die "$dOut /ResultsTable.txt"; # then also open where the reduced one will go
-	print RESULTS join ("\t", ("Locus","Missing","Paralogous","CountNuc","CountAA","MinLength","MaxLength","AvgLength","NonVarNuc","NonVarAA") ) . "\n" ;
-
-
-
+# =================================
 # Actually starting the work now
+# =================================
 
+# If we have a category table
+
+my %categories = (); 
+my $catrowcount = 0;
+
+if ( $locuscat ne "notdef" )
+{
+	open(CATTABLE, $locuscat) or die "Cannot open $locuscat\n";
+
+		while ( my $line = <CATTABLE> )
+		{
+			chomp($line); $line =~ s/\r\n?|\n//g; # clean up line breaks
+		
+			if ( my @row = split ('\t', $line) ) # split row by tabs into array of cells
+			{
+				# first column is isolate unique ID, second column is whatever group, ignore the rest
+				$categories{$row[0]} = $row[1]; 
+				my $catrowcount ++; 
+			}
+			else { next; } # if line is blank or doesn't have at least two elements, skip 
+				
+		} 
+
+		#if ( $catrowcount <= 1 ) { die "You only have one column so something has probably gone wrong with line breaks.\n"; }
+	
+	close(CATTABLE);
+
+	my @obscats = do { my %seen; grep { !$seen{$_}++ } values %categories };
+
+	print "The categories imported are: @obscats \n\n";
+}
 
 # Reading the table in
 my $tableref = ReadTableIn ( $fTable );
@@ -237,6 +306,29 @@ if ( $transpose =~ /^[Yy]/ ) # transposes the table and puts it back in aoaTable
 	@aoaTable = @$tableref;
 	print " and done.\n";
 }
+
+my $headerrow = $aoaTable[0];
+my $isolatecount = scalar (@$headerrow) - 1; # since the first column is the header
+
+# Printing the header of the results file
+open ( RESULTS, '>', $dOut."/ResultsTable.txt" ) or die "$dOut /ResultsTable.txt"; # then also open where the reduced one will go
+
+	my @headerlist = ("Locus","Missing","Paralogous","CountNuc","CountAA","MinLength","MaxLength","AvgLength");
+
+	if ( $locuscat ne "notdef" )
+	{	splice @headerlist, 1, 0, "Category";	}
+
+	if ( $align eq "Yes" )
+	{	splice @headerlist, 9, 0, "NonVarNuc\tNonVarAA";	}
+
+
+	print RESULTS	"GbGDiv results table from '". $tableaddress[-1] ."' records table.\n" . 
+    				"Created at ".sprintf("%02d", $hour).":$min, on $days[$wday] $mday $months[$mon], ". (1900 + $year) . "\n" . 
+    				"Software version: " . $version . "\n" . 
+    				"Isolate records read from table: ". $isolatecount . "\n\n".
+					join ("\t", @headerlist ) . "\n" ;
+	
+	my @resultsline = (); 
 
 
 # Going through table and keeping the observed alleles, plus counting missing and unique nucleotide sequences 
@@ -276,6 +368,8 @@ foreach my $locusrow (@aoaTable) # loop per locus
 	if ( exists($unique_alleles{"0"}) ) # move count away from empty if any missing alleles were seen
 	{	$missing = $unique_alleles{"0"}	} # gives the value in the frequency hash when the key is allele "0", the missing allele		
 
+	if ( $missing == $isolatecount )
+	{ print "$locusname is being removed because it only appeared on the table as missing.\n"; next; }
 
 	# find the file where the original FASTA sequences are	
 	
@@ -288,10 +382,10 @@ foreach my $locusrow (@aoaTable) # loop per locus
 			GetFASTASeqs ( $dbname, $locusname ) ; # the bit where the file is copied from BIGSdb
 			$fullFAS = $dOut."/BIGSdb-FASTA/".$locusname.".FAS";
 		}
-		elsif ( $FASTAoption =~ /^1/ ) # directory already exists
+		elsif ( $FASTAoption =~ /^1/ ) # if directory already exists and we were pointed to it
 		{	$fullFAS = $dFAS."/".$locusname.".FAS"; }
 		
-		if ( open(FULLFASTA, $fullFAS) )# if can open file in directory 
+		if ( open(FULLFASTA, $fullFAS) ) # if can open file in directory 
 		{
 			my $save = 1; # whether to copy the sequence following a >identifier line
 		
@@ -332,34 +426,36 @@ foreach my $locusrow (@aoaTable) # loop per locus
 				{ print "Did not find sequence for locus $locusname, allele $key.\n"; }
 			}
 			
-			print RESULTS join ("\t", ($locusname, $missing, $paralogous, $countnuc) ), "\t\n";	
+			
+ 			@resultsline = ($locusname, $missing, $paralogous, $countnuc);
+ 			
+ 			if ( $locuscat ne "notdef" )
+			{	splice @resultsline, 1, 0, $categories{$locusname}; }
+ 			
+ 			print RESULTS join ("\t", @resultsline ), "\n";	
+			
+			close(FULLFASTA);
 		}
 		
 		else # if couldn't open the file
 		{ 
 			my @seenalleles = sort keys %unique_alleles;
 
-			if ( scalar(@seenalleles) == 1 && $seenalleles[0] eq "0" )
-			{ print "$locusname is being removed because it only appeared on the table as missing.\n"; }
+			print "'$locusname' did not exist as a FASTA file. Alleles in table were..."; 
 		
-			else # if there are more alleles than just "0" which isn't even an allele, give some examples
-			{
-				print "$locusname did not exist as a FASTA file. Alleles in table were..."; 
-			
-				my $sampleallele = 0; 
-				foreach my $key ( @seenalleles ) 
-				{ 
-					if ( $sampleallele < 5 )
-					{ print " $key"; $sampleallele++; }
-					else # if already printed 5 allele numbers, just leave it
-					{ print " etc."; last; }
-				 } print "\n"; 
-			}
+			my $sampleallele = 0; 
+			foreach my $key ( @seenalleles ) 
+			{ 
+				if ( $sampleallele < 5 )
+				{ print " $key"; $sampleallele++; }
+				else # if already printed 5 allele numbers, just leave it
+				{ print " etc."; last; }
+			 } print "\n"; 
 			
 			next; # since don't need to include results for a non-locus
 		} 
 		
-		close(FULLFASTA);
+		
 	}
 	
 	elsif ( $FASTAoption =~ /^3/ )
@@ -404,12 +500,18 @@ foreach my $locusrow (@aoaTable) # loop per locus
 					print REDFASTA ">" . $allele_id . "\n" . $sequence . "\n";
 					$countnuc ++; 
 				}
- 			
- 			print RESULTS join ("\t", ($locusname, $missing, $paralogous, $countnuc) ), "\t\n";	
- 			
+
  			} # closes foreach allele loop
- 		} # closes not 404 else
-	} # closes opt 3 loop
+ 			
+ 			@resultsline = ($locusname, $missing, $paralogous, $countnuc);
+ 			
+ 			if ( $locuscat ne "notdef" )
+			{	splice @resultsline, 1, 0, $categories{$locusname}; }
+ 			
+ 			print RESULTS join ("\t", @resultsline ), "\n";	
+
+ 		} # closes found JSON else
+	} # closes opt 3 elsif
 	
 	close(REDFASTA);
 		
@@ -423,7 +525,9 @@ my %results = (); # creates a hash where the rest of results go under the locusn
 
 
 
-# Translating 
+# =================================
+# Translations
+# =================================
 mkdir $dOut."/Translated-FASTA/" or die "Cannot create /Translated-FASTA/ folder";
 
 # opening the directory where the observed alleles are and getting all the file names
@@ -492,7 +596,7 @@ foreach my $file (@files)
  	
  	close NUCLEOTIDE; close AMINOACID;
  	
- 	$results{$locusname} = join ("\t", ($countaa, $min, $max, $avg) ) . "\t" ;
+ 	$results{$locusname} = "\t" . join ("\t", ($countaa, $min, $max, $avg) ) ;
 
  	#So you have something to watch while it runs... 
  	print "\r$locusname";
@@ -501,96 +605,96 @@ foreach my $file (@files)
 print "\nTranslation complete.\n";
 
 
+# =================================
+# Alignments
+# =================================
 
-#Alignments!
-mkdir $dOut."/AlignedNuc-FASTA/" or die "Cannot create /AlignedNuc-FASTA/ folder";
-mkdir $dOut."/AlignedAA-FASTA/"  or die "Cannot create /AlignedAA-FASTA/ folder";
-
-print "\nCurrently aligning...\n";
-
-foreach my $file (@files)
+if ( $align eq "Yes" ) # only if requested
 {
- 	# where all my files at
- 	my $inNuc	=	$dOut."/Observed-FASTA/"	. $file; 
- 	my $inAA	=	$dOut."/Translated-FASTA/"	. $file;
- 	my $outNuc	=	$dOut."/AlignedNuc-FASTA/"	. $file; 
- 	my $outAA	=	$dOut."/AlignedAA-FASTA/"	. $file; 
+	mkdir $dOut."/AlignedNuc-FASTA/" or die "Cannot create /AlignedNuc-FASTA/ folder";
+	mkdir $dOut."/AlignedAA-FASTA/"  or die "Cannot create /AlignedAA-FASTA/ folder";
 
-	# runs MAFFT commands 
- 	system ( "mafft " . join (" ", @mafftarg) . " " . $inNuc . " > " . $outNuc  ); 
- 	system ( "mafft " . join (" ", @mafftarg) . " " . $inAA . " > " . $outAA  ); 
+	print "\nCurrently aligning...\n";
 
-	# now counting the variable sites
-	my $varsitesNuc = 0;
-	my $varsitesAA = 0;
+	foreach my $file (@files)
+	{
+		# where all my files at
+		my $inNuc	=	$dOut."/Observed-FASTA/"	. $file; 
+		my $inAA	=	$dOut."/Translated-FASTA/"	. $file;
+		my $outNuc	=	$dOut."/AlignedNuc-FASTA/"	. $file; 
+		my $outAA	=	$dOut."/AlignedAA-FASTA/"	. $file; 
+
+		# runs MAFFT commands 
+		system ( "mafft " . join (" ", @mafftarg) . " " . $inNuc . " > " . $outNuc  ); 
+		system ( "mafft " . join (" ", @mafftarg) . " " . $inAA . " > " . $outAA  ); 
+
+		# now counting the variable sites
+		my $varsitesNuc = 0;
+		my $varsitesAA = 0;
 	
-	open (ALIGNEDNUC , $dOut."/AlignedNuc-FASTA/".$file) or die "Cannot open /AlignedNuc-FASTA/$file";
-		while (my $line = <ALIGNEDNUC>)
-		{	$varsitesNuc = $varsitesNuc + ($line =~ tr/\*//)	}
-	close ALIGNEDNUC;
+		open (ALIGNEDNUC , $dOut."/AlignedNuc-FASTA/".$file) or die "Cannot open /AlignedNuc-FASTA/$file";
+			while (my $line = <ALIGNEDNUC>)
+			{	$varsitesNuc = $varsitesNuc + ($line =~ tr/\*//)	}
+		close ALIGNEDNUC;
 
-	open (ALIGNEDAA , $dOut."/AlignedAA-FASTA/".$file) or die "Cannot open /AlignedAA-FASTA/$file";
-		while (my $line = <ALIGNEDAA>)
-		{	$varsitesAA = $varsitesAA + ($line =~ tr/\*//)	}
-	close ALIGNEDAA;
+		open (ALIGNEDAA , $dOut."/AlignedAA-FASTA/".$file) or die "Cannot open /AlignedAA-FASTA/$file";
+			while (my $line = <ALIGNEDAA>)
+			{	$varsitesAA = $varsitesAA + ($line =~ tr/\*//)	}
+		close ALIGNEDAA;
 	
 	
-	my ($locusname, $extension) = split (/\./, $file);
+		my ($locusname, $extension) = split (/\./, $file);
 
-	$results{$locusname} = $results{$locusname} . join ("\t", ($varsitesNuc, $varsitesAA) ) ;
+		$results{$locusname} = $results{$locusname} . "\t" . join ("\t", ($varsitesNuc, $varsitesAA) ) ;
+	
+		# So you have something to watch while it runs... 
+		print "\r$file";
+	} # closes per-locus loop
+
+	print "\nAlignments complete.\n";
+}
 
 
- 	# So you have something to watch while it runs... 
- 	print "\r$file";
-} # closes per-locus loop
-
-print "\nAlignments complete.\n";
-
-
-
-# Then put remaining results back into that table
+# =================================
+# Printing results to file, plus showing time taken
+# =================================
 
 open ( RESULTSIN,  '<', $dOut."/ResultsTable.txt" ) or die "$dOut /ResultsTable.txt";
-open ( RESULTSOUT, '>', $dOut."/ResultsTable-tmp.txt" ) or die "$dOut /ResultsTable.txt";
-
-	my $header = <RESULTSIN>;
-	print RESULTSOUT $header;
+open ( RESULTSOUT, '>', $dOut."/ResultsTable-tmp.txt" ) or die "$dOut /ResultsTable.txt";	
 	
+	my $linecount = 1; 
 	while ( my $line = <RESULTSIN> )
 	{
-		chomp $line; 
+		if ( $linecount <= 6 )
+		{
+				print RESULTSOUT $line;
+				$linecount ++ ;
+		}
 		
-		$line =~ /^(\S+)/; 
-		my $locusname = $1;
+		else 
+		{
+			chomp $line; 
 		
-		print RESULTSOUT $line . $results{$locusname} . "\n";
+			$line =~ /^(\S+)/; 
+			my $locusname = $1;
+		
+			print RESULTSOUT $line . $results{$locusname} . "\n";
+		}
 	}
 	
 close RESULTSIN;
 close RESULTSOUT; 
 
+# after making changes by adding in more info, replace the original with the improved temporary file
 rename ( $dOut."/ResultsTable-tmp.txt" , $dOut."/ResultsTable.txt" ) or die "Cannot rename temporary results over older.";
 
+# Fourth Benchmark point
+my $t1 = Benchmark->new;
 
-# Making graph in R
-my $Rscript = $0;
-$Rscript =~ s/\.[^.]+$/-R\.R/; # works if gene-diversity.pl was loaded and gene-diversity.R in the same folder is where R script is
-
-if ( mkdir $dOut."/Graphs/" )
-{ print "\n\nGraphs generated from your data will be at the Graphs folder.\n" }
-else 
-{ Usage("Could not create Graphs folder: $dOut/Graphs/"); exit; }
+my $td1 = timediff($t1, $t0);
 
 
-my $command = "R --slave --args $dOut $locuscat < $Rscript"; #making the full thing, adding --slave for silence
-
-print "Running R script... ";
-
-system ( $command ); 
-
-print "done!\n\n";
-
-print "Gene diversity scripts all complete!\n";
+print "\n\nGbGDiv all complete! Processing took ",timestr($td1),".\n";
 
 #---------------------------------------------------------------
 # Subroutines
@@ -881,13 +985,15 @@ Usage:
 GbGDiv.pl
 
 Command line options:
--tin: Table as tab-separated, with loci and isolates as rows and columns, or reverse if "transpose" option used.
+-table: Table as tab-separated, with loci and isolates as rows and columns, or reverse if "transpose" option used.
 -transpose: "Yes" if the table has loci as columns and isolates as rows, "No" otherwise. 
 -FASTA: Directory with FASTA files where "locusname.FAS" is the file name, like BACT000001.FAS
 -dbname: If grabbing FASTA sequences from BIGSdb, the name of the database. 
+-align: "Yes" if alignments are wanted for porportion of variable sites ( slow process). "No" otherwise.
 -out: Directory where all results will be saved.
 -dboption: 1 if complete FASTA directory exists, 2 if creating the same, 3 if pulling just what is needed
 -dup: Value for the mininum frequency for allele appearance to be included. Default is "1".
+-locus cat: Can point to a file with categories for loci.
 -mafft: Can be used to add more parameters to MAFFT. 
 EOU
 
