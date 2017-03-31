@@ -13,11 +13,7 @@ use LWP::Simple; # for downloading API pages
 use List::Util qw( min max sum ); # for measuring lengths
 
 #$| = 1; # for dynamic output
-<<<<<<< Updated upstream
 my $version = "0.9.2";
-=======
-my $version = "0.9";
->>>>>>> Stashed changes
 
 # Declares subroutines
 sub Usage( ; $ );
@@ -39,14 +35,8 @@ my $FASTAoption = 0;# 1 = have complete dir, 2 = make complete dir, 3 = take str
 my $align;			# whether to complete alignments
 my $dOut;			# directory where the results will go
 my $dup = 1;		# the smallest number of duplicates necessary for locus to be considered "seen", default is 1
-<<<<<<< Updated upstream
 my $locuscat;		# file with categories of loci for graphs
 my @mafftarg = ("--clustalout","--quiet"); # start with at least these, can ask for more, add "-mafft --auto" to keep silent
-=======
-my $locuscat; # file with categories of loci for graphs
-my @mafftarg = ("--clustalout","--quiet"); # start with at least these, can ask for more, add "-mafft --auto" to keep silent
-
->>>>>>> Stashed changes
 
 my $i = 0; 
 my $arg_cnt = 0; 
@@ -85,7 +75,6 @@ if(! defined $fTable)
 if(! -e $fTable)  { Usage("Input table file does not exist: $fTable"); exit; }
 
 # are the loci split into categories?
-<<<<<<< Updated upstream
 if(! defined $locuscat) 
 { 
 	print "Do you have a tab-separated file with loci categories? If not, leave blank.\n"; 
@@ -94,11 +83,6 @@ if(! defined $locuscat)
 	if(! -e $fTable)  { Usage("Input category file does not exist: $locuscat"); exit; }
 }
 if( $locuscat eq "")
-=======
-if ( defined $locuscat && ! -e $locuscat)
-{  Usage("Input file file does not exist: $locuscat"); exit; }
-elsif ( ! defined $locuscat )
->>>>>>> Stashed changes
 { 	$locuscat = "notdef"	}
 
 
@@ -179,17 +163,6 @@ elsif ( defined $dbname ) # had defined a BIGSdb database name in the command li
 my @tableaddress = split ("/", $fTable); #so that @tableaddress is usable later too
 	$tableaddress[-1] =~ s/\.[^.]+$//; # remove extension from file name of input table
 
-<<<<<<< Updated upstream
-=======
-# a directory where results can go
-if(! defined $dOut)  
-{ 	
-	print 	"\n\nName the directory where you'd like the results to go.\n".
-			"If you can't decide, leave this blank and a new folder, in the same place as your ".
-			"table is held will be created, named '$tableaddress[-1]'\n";
-	$dOut = <STDIN>; 
-	chomp $dOut; $dOut =~ s/\s+$//;
->>>>>>> Stashed changes
 
 # and whether to align or not
 if (! defined $align )
@@ -255,18 +228,12 @@ elsif ( $FASTAoption =~ /^2/ )
 elsif ( $FASTAoption =~ /^3/ )
 {	print "There won't be a deposit of FASTA sequences, we'll grab them straight from $dbname. \n";	}
 
-<<<<<<< Updated upstream
 # Alignments
 if 		( $align eq "Yes" )	{ print "Alignments will be complete, with MAFFT arguments: @mafftarg\n"; } 
 elsif 	( $align eq "No" )	{ print "You chose not to perform alignments.\n"; } 
 
 # Others
 print "Alleles must be seen at least $dup time(s) in order to be included.\n\n"; 
-=======
-# Other options
-print 	"Arguments that will be passed to MAFFT are: @mafftarg\n" . 
-		"Alleles must be seen at least $dup time(s) in order to be included.\n\n"; 
->>>>>>> Stashed changes
 
 
 # Give the option to get out if it goes in fact look dodgy
@@ -292,12 +259,9 @@ if ( $FASTAoption =~ /^2/ )
 
 
 
-<<<<<<< Updated upstream
 # =================================
 # Actually starting the work now
 # =================================
-=======
->>>>>>> Stashed changes
 
 # If we have a category table
 
@@ -349,7 +313,6 @@ my $isolatecount = scalar (@$headerrow) - 1; # since the first column is the hea
 # Printing the header of the results file
 open ( RESULTS, '>', $dOut."/ResultsTable.txt" ) or die "$dOut /ResultsTable.txt"; # then also open where the reduced one will go
 
-<<<<<<< Updated upstream
 	my @headerlist = ("Locus","Missing","Paralogous","CountNuc","CountAA","MinLength","MaxLength","AvgLength");
 
 	if ( $locuscat ne "notdef" )
@@ -359,21 +322,13 @@ open ( RESULTS, '>', $dOut."/ResultsTable.txt" ) or die "$dOut /ResultsTable.txt
 	{	splice @headerlist, 9, 0, "NonVarNuc\tNonVarAA";	}
 
 
-=======
->>>>>>> Stashed changes
 	print RESULTS	"GbGDiv results table from '". $tableaddress[-1] ."' records table.\n" . 
     				"Created at ".sprintf("%02d", $hour).":$min, on $days[$wday] $mday $months[$mon], ". (1900 + $year) . "\n" . 
     				"Software version: " . $version . "\n" . 
     				"Isolate records read from table: ". $isolatecount . "\n\n".
-<<<<<<< Updated upstream
 					join ("\t", @headerlist ) . "\n" ;
 	
 	my @resultsline = (); 
-=======
-
-		join ("\t", ("Locus","Missing","Paralogous","CountNuc","CountAA","MinLength","MaxLength","AvgLength","NonVarNuc","NonVarAA") ) . "\n" ;
-
->>>>>>> Stashed changes
 
 
 # Going through table and keeping the observed alleles, plus counting missing and unique nucleotide sequences 
@@ -471,7 +426,6 @@ foreach my $locusrow (@aoaTable) # loop per locus
 				{ print "Did not find sequence for locus $locusname, allele $key.\n"; }
 			}
 			
-<<<<<<< Updated upstream
 			
  			@resultsline = ($locusname, $missing, $paralogous, $countnuc);
  			
@@ -479,9 +433,6 @@ foreach my $locusrow (@aoaTable) # loop per locus
 			{	splice @resultsline, 1, 0, $categories{$locusname}; }
  			
  			print RESULTS join ("\t", @resultsline ), "\n";	
-=======
-			print RESULTS join ("\t", ($locusname, $missing, $paralogous, $countnuc) ), "\t\n";	
->>>>>>> Stashed changes
 			
 			close(FULLFASTA);
 		}
@@ -552,16 +503,12 @@ foreach my $locusrow (@aoaTable) # loop per locus
 
  			} # closes foreach allele loop
  			
-<<<<<<< Updated upstream
  			@resultsline = ($locusname, $missing, $paralogous, $countnuc);
  			
  			if ( $locuscat ne "notdef" )
 			{	splice @resultsline, 1, 0, $categories{$locusname}; }
  			
  			print RESULTS join ("\t", @resultsline ), "\n";	
-=======
- 			print RESULTS join ("\t", ($locusname, $missing, $paralogous, $countnuc) ), "\t\n";	
->>>>>>> Stashed changes
 
  		} # closes found JSON else
 	} # closes opt 3 elsif
@@ -696,7 +643,6 @@ if ( $align eq "Yes" ) # only if requested
 		close ALIGNEDAA;
 	
 	
-<<<<<<< Updated upstream
 		my ($locusname, $extension) = split (/\./, $file);
 
 		$results{$locusname} = $results{$locusname} . "\t" . join ("\t", ($varsitesNuc, $varsitesAA) ) ;
@@ -707,18 +653,6 @@ if ( $align eq "Yes" ) # only if requested
 
 	print "\nAlignments complete.\n";
 }
-=======
-	my ($locusname, $extension) = split (/\./, $file);
-
-	$results{$locusname} = $results{$locusname} . join ("\t", ($varsitesNuc, $varsitesAA) ) ;
-	
- 	# So you have something to watch while it runs... 
- 	print "\r$file";
-} # closes per-locus loop
-
-print "\nAlignments complete.\n";
-
->>>>>>> Stashed changes
 
 
 # =================================
@@ -736,19 +670,11 @@ open ( RESULTSOUT, '>', $dOut."/ResultsTable-tmp.txt" ) or die "$dOut /ResultsTa
 				print RESULTSOUT $line;
 				$linecount ++ ;
 		}
-<<<<<<< Updated upstream
 		
 		else 
 		{
 			chomp $line; 
 		
-=======
-		
-		else 
-		{
-			chomp $line; 
-		
->>>>>>> Stashed changes
 			$line =~ /^(\S+)/; 
 			my $locusname = $1;
 		
@@ -762,31 +688,11 @@ close RESULTSOUT;
 # after making changes by adding in more info, replace the original with the improved temporary file
 rename ( $dOut."/ResultsTable-tmp.txt" , $dOut."/ResultsTable.txt" ) or die "Cannot rename temporary results over older.";
 
-# Fourth Benchmark point
+# Second Benchmark point
 my $t1 = Benchmark->new;
 
-<<<<<<< Updated upstream
 my $td1 = timediff($t1, $t0);
 
-=======
-# Making table in R
-
-my $Rtm = $0; # starting from where .pl is
-$Rtm =~ s/\.[^.]+$/-tablemaker\.R/; # works if gene-diversity.pl was loaded and gene-diversity.R in the same folder is where R script is
-
-my $command = "R --slave --args $dOut $locuscat < $Rtm"; #making the full thing, adding --slave for silence
-
-print "Running R script to create table of results... \n\n";
-
-system ( $command ); 
-
-# print "\nFinished creating the full table!\n\nNow opening the Shiny application in your browser...";
-# 
-# my $Rshiny = $0; 
-# $Rshiny =~ s/\.[^.]+$/-shiny\//; 
-# 
-# system ( "Rscript --slave -e \"shiny::runApp('" . $Rshiny . "')\"" ); 
->>>>>>> Stashed changes
 
 print "\n\nGbGDiv all complete! Processing took ",timestr($td1),".\n";
 
