@@ -1,3 +1,6 @@
+This is an even older version of GUAVA, which was re-named GbGDiv in the meantime.
+
+
 ## What is necessary for these scripts to work correctly
 * Perl, including List::Util and LWP::Simple, download from https://www.perl.org/get.html
 * MAFFT — tested on v7.221, download from http://mafft.cbrc.jp/alignment/software/ 
