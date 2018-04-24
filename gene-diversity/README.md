@@ -1,4 +1,6 @@
-This is an even older version of GUAVA, which was re-named GbGDiv in the meantime.
+*This is an even older version of GUAVA, which was re-named GbGDiv in the meantime.*
+
+
 
 
 ## What is necessary for these scripts to work correctly
